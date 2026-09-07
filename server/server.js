@@ -14,6 +14,7 @@ const PORT = process.env.PORT || 5000;
 
 const companyRoutes = require("./routes/companyRoutes");
 const heroRoutes = require("./routes/heroRoutes");
+const aboutRoutes = require("./routes/aboutRoutes");
 const serviceRoutes = require("./routes/serviceRoutes");
 const categoryRoutes = require("./routes/categoryRoutes");
 const productRoutes = require("./routes/productRoutes");
@@ -57,6 +58,7 @@ app.use(
 
 app.use("/api/company", companyRoutes);
 app.use("/api/hero", heroRoutes);
+app.use("/api/about", aboutRoutes);
 app.use("/api/services", serviceRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/products", productRoutes);
