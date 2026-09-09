@@ -1,12 +1,11 @@
-
 import React, { useEffect, useState } from "react";
 import { useLanguage } from "../../context/LanguageContext";
+import { motion } from "framer-motion";
 import {
   getCompany,
   getSocialLinks,
+  getImageUrl,
 } from "../../api/api";
-import { getImageUrl } from "../../api/api";
-import { getIconClass } from "../../utils/icons";
 
 const Footer = () => {
   const { language } = useLanguage();
@@ -86,10 +85,7 @@ const Footer = () => {
     },
   ];
 
-  const navigationLabel =
-    language === "fr"
-      ? "Navigation"
-      : "Navigation";
+  const navigationLabel = "Navigation";
 
   const socialLabel =
     language === "fr"
@@ -114,7 +110,25 @@ const Footer = () => {
     <footer className="footer">
       <div className="container">
 
-        <div className="footer__grid">
+        <motion.div
+          className="footer__grid"
+          initial={{
+            opacity: 0,
+            y: 30,
+          }}
+          whileInView={{
+            opacity: 1,
+            y: 0,
+          }}
+          viewport={{
+            once: true,
+            amount: 0.2,
+          }}
+          transition={{
+            duration: 0.7,
+            ease: "easeOut",
+          }}
+        >
 
           {/* BRAND */}
           <div className="footer__brand">
@@ -157,7 +171,6 @@ const Footer = () => {
 
           </div>
 
-
           {/* NAVIGATION */}
           <div className="footer__navigation">
 
@@ -176,7 +189,6 @@ const Footer = () => {
 
           </div>
 
-
           {/* SOCIAL */}
           <div className="footer__social-column">
 
@@ -184,23 +196,42 @@ const Footer = () => {
 
             {activeSocialLinks.length > 0 && (
               <div className="footer__social">
-                {activeSocialLinks.map((social) => (
-                  <a
-                    href={social.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    key={social.id}
-                    aria-label={social.platform}
-                  >
-                    <i
-                      className={`bi ${getIconClass(
-                        "social",
-                        social.icon
-                      )}`}
-                      aria-hidden="true"
-                    ></i>
-                  </a>
-                ))}
+                {activeSocialLinks.map(
+                  (social, index) => (
+                    <motion.a
+                      href={social.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      key={social.id}
+                      aria-label={social.platform}
+                      initial={{
+                        opacity: 0,
+                        y: 10,
+                      }}
+                      whileInView={{
+                        opacity: 1,
+                        y: 0,
+                      }}
+                      whileHover={{
+                        y: -3,
+                      }}
+                      viewport={{
+                        once: true,
+                      }}
+                      transition={{
+                        duration: 0.4,
+                        delay: index * 0.08,
+                      }}
+                    >
+                      {social.icon && (
+                        <i
+                          className={`bi ${social.icon}`}
+                          aria-hidden="true"
+                        ></i>
+                      )}
+                    </motion.a>
+                  )
+                )}
               </div>
             )}
 
@@ -222,11 +253,19 @@ const Footer = () => {
 
           </div>
 
-        </div>
-
+        </motion.div>
 
         {/* BOTTOM */}
-        <div className="footer__bottom">
+        <motion.div
+          className="footer__bottom"
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{
+            duration: 0.8,
+            delay: 0.2,
+          }}
+        >
 
           <p>
             © {new Date().getFullYear()}{" "}
@@ -243,7 +282,7 @@ const Footer = () => {
             ></i>
           </a>
 
-        </div>
+        </motion.div>
 
       </div>
     </footer>

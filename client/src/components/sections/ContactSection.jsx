@@ -1,12 +1,11 @@
-
 import React, { useEffect, useState } from "react";
+import { motion } from "framer-motion";
 import { useLanguage } from "../../context/LanguageContext";
 import {
   getCompany,
   getSocialLinks,
   getSiteSettings,
 } from "../../api/api";
-import { getIconClass } from "../../utils/icons";
 import SectionHeading from "../common/SectionHeading";
 
 const ContactSection = () => {
@@ -104,179 +103,352 @@ const ContactSection = () => {
     (social) => Number(social.is_active) === 1
   );
 
+  const layoutVariants = {
+    hidden: {
+      opacity: 0,
+      y: 35,
+    },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.7,
+        ease: "easeOut",
+      },
+    },
+  };
+
+  const introVariants = {
+    hidden: {
+      opacity: 0,
+      x: -35,
+    },
+    visible: {
+      opacity: 1,
+      x: 0,
+      transition: {
+        duration: 0.7,
+        ease: "easeOut",
+      },
+    },
+  };
+
+  const infoVariants = {
+    hidden: {
+      opacity: 0,
+      x: 35,
+    },
+    visible: {
+      opacity: 1,
+      x: 0,
+      transition: {
+        duration: 0.7,
+        ease: "easeOut",
+      },
+    },
+  };
+
+  const itemsContainerVariants = {
+    hidden: {},
+    visible: {
+      transition: {
+        staggerChildren: 0.12,
+      },
+    },
+  };
+
+  const itemVariants = {
+    hidden: {
+      opacity: 0,
+      y: 25,
+      scale: 0.97,
+    },
+    visible: {
+      opacity: 1,
+      y: 0,
+      scale: 1,
+      transition: {
+        duration: 0.55,
+        ease: "easeOut",
+      },
+    },
+  };
+
   return (
     <section id="contact" className="contact section">
       <div className="container">
 
-        <SectionHeading
-          title={contactTitle}
-          subtitle={contactSubtitle}
-        />
+        <motion.div
+          variants={layoutVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{
+            once: true,
+            amount: 0.2,
+          }}
+        >
+          <SectionHeading
+            title={contactTitle}
+            subtitle={contactSubtitle}
+          />
+        </motion.div>
 
         <div className="contact__layout">
 
           {/* INTRO */}
-          <div className="contact__intro">
+          <motion.div
+            className="contact__intro"
+            variants={introVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{
+              once: true,
+              amount: 0.15,
+            }}
+          >
             <span className="contact__label">
               {language === "fr"
                 ? "Parlons de vos besoins"
                 : "Let's discuss your needs"}
             </span>
 
-            {introTitle && (
-              <h3>{introTitle}</h3>
-            )}
+            {introTitle && <h3>{introTitle}</h3>}
 
-            {infoDescription && (
-              <p>{infoDescription}</p>
-            )}
+            {infoDescription && <p>{infoDescription}</p>}
 
             {company.phone_1 && (
-              <a
+              <motion.a
                 href={`tel:${company.phone_1}`}
                 className="contact__call"
+                whileHover={{ x: 5 }}
+                whileTap={{ scale: 0.98 }}
+                transition={{ duration: 0.2 }}
               >
-                <i
+                <motion.i
                   className="bi bi-telephone"
                   aria-hidden="true"
-                ></i>
+                  whileHover={{ scale: 1.1 }}
+                ></motion.i>
 
                 <span>{callButton}</span>
 
-                <i
+                <motion.i
                   className="bi bi-arrow-right"
                   aria-hidden="true"
-                ></i>
-              </a>
+                  whileHover={{ x: 5 }}
+                ></motion.i>
+              </motion.a>
             )}
-          </div>
+          </motion.div>
 
           {/* INFORMATION */}
-          <div className="contact__info">
+          <motion.div
+            className="contact__info"
+            variants={infoVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{
+              once: true,
+              amount: 0.15,
+            }}
+          >
+            {infoTitle && <h3>{infoTitle}</h3>}
 
-            {infoTitle && (
-              <h3>{infoTitle}</h3>
-            )}
+            <motion.div
+              variants={itemsContainerVariants}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{
+                once: true,
+                amount: 0.1,
+              }}
+            >
 
-            {/* PHONES */}
-            {phones.length > 0 && (
-              <div className="contact__item">
-                <div className="contact__item-icon">
-                  <i
-                    className="bi bi-telephone"
-                    aria-hidden="true"
-                  ></i>
-                </div>
-
-                <div className="contact__item-content">
-                  <span>{phoneLabel}</span>
-
-                  <div className="contact__values">
-                    {phones.map((phone) => (
-                      <a
-                        href={`tel:${phone}`}
-                        key={phone}
-                      >
-                        {phone}
-                      </a>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* EMAIL */}
-            {company.email && (
-              <div className="contact__item">
-                <div className="contact__item-icon">
-                  <i
-                    className="bi bi-envelope"
-                    aria-hidden="true"
-                  ></i>
-                </div>
-
-                <div className="contact__item-content">
-                  <span>{emailLabel}</span>
-
-                  <a
-                    href={`mailto:${company.email}`}
+              {/* PHONES */}
+              {phones.length > 0 && (
+                <motion.div
+                  className="contact__item"
+                  variants={itemVariants}
+                  whileHover={{ y: -5 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <motion.div
+                    className="contact__item-icon"
+                    whileHover={{
+                      scale: 1.08,
+                      rotate: -3,
+                    }}
                   >
-                    {company.email}
-                  </a>
-                </div>
-              </div>
-            )}
+                    <i
+                      className="bi bi-telephone"
+                      aria-hidden="true"
+                    ></i>
+                  </motion.div>
 
-            {/* ADDRESS */}
-            {address && (
-              <div className="contact__item">
-                <div className="contact__item-icon">
-                  <i
-                    className="bi bi-geo-alt"
-                    aria-hidden="true"
-                  ></i>
-                </div>
+                  <div className="contact__item-content">
+                    <span>{phoneLabel}</span>
 
-                <div className="contact__item-content">
-                  <span>{addressLabel}</span>
+                    <div className="contact__values">
+                      {phones.map((phone) => (
+                        <a
+                          href={`tel:${phone}`}
+                          key={phone}
+                        >
+                          {phone}
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                </motion.div>
+              )}
 
-                  <p>{address}</p>
-                </div>
-              </div>
-            )}
+              {/* EMAIL */}
+              {company.email && (
+                <motion.div
+                  className="contact__item"
+                  variants={itemVariants}
+                  whileHover={{ y: -5 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <motion.div
+                    className="contact__item-icon"
+                    whileHover={{
+                      scale: 1.08,
+                      rotate: -3,
+                    }}
+                  >
+                    <i
+                      className="bi bi-envelope"
+                      aria-hidden="true"
+                    ></i>
+                  </motion.div>
 
-            {/* DELIVERY */}
-            {deliveryDescription && (
-              <div className="contact__delivery">
-                <div className="contact__delivery-icon">
-                  <i
-                    className="bi bi-truck"
-                    aria-hidden="true"
-                  ></i>
-                </div>
+                  <div className="contact__item-content">
+                    <span>{emailLabel}</span>
 
-                <div>
-                  {deliveryTitle && (
-                    <h4>{deliveryTitle}</h4>
-                  )}
+                    <a href={`mailto:${company.email}`}>
+                      {company.email}
+                    </a>
+                  </div>
+                </motion.div>
+              )}
 
-                  <p>{deliveryDescription}</p>
-                </div>
-              </div>
-            )}
+              {/* ADDRESS */}
+              {address && (
+                <motion.div
+                  className="contact__item"
+                  variants={itemVariants}
+                  whileHover={{ y: -5 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <motion.div
+                    className="contact__item-icon"
+                    whileHover={{
+                      scale: 1.08,
+                      rotate: -3,
+                    }}
+                  >
+                    <i
+                      className="bi bi-geo-alt"
+                      aria-hidden="true"
+                    ></i>
+                  </motion.div>
 
-          </div>
+                  <div className="contact__item-content">
+                    <span>{addressLabel}</span>
+
+                    <p>{address}</p>
+                  </div>
+                </motion.div>
+              )}
+
+              {/* DELIVERY */}
+              {deliveryDescription && (
+                <motion.div
+                  className="contact__delivery"
+                  variants={itemVariants}
+                  whileHover={{ y: -5 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <motion.div
+                    className="contact__delivery-icon"
+                    whileHover={{
+                      scale: 1.1,
+                      rotate: -4,
+                    }}
+                  >
+                    <i
+                      className="bi bi-truck"
+                      aria-hidden="true"
+                    ></i>
+                  </motion.div>
+
+                  <div>
+                    {deliveryTitle && (
+                      <h4>{deliveryTitle}</h4>
+                    )}
+
+                    <p>{deliveryDescription}</p>
+                  </div>
+                </motion.div>
+              )}
+
+            </motion.div>
+          </motion.div>
         </div>
 
         {/* SOCIAL */}
         {activeSocialLinks.length > 0 && (
-          <div className="contact__social">
-
+          <motion.div
+            className="contact__social"
+            variants={layoutVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{
+              once: true,
+              amount: 0.15,
+            }}
+          >
             <span className="contact__social-label">
               {followTitle}
             </span>
 
-            <div className="contact__social-links">
+            <motion.div
+              className="contact__social-links"
+              variants={itemsContainerVariants}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{
+                once: true,
+                amount: 0.2,
+              }}
+            >
               {activeSocialLinks.map((social) => (
-                <a
+                <motion.a
                   href={social.url}
                   target="_blank"
                   rel="noopener noreferrer"
                   key={social.id}
                   aria-label={social.platform}
+                  variants={itemVariants}
+                  whileHover={{
+                    y: -5,
+                    scale: 1.05,
+                  }}
+                  whileTap={{ scale: 0.95 }}
+                  transition={{ duration: 0.2 }}
                 >
-                  <i
-                    className={`bi ${getIconClass(
-                      "social",
-                      social.icon
-                    )}`}
-                    aria-hidden="true"
-                  ></i>
-                </a>
+                  {social.icon && (
+                    <motion.i
+                      className={`bi ${social.icon}`}
+                      aria-hidden="true"
+                      whileHover={{ scale: 1.08 }}
+                    ></motion.i>
+                  )}
+                </motion.a>
               ))}
-            </div>
-
-          </div>
+            </motion.div>
+          </motion.div>
         )}
 
       </div>

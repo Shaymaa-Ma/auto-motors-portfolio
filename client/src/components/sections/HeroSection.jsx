@@ -1,5 +1,6 @@
 
 import React, { useEffect, useState } from "react";
+import { motion } from "framer-motion";
 import { useLanguage } from "../../context/LanguageContext";
 import {
   getCompany,
@@ -60,6 +61,31 @@ const HeroSection = () => {
     ? getImageUrl(hero.background_image)
     : "";
 
+  // Animation settings
+  const containerVariants = {
+    hidden: {},
+    visible: {
+      transition: {
+        staggerChildren: 0.15,
+      },
+    },
+  };
+
+  const itemVariants = {
+    hidden: {
+      opacity: 0,
+      y: 30,
+    },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.8,
+        ease: [0.22, 1, 0.36, 1],
+      },
+    },
+  };
+
   return (
     <section
       id="home"
@@ -72,59 +98,124 @@ const HeroSection = () => {
           : undefined
       }
     >
+      {/* Background animation */}
+      <motion.div
+        className="hero__animated-bg"
+        initial={{ scale: 1.05 }}
+        animate={{ scale: 1 }}
+        transition={{
+          duration: 2,
+          ease: "easeOut",
+        }}
+      />
+
       <div className="hero__overlay"></div>
 
       <div className="container hero__container">
-        <div className="hero__content">
+        <motion.div
+          className="hero__content"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+        >
+          {/* Company */}
           {company?.company_name && (
-            <span className="hero__eyebrow">
+            <motion.span
+              className="hero__eyebrow"
+              variants={itemVariants}
+            >
               {company.company_name}
-            </span>
+            </motion.span>
           )}
 
+          {/* Main title */}
           {title && (
-            <h1 className="hero__title">{title}</h1>
+            <motion.h1
+              className="hero__title"
+              variants={itemVariants}
+            >
+              {title}
+            </motion.h1>
           )}
 
+          {/* Subtitle */}
           {subtitle && (
-            <p className="hero__subtitle">{subtitle}</p>
+            <motion.p
+              className="hero__subtitle"
+              variants={itemVariants}
+            >
+              {subtitle}
+            </motion.p>
           )}
 
+          {/* Description */}
           {description && (
-            <p className="hero__description">
+            <motion.p
+              className="hero__description"
+              variants={itemVariants}
+            >
               {description}
-            </p>
+            </motion.p>
           )}
 
+          {/* Buttons */}
           {(primaryButton || secondaryButton) && (
-            <div className="hero__actions">
+            <motion.div
+              className="hero__actions"
+              variants={itemVariants}
+            >
               {primaryButton && (
-                <a
+                <motion.a
                   href="#products"
                   className="hero__button hero__button--primary"
+                  whileHover={{
+                    y: -3,
+                    scale: 1.02,
+                  }}
+                  whileTap={{
+                    scale: 0.97,
+                  }}
+                  transition={{
+                    duration: 0.2,
+                  }}
                 >
                   <span>{primaryButton}</span>
-                  <i
+
+                  <motion.i
                     className="bi bi-arrow-right"
                     aria-hidden="true"
-                  ></i>
-                </a>
+                    whileHover={{
+                      x: 5,
+                    }}
+                  ></motion.i>
+                </motion.a>
               )}
 
               {secondaryButton && (
-                <a
+                <motion.a
                   href="#contact"
                   className="hero__button hero__button--secondary"
+                  whileHover={{
+                    y: -3,
+                    scale: 1.02,
+                  }}
+                  whileTap={{
+                    scale: 0.97,
+                  }}
+                  transition={{
+                    duration: 0.2,
+                  }}
                 >
                   {secondaryButton}
-                </a>
+                </motion.a>
               )}
-            </div>
+            </motion.div>
           )}
-        </div>
+        </motion.div>
       </div>
 
-      <a
+      {/* Scroll indicator */}
+      <motion.a
         href="#about"
         className="hero__scroll"
         aria-label={
@@ -132,16 +223,36 @@ const HeroSection = () => {
             ? "Découvrir la section À propos"
             : "Discover the About section"
         }
+        initial={{
+          opacity: 0,
+          y: 15,
+        }}
+        animate={{
+          opacity: 1,
+          y: 0,
+        }}
+        transition={{
+          delay: 1.4,
+          duration: 0.8,
+        }}
       >
         <span>
           {language === "fr" ? "Découvrir" : "Discover"}
         </span>
 
-        <i
+        <motion.i
           className="bi bi-arrow-down"
           aria-hidden="true"
-        ></i>
-      </a>
+          animate={{
+            y: [0, 6, 0],
+          }}
+          transition={{
+            duration: 1.5,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        ></motion.i>
+      </motion.a>
     </section>
   );
 };

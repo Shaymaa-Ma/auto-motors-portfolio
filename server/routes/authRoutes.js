@@ -1,22 +1,30 @@
-/*const express = require("express");
-const router = express.Router();
+const express = require("express");
 
 const {
-  register,
   login,
   me,
   logout,
 } = require("../controllers/authController");
 
-const {
-  authenticateAdmin,
-} = require("../middleware/authMiddleware");
+const authMiddleware = require("../middleware/authMiddleware");
 
-router.post("/register", register);
+const router = express.Router();
+
+// =========================================================
+// Public
+// =========================================================
+
+// POST /api/auth/login
 router.post("/login", login);
 
-router.get("/me", authenticateAdmin, me);
-router.post("/logout", authenticateAdmin, logout);
+// =========================================================
+// Protected
+// =========================================================
+
+// GET /api/auth/me
+router.get("/me", authMiddleware, me);
+
+// POST /api/auth/logout
+router.post("/logout", authMiddleware, logout);
 
 module.exports = router;
-*/

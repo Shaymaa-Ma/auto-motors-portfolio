@@ -1,12 +1,13 @@
 
 import React, { useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useLanguage } from "../../context/LanguageContext";
 import {
   getCompany,
   getSocialLinks,
   getImageUrl,
 } from "../../api/api";
-import { getIconClass } from "../../utils/icons";
+
 
 const Navbar = () => {
   const { language, toggleLanguage } = useLanguage();
@@ -61,7 +62,7 @@ const Navbar = () => {
 
   /* ==========================================================================
      ACTIVE SECTION
-     
+
      Detects which section is currently underneath the navbar.
      This works when the user scrolls manually.
      ========================================================================== */
@@ -135,7 +136,7 @@ const Navbar = () => {
 
   /* ==========================================================================
      HANDLE NAVIGATION CLICK
-     
+
      Immediately activates the clicked section.
      The scroll listener then keeps it synchronized while scrolling.
      ========================================================================== */
@@ -193,14 +194,40 @@ const Navbar = () => {
   ];
 
   /* ==========================================================================
+     LANGUAGE SWITCHER
+
+     Both languages are always visible so the user immediately understands
+     that they can switch between French and English.
+     ========================================================================== */
+
+  const switchLanguage = (selectedLanguage) => {
+    if (language === selectedLanguage) return;
+
+    toggleLanguage();
+  };
+
+  /* ==========================================================================
      RENDER
      ========================================================================== */
 
   return (
     <>
-      <header
-        className={`navbar ${scrolled ? "navbar--scrolled" : ""
-          }`}
+      <motion.header
+        className={`navbar ${
+          scrolled ? "navbar--scrolled" : ""
+        }`}
+        initial={{
+          opacity: 0,
+          y: -20,
+        }}
+        animate={{
+          opacity: 1,
+          y: 0,
+        }}
+        transition={{
+          duration: 0.6,
+          ease: "easeOut",
+        }}
       >
         <div className="container navbar__container">
 
@@ -256,10 +283,11 @@ const Navbar = () => {
                 <a
                   key={item.href}
                   href={item.href}
-                  className={`navbar__link ${isActive
+                  className={`navbar__link ${
+                    isActive
                       ? "navbar__link--active"
                       : ""
-                    }`}
+                  }`}
                   onClick={() =>
                     handleNavigationClick(sectionId)
                   }
@@ -279,16 +307,15 @@ const Navbar = () => {
 
           <div className="navbar__desktop-actions">
 
-            {/* Language */}
+            {/* Language Switcher */}
 
-            <button
-              type="button"
+            <div
               className="navbar__language"
-              onClick={toggleLanguage}
+              role="group"
               aria-label={
                 language === "fr"
-                  ? "Switch to English"
-                  : "Passer au français"
+                  ? "Choisir la langue"
+                  : "Choose language"
               }
             >
               <i
@@ -296,10 +323,41 @@ const Navbar = () => {
                 aria-hidden="true"
               ></i>
 
-              <span>
-                {language === "fr" ? "EN" : "FR"}
+              <button
+                type="button"
+                className={`navbar__language-option ${
+                  language === "fr"
+                    ? "navbar__language-option--active"
+                    : ""
+                }`}
+                onClick={() => switchLanguage("fr")}
+                aria-label="Français"
+                aria-pressed={language === "fr"}
+              >
+                FR
+              </button>
+
+              <span
+                className="navbar__language-separator"
+                aria-hidden="true"
+              >
+                |
               </span>
-            </button>
+
+              <button
+                type="button"
+                className={`navbar__language-option ${
+                  language === "en"
+                    ? "navbar__language-option--active"
+                    : ""
+                }`}
+                onClick={() => switchLanguage("en")}
+                aria-label="English"
+                aria-pressed={language === "en"}
+              >
+                EN
+              </button>
+            </div>
 
             {/* Contact */}
 
@@ -343,210 +401,249 @@ const Navbar = () => {
             <span></span>
           </button>
         </div>
-      </header>
+      </motion.header>
 
       {/* ======================================================================
          MOBILE OVERLAY
          ====================================================================== */}
 
-      <div
-        className={`navbar__overlay ${menuOpen
-            ? "navbar__overlay--visible"
-            : ""
-          }`}
-        onClick={closeMenu}
-        aria-hidden="true"
-      />
+      <AnimatePresence>
+        {menuOpen && (
+          <motion.div
+            className="navbar__overlay navbar__overlay--visible"
+            onClick={closeMenu}
+            aria-hidden="true"
+            initial={{
+              opacity: 0,
+            }}
+            animate={{
+              opacity: 1,
+            }}
+            exit={{
+              opacity: 0,
+            }}
+            transition={{
+              duration: 0.3,
+              ease: "easeOut",
+            }}
+          />
+        )}
+      </AnimatePresence>
 
       {/* ======================================================================
          MOBILE RIGHT DRAWER
          ====================================================================== */}
 
-      <aside
-        className={`navbar__drawer ${menuOpen
-            ? "navbar__drawer--open"
-            : ""
-          }`}
-        aria-hidden={!menuOpen}
-      >
-        {/* ====================================================================
-           DRAWER HEADER
-           ==================================================================== */}
-
-        <div className="navbar__drawer-header">
-
-          {/* Brand */}
-
-          <div className="navbar__drawer-brand">
-            {logoUrl ? (
-              <img
-                src={logoUrl}
-                alt={
-                  company?.company_name ||
-                  "AUTO MOTORS SARL"
-                }
-              />
-            ) : (
-              <span>
-                {company?.company_name ||
-                  "AUTO MOTORS SARL"}
-              </span>
-            )}
-          </div>
-
-          {/* Close */}
-
-          <button
-            type="button"
-            className="navbar__drawer-close"
-            onClick={closeMenu}
-            aria-label={
-              language === "fr"
-                ? "Fermer le menu"
-                : "Close menu"
-            }
+      <AnimatePresence>
+        {menuOpen && (
+          <motion.aside
+            className="navbar__drawer navbar__drawer--open"
+            aria-hidden={!menuOpen}
+            initial={{
+              x: "100%",
+            }}
+            animate={{
+              x: 0,
+            }}
+            exit={{
+              x: "100%",
+            }}
+            transition={{
+              duration: 0.45,
+              ease: [0.22, 1, 0.36, 1],
+            }}
           >
-            <i
-              className="bi bi-x-lg"
-              aria-hidden="true"
-            ></i>
-          </button>
-        </div>
+            {/* ====================================================================
+               DRAWER HEADER
+               ==================================================================== */}
 
-        <div className="navbar__drawer-divider"></div>
+            <div className="navbar__drawer-header">
 
-        {/* ====================================================================
-           MOBILE NAVIGATION
-           ==================================================================== */}
+              {/* Brand */}
 
-        <nav
-          className="navbar__mobile-nav"
-          aria-label={
-            language === "fr"
-              ? "Navigation mobile"
-              : "Mobile navigation"
-          }
-        >
-          {navigation.map((item, index) => {
-            const sectionId = item.href.substring(1);
-            const isActive =
-              activeSection === sectionId;
+              <div className="navbar__drawer-brand">
+                {logoUrl ? (
+                  <img
+                    src={logoUrl}
+                    alt={
+                      company?.company_name ||
+                      "AUTO MOTORS SARL"
+                    }
+                  />
+                ) : (
+                  <span>
+                    {company?.company_name ||
+                      "AUTO MOTORS SARL"}
+                  </span>
+                )}
+              </div>
 
-            return (
-              <a
-                key={item.href}
-                href={item.href}
-                className={`navbar__mobile-link ${isActive
-                    ? "navbar__mobile-link--active"
-                    : ""
-                  }`}
-                onClick={() =>
-                  handleNavigationClick(sectionId)
-                }
-                aria-current={
-                  isActive ? "page" : undefined
+              {/* Close */}
+
+              <button
+                type="button"
+                className="navbar__drawer-close"
+                onClick={closeMenu}
+                aria-label={
+                  language === "fr"
+                    ? "Fermer le menu"
+                    : "Close menu"
                 }
               >
-                <span className="navbar__mobile-number">
-                  {String(index + 1).padStart(2, "0")}
-                </span>
-
-                <span>{item.label}</span>
-
                 <i
-                  className="bi bi-arrow-right"
+                  className="bi bi-x-lg"
                   aria-hidden="true"
                 ></i>
-              </a>
-            );
-          })}
-        </nav>
+              </button>
+            </div>
 
-        {/* ====================================================================
-           DRAWER BOTTOM
-           ==================================================================== */}
+            <div className="navbar__drawer-divider"></div>
 
-        <div className="navbar__drawer-bottom">
+            {/* ====================================================================
+               MOBILE NAVIGATION
+               ==================================================================== */}
 
-          {/* Language */}
+            <nav
+              className="navbar__mobile-nav"
+              aria-label={
+                language === "fr"
+                  ? "Navigation mobile"
+                  : "Mobile navigation"
+              }
+            >
+              {navigation.map((item, index) => {
+                const sectionId = item.href.substring(1);
+                const isActive =
+                  activeSection === sectionId;
 
-          <button
-            type="button"
-            className="navbar__drawer-language"
-            onClick={() => {
-              toggleLanguage();
-              closeMenu();
-            }}
-          >
-            <span>
-              <i
-                className="bi bi-translate"
-                aria-hidden="true"
-              ></i>
-
-              {language === "fr"
-                ? "English"
-                : "Français"}
-            </span>
-
-            <i
-              className="bi bi-chevron-down"
-              aria-hidden="true"
-            ></i>
-          </button>
-
-          {/* Contact */}
-
-          <a
-            href="#contact"
-            className="navbar__drawer-contact"
-            onClick={() => {
-              setActiveSection("contact");
-              closeMenu();
-            }}
-          >
-            <span>
-              {language === "fr"
-                ? "Nous contacter"
-                : "Contact us"}
-            </span>
-
-            <i
-              className="bi bi-arrow-up-right"
-              aria-hidden="true"
-            ></i>
-          </a>
-
-          {/* Social links */}
-
-          {socialLinks.length > 0 && (
-            <div className="navbar__drawer-socials">
-              {socialLinks
-                .filter(
-                  (social) =>
-                    Number(social.is_active) === 1
-                )
-                .map((social) => (
+                return (
                   <a
-                    key={social.id}
-                    href={social.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label={social.platform}
+                    key={item.href}
+                    href={item.href}
+                    className={`navbar__mobile-link ${
+                      isActive
+                        ? "navbar__mobile-link--active"
+                        : ""
+                    }`}
+                    onClick={() =>
+                      handleNavigationClick(sectionId)
+                    }
+                    aria-current={
+                      isActive ? "page" : undefined
+                    }
                   >
+                    <span className="navbar__mobile-number">
+                      {String(index + 1).padStart(2, "0")}
+                    </span>
+
+                    <span>{item.label}</span>
+
                     <i
-                      className={`bi ${getIconClass(
-                        "social",
-                        social.icon
-                      )}`}
+                      className="bi bi-arrow-right"
                       aria-hidden="true"
                     ></i>
                   </a>
-                ))}
+                );
+              })}
+            </nav>
+
+            {/* ====================================================================
+               DRAWER BOTTOM
+               ==================================================================== */}
+
+            <div className="navbar__drawer-bottom">
+
+              {/* Language Switcher */}
+
+              <div
+                className="navbar__drawer-language"
+                role="group"
+                aria-label={
+                  language === "fr"
+                    ? "Choisir la langue"
+                    : "Choose language"
+                }
+              >
+                <span className="navbar__drawer-language-label">
+                  <i
+                    className="bi bi-translate"
+                    aria-hidden="true"
+                  ></i>
+
+                  {language === "fr"
+                    ? "Langue"
+                    : "Language"}
+                </span>
+
+                <div className="navbar__drawer-language-options">
+
+                  <button
+                    type="button"
+                    className={
+                      language === "fr"
+                        ? "active"
+                        : ""
+                    }
+                    onClick={() => {
+                      switchLanguage("fr");
+                      closeMenu();
+                    }}
+                    aria-label="Français"
+                    aria-pressed={language === "fr"}
+                  >
+                    FR
+                  </button>
+
+                  <span aria-hidden="true">
+                    |
+                  </span>
+
+                  <button
+                    type="button"
+                    className={
+                      language === "en"
+                        ? "active"
+                        : ""
+                    }
+                    onClick={() => {
+                      switchLanguage("en");
+                      closeMenu();
+                    }}
+                    aria-label="English"
+                    aria-pressed={language === "en"}
+                  >
+                    EN
+                  </button>
+
+                </div>
+              </div>
+
+              {/* Contact */}
+
+              <a
+                href="#contact"
+                className="navbar__drawer-contact"
+                onClick={() => {
+                  setActiveSection("contact");
+                  closeMenu();
+                }}
+              >
+                <span>
+                  {language === "fr"
+                    ? "Nous contacter"
+                    : "Contact us"}
+                </span>
+
+                <i
+                  className="bi bi-arrow-up-right"
+                  aria-hidden="true"
+                ></i>
+              </a>
+
             </div>
-          )}
-        </div>
-      </aside>
+          </motion.aside>
+        )}
+      </AnimatePresence>
     </>
   );
 };

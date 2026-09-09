@@ -1,5 +1,6 @@
 
 import React, { useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useLanguage } from "../../context/LanguageContext";
 import {
   getGallery,
@@ -70,16 +71,126 @@ const GallerySection = () => {
       ? firstGallery.section_subtitle_fr
       : firstGallery.section_subtitle_en;
 
+  // Animation variants
+  const headingVariants = {
+    hidden: {
+      opacity: 0,
+      y: 35,
+    },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.7,
+        ease: "easeOut",
+      },
+    },
+  };
+
+  const gridVariants = {
+    hidden: {},
+    visible: {
+      transition: {
+        staggerChildren: 0.12,
+      },
+    },
+  };
+
+  const cardVariants = {
+    hidden: {
+      opacity: 0,
+      y: 35,
+      scale: 0.97,
+    },
+    visible: {
+      opacity: 1,
+      y: 0,
+      scale: 1,
+      transition: {
+        duration: 0.55,
+        ease: "easeOut",
+      },
+    },
+  };
+
+  const lightboxVariants = {
+    hidden: {
+      opacity: 0,
+    },
+    visible: {
+      opacity: 1,
+      transition: {
+        duration: 0.25,
+        ease: "easeOut",
+      },
+    },
+    exit: {
+      opacity: 0,
+      transition: {
+        duration: 0.2,
+        ease: "easeIn",
+      },
+    },
+  };
+
+  const lightboxImageVariants = {
+    hidden: {
+      opacity: 0,
+      scale: 0.88,
+    },
+    visible: {
+      opacity: 1,
+      scale: 1,
+      transition: {
+        duration: 0.35,
+        ease: "easeOut",
+      },
+    },
+    exit: {
+      opacity: 0,
+      scale: 0.92,
+      transition: {
+        duration: 0.2,
+        ease: "easeIn",
+      },
+    },
+  };
+
   return (
     <>
-      <section id="gallery" className="gallery section">
+      <section
+        id="gallery"
+        className="gallery section"
+      >
         <div className="container">
-          <SectionHeading
-            title={sectionTitle}
-            subtitle={sectionSubtitle}
-          />
 
-          <div className="gallery__grid">
+          {/* Section Heading */}
+          <motion.div
+            variants={headingVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{
+              once: true,
+              amount: 0.2,
+            }}
+          >
+            <SectionHeading
+              title={sectionTitle}
+              subtitle={sectionSubtitle}
+            />
+          </motion.div>
+
+          {/* Gallery Grid */}
+          <motion.div
+            className="gallery__grid"
+            variants={gridVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{
+              once: true,
+              amount: 0.1,
+            }}
+          >
             {gallery.map((item) => {
               const title =
                 language === "fr"
@@ -92,20 +203,32 @@ const GallerySection = () => {
                   : item.description_en;
 
               return (
-                <button
+                <motion.button
                   type="button"
                   key={item.id}
                   className="gallery-card"
+                  variants={cardVariants}
                   onClick={() =>
                     setSelectedImage(item)
                   }
+                  whileHover={{
+                    y: -6,
+                    transition: {
+                      duration: 0.2,
+                      ease: "easeOut",
+                    },
+                  }}
+                  whileTap={{
+                    scale: 0.98,
+                  }}
                   aria-label={
                     language === "fr"
                       ? "Agrandir l'image"
                       : "Enlarge image"
                   }
                 >
-                  <img
+                  {/* Image */}
+                  <motion.img
                     src={getImageUrl(item.image)}
                     alt={
                       title ||
@@ -113,6 +236,13 @@ const GallerySection = () => {
                     }
                     loading="lazy"
                     decoding="async"
+                    whileHover={{
+                      scale: 1.04,
+                    }}
+                    transition={{
+                      duration: 0.4,
+                      ease: "easeOut",
+                    }}
                   />
 
                   {(title || description) && (
@@ -124,56 +254,92 @@ const GallerySection = () => {
                       )}
                     </div>
                   )}
-                </button>
+                </motion.button>
               );
             })}
-          </div>
+          </motion.div>
         </div>
       </section>
 
-      {selectedImage && (
-        <div
-          className="gallery-lightbox"
-          role="dialog"
-          aria-modal="true"
-          aria-label={
-            language === "fr"
-              ? "Aperçu de l'image"
-              : "Image preview"
-          }
-          onClick={() => setSelectedImage(null)}
-        >
-          <button
-            type="button"
-            className="gallery-lightbox__close"
-            onClick={() => setSelectedImage(null)}
+      {/* Lightbox */}
+      <AnimatePresence>
+        {selectedImage && (
+          <motion.div
+            className="gallery-lightbox"
+            role="dialog"
+            aria-modal="true"
             aria-label={
               language === "fr"
-                ? "Fermer"
-                : "Close"
+                ? "Aperçu de l'image"
+                : "Image preview"
             }
+            variants={lightboxVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            onClick={() => setSelectedImage(null)}
           >
-            <i
-              className="bi bi-x-lg"
-              aria-hidden="true"
-            ></i>
-          </button>
+            {/* Close Button */}
+            <motion.button
+              type="button"
+              className="gallery-lightbox__close"
+              onClick={() =>
+                setSelectedImage(null)
+              }
+              aria-label={
+                language === "fr"
+                  ? "Fermer"
+                  : "Close"
+              }
+              initial={{
+                opacity: 0,
+                scale: 0.8,
+              }}
+              animate={{
+                opacity: 1,
+                scale: 1,
+              }}
+              transition={{
+                duration: 0.25,
+                delay: 0.1,
+              }}
+              whileHover={{
+                scale: 1.1,
+                rotate: 90,
+              }}
+              whileTap={{
+                scale: 0.9,
+              }}
+            >
+              <i
+                className="bi bi-x-lg"
+                aria-hidden="true"
+              ></i>
+            </motion.button>
 
-          <img
-            src={getImageUrl(selectedImage.image)}
-            alt={
-              language === "fr"
-                ? selectedImage.title_fr ||
-                  "AUTO MOTORS SARL"
-                : selectedImage.title_en ||
-                  "AUTO MOTORS SARL"
-            }
-            onClick={(event) =>
-              event.stopPropagation()
-            }
-          />
-        </div>
-      )}
+            {/* Lightbox Image */}
+            <motion.img
+              src={getImageUrl(
+                selectedImage.image
+              )}
+              alt={
+                language === "fr"
+                  ? selectedImage.title_fr ||
+                    "AUTO MOTORS SARL"
+                  : selectedImage.title_en ||
+                    "AUTO MOTORS SARL"
+              }
+              variants={lightboxImageVariants}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+              onClick={(event) =>
+                event.stopPropagation()
+              }
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 };

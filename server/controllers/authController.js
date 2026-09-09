@@ -1,121 +1,39 @@
-
-/*
-authController.js will handle
-We'll eventually have:
-authController.js
-│
-├── register
-├── login
-├── logout
-└── getCurrentAdmin
-
-
-const bcrypt = require("bcrypt");
+const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-
-const db = require("../config/db");
-const { sendSuccess, sendError } = require("../utils/response");
+const pool = require("../config/db");
 
 // =========================================================
-// REGISTER FIRST ADMIN
+// Generate JWT
 // =========================================================
 
-const register = async (req, res) => {
-  try {
-    const { name, email, password } = req.body;
-
-    // -----------------------------------------------------
-    // Validate input
-    // -----------------------------------------------------
-
-    if (!name || !email || !password) {
-      return sendError(
-        res,
-        "Name, email and password are required",
-        400
-      );
+const generateToken = (admin) => {
+  return jwt.sign(
+    {
+      id: admin.id,
+      email: admin.email,
+      role: admin.role,
+    },
+    process.env.JWT_SECRET,
+    {
+      expiresIn: process.env.JWT_EXPIRES_IN || "8h",
     }
-
-    if (password.length < 6) {
-      return sendError(
-        res,
-        "Password must contain at least 6 characters",
-        400
-      );
-    }
-
-    // -----------------------------------------------------
-    // Check whether an admin already exists
-    // -----------------------------------------------------
-
-    const [adminCount] = await db.query(
-      "SELECT COUNT(*) AS count FROM admins"
-    );
-
-    if (adminCount[0].count > 0) {
-      return sendError(
-        res,
-        "Admin account already exists",
-        403
-      );
-    }
-
-    // -----------------------------------------------------
-    // Check email
-    // -----------------------------------------------------
-
-    const [existingAdmin] = await db.query(
-      "SELECT id FROM admins WHERE email = ? LIMIT 1",
-      [email]
-    );
-
-    if (existingAdmin.length > 0) {
-      return sendError(
-        res,
-        "Email is already registered",
-        409
-      );
-    }
-
-    // -----------------------------------------------------
-    // Hash password
-    // -----------------------------------------------------
-
-    const hashedPassword = await bcrypt.hash(password, 12);
-
-    // -----------------------------------------------------
-    // Create admin
-    // -----------------------------------------------------
-
-    const [result] = await db.query(
-      `INSERT INTO admins
-        (name, email, password)
-       VALUES (?, ?, ?)`,
-      [name, email, hashedPassword]
-    );
-
-    return sendSuccess(
-      res,
-      {
-        id: result.insertId,
-        name,
-        email,
-      },
-      "Admin account created successfully",
-      201
-    );
-  } catch (error) {
-    console.error("Register error:", error);
-
-    return sendError(
-      res,
-      "Failed to create admin account"
-    );
-  }
+  );
 };
 
 // =========================================================
-// LOGIN
+// Cookie options
+// =========================================================
+
+const getCookieOptions = () => ({
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+  maxAge: 8 * 60 * 60 * 1000, // 8 hours
+  path: "/",
+});
+
+// =========================================================
+// POST /api/auth/login
 // =========================================================
 
 const login = async (req, res) => {
@@ -127,147 +45,192 @@ const login = async (req, res) => {
     // -----------------------------------------------------
 
     if (!email || !password) {
-      return sendError(
-        res,
-        "Email and password are required",
-        400
-      );
+      return res.status(400).json({
+        success: false,
+        message: "Email and password are required.",
+      });
     }
 
     // -----------------------------------------------------
     // Find admin
     // -----------------------------------------------------
 
-    const [admins] = await db.query(
-      `SELECT id, name, email, password
-       FROM admins
-       WHERE email = ?
-       LIMIT 1`,
-      [email]
+    const [admins] = await pool.execute(
+      `
+        SELECT
+          id,
+          name,
+          email,
+          password_hash,
+          role,
+          is_active
+        FROM admins
+        WHERE email = ?
+        LIMIT 1
+      `,
+      [email.trim().toLowerCase()]
     );
 
     if (admins.length === 0) {
-      return sendError(
-        res,
-        "Invalid email or password",
-        401
-      );
+      return res.status(401).json({
+        success: false,
+        message: "Invalid email or password.",
+      });
     }
 
     const admin = admins[0];
 
     // -----------------------------------------------------
-    // Compare password
+    // Check if account is active
     // -----------------------------------------------------
 
-    const passwordMatch = await bcrypt.compare(
-      password,
-      admin.password
-    );
-
-    if (!passwordMatch) {
-      return sendError(
-        res,
-        "Invalid email or password",
-        401
-      );
+    if (!admin.is_active) {
+      return res.status(403).json({
+        success: false,
+        message: "This administrator account is disabled.",
+      });
     }
 
     // -----------------------------------------------------
-    // Create JWT
+    // Compare password
     // -----------------------------------------------------
 
-    const token = jwt.sign(
-      {
+    const passwordMatches = await bcrypt.compare(
+      password,
+      admin.password_hash
+    );
+
+    if (!passwordMatches) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid email or password.",
+      });
+    }
+
+    // -----------------------------------------------------
+    // Generate JWT
+    // -----------------------------------------------------
+
+    const token = generateToken(admin);
+
+    // -----------------------------------------------------
+    // Store JWT in HttpOnly cookie
+    // -----------------------------------------------------
+
+    res.cookie("admin_token", token, getCookieOptions());
+
+    // -----------------------------------------------------
+    // Never send password/password_hash to frontend
+    // -----------------------------------------------------
+
+    return res.status(200).json({
+      success: true,
+      message: "Login successful.",
+      admin: {
         id: admin.id,
-        email: admin.email,
         name: admin.name,
+        email: admin.email,
+        role: admin.role,
       },
-      process.env.JWT_SECRET,
-      {
-        expiresIn: "1d",
-      }
-    );
-
-    // -----------------------------------------------------
-    // Response
-    // -----------------------------------------------------
-
-    return sendSuccess(
-      res,
-      {
-        token,
-        admin: {
-          id: admin.id,
-          name: admin.name,
-          email: admin.email,
-        },
-      },
-      "Login successful"
-    );
+    });
   } catch (error) {
     console.error("Login error:", error);
 
-    return sendError(
-      res,
-      "Failed to login"
-    );
+    return res.status(500).json({
+      success: false,
+      message: "An error occurred while logging in.",
+    });
   }
 };
 
 // =========================================================
-// GET CURRENT ADMIN
+// GET /api/auth/me
 // =========================================================
 
 const me = async (req, res) => {
   try {
-    const [admins] = await db.query(
-      `SELECT id, name, email, created_at
-       FROM admins
-       WHERE id = ?
-       LIMIT 1`,
-      [req.admin.id]
+    // authMiddleware already verified the JWT
+    const adminId = req.admin.id;
+
+    const [admins] = await pool.execute(
+      `
+        SELECT
+          id,
+          name,
+          email,
+          role,
+          is_active
+        FROM admins
+        WHERE id = ?
+        LIMIT 1
+      `,
+      [adminId]
     );
 
     if (admins.length === 0) {
-      return sendError(
-        res,
-        "Admin not found",
-        404
-      );
+      return res.status(401).json({
+        success: false,
+        message: "Administrator account not found.",
+      });
     }
 
-    return sendSuccess(
-      res,
-      admins[0],
-      "Admin retrieved successfully"
-    );
-  } catch (error) {
-    console.error("Get admin error:", error);
+    const admin = admins[0];
 
-    return sendError(
-      res,
-      "Failed to retrieve admin"
-    );
+    if (!admin.is_active) {
+      return res.status(403).json({
+        success: false,
+        message: "This administrator account is disabled.",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      admin: {
+        id: admin.id,
+        name: admin.name,
+        email: admin.email,
+        role: admin.role,
+      },
+    });
+  } catch (error) {
+    console.error("Get current admin error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Unable to retrieve administrator information.",
+    });
   }
 };
 
 // =========================================================
-// LOGOUT
+// POST /api/auth/logout
 // =========================================================
 
-const logout = async (req, res) => {
-  return sendSuccess(
-    res,
-    null,
-    "Logout successful"
-  );
+const logout = (req, res) => {
+  try {
+    res.clearCookie("admin_token", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      path: "/",
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Logout successful.",
+    });
+  } catch (error) {
+    console.error("Logout error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Unable to logout.",
+    });
+  }
 };
 
 module.exports = {
-  register,
   login,
   me,
   logout,
 };
-*/

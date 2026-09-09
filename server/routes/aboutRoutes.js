@@ -1,8 +1,39 @@
 const express = require("express");
+
+const {
+  getAbout,
+  updateAbout,
+} = require("../controllers/aboutController");
+
+const authMiddleware = require("../middleware/authMiddleware");
+
+const {
+  createImageUpload,
+} = require("../middleware/uploadMiddleware");
+
 const router = express.Router();
 
-const { getAbout } = require("../controllers/aboutController");
+// Configure About image upload
+const aboutUpload =
+  createImageUpload(
+    "about",
+    "about"
+  );
 
-router.get("/", getAbout);
+// Get About content
+router.get(
+  "/",
+  getAbout
+);
+
+// Update About content
+router.put(
+  "/",
+  authMiddleware,
+  aboutUpload.single(
+    "image"
+  ),
+  updateAbout
+);
 
 module.exports = router;

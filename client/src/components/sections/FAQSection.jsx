@@ -1,5 +1,6 @@
 
 import React, { useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useLanguage } from "../../context/LanguageContext";
 import { getFaqs } from "../../api/api";
 import SectionHeading from "../common/SectionHeading";
@@ -46,15 +47,77 @@ const FAQSection = () => {
     );
   };
 
+  // Animation variants
+  const headingVariants = {
+    hidden: {
+      opacity: 0,
+      y: 35,
+    },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.7,
+        ease: "easeOut",
+      },
+    },
+  };
+
+  const listVariants = {
+    hidden: {},
+    visible: {
+      transition: {
+        staggerChildren: 0.12,
+      },
+    },
+  };
+
+  const itemVariants = {
+    hidden: {
+      opacity: 0,
+      y: 30,
+    },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.5,
+        ease: "easeOut",
+      },
+    },
+  };
+
   return (
     <section id="faq" className="faq section">
       <div className="container">
-        <SectionHeading
-          title={sectionTitle}
-          subtitle={sectionSubtitle}
-        />
 
-        <div className="faq__list">
+        {/* Section Heading */}
+        <motion.div
+          variants={headingVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{
+            once: true,
+            amount: 0.2,
+          }}
+        >
+          <SectionHeading
+            title={sectionTitle}
+            subtitle={sectionSubtitle}
+          />
+        </motion.div>
+
+        {/* FAQ List */}
+        <motion.div
+          className="faq__list"
+          variants={listVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{
+            once: true,
+            amount: 0.1,
+          }}
+        >
           {faqs.map((faq) => {
             const question =
               language === "fr"
@@ -69,41 +132,102 @@ const FAQSection = () => {
             const isOpen = openFaq === faq.id;
 
             return (
-              <article
+              <motion.article
                 key={faq.id}
                 className={`faq-item ${
                   isOpen ? "is-open" : ""
                 }`}
+                variants={itemVariants}
               >
-                <button
+                <motion.button
                   type="button"
                   className="faq-item__question"
                   onClick={() =>
                     toggleFaq(faq.id)
                   }
                   aria-expanded={isOpen}
+                  whileTap={{
+                    scale: 0.99,
+                  }}
                 >
                   <span>{question}</span>
 
-                  <i
-                    className={`bi ${
-                      isOpen
-                        ? "bi-dash"
-                        : "bi-plus"
-                    }`}
+                  <motion.i
+                    className="bi"
+                    animate={{
+                      rotate: isOpen ? 180 : 0,
+                    }}
+                    transition={{
+                      duration: 0.25,
+                      ease: "easeOut",
+                    }}
                     aria-hidden="true"
-                  ></i>
-                </button>
+                  >
+                    <i
+                      className={
+                        isOpen
+                          ? "bi-dash"
+                          : "bi-plus"
+                      }
+                    ></i>
+                  </motion.i>
+                </motion.button>
 
-                {isOpen && answer && (
-                  <div className="faq-item__answer">
-                    <p>{answer}</p>
-                  </div>
-                )}
-              </article>
+                {/* Animated Answer */}
+                <AnimatePresence initial={false}>
+                  {isOpen && answer && (
+                    <motion.div
+                      className="faq-item__answer"
+                      initial={{
+                        height: 0,
+                        opacity: 0,
+                      }}
+                      animate={{
+                        height: "auto",
+                        opacity: 1,
+                      }}
+                      exit={{
+                        height: 0,
+                        opacity: 0,
+                      }}
+                      transition={{
+                        height: {
+                          duration: 0.3,
+                          ease: "easeInOut",
+                        },
+                        opacity: {
+                          duration: 0.2,
+                          ease: "easeOut",
+                        },
+                      }}
+                      style={{
+                        overflow: "hidden",
+                      }}
+                    >
+                      <motion.p
+                        initial={{
+                          y: -8,
+                        }}
+                        animate={{
+                          y: 0,
+                        }}
+                        exit={{
+                          y: -8,
+                        }}
+                        transition={{
+                          duration: 0.25,
+                          ease: "easeOut",
+                        }}
+                      >
+                        {answer}
+                      </motion.p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.article>
             );
           })}
-        </div>
+        </motion.div>
       </div>
     </section>
   );

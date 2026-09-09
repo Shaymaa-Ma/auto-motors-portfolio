@@ -1,0 +1,1 @@
+//Delete confirmations for Products, Categories, Vehicles, Gallery, etc.

@@ -1,33 +1,26 @@
-/*
 const jwt = require("jsonwebtoken");
 
 // =========================================================
-// AUTHENTICATE ADMIN
+// Protect admin routes
 // =========================================================
 
-const authenticateAdmin = (req, res, next) => {
+const authMiddleware = (req, res, next) => {
   try {
-    const authHeader = req.headers.authorization;
+    const token = req.cookies?.admin_token;
 
     // -----------------------------------------------------
-    // Check Authorization header
+    // No authentication cookie
     // -----------------------------------------------------
 
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    if (!token) {
       return res.status(401).json({
         success: false,
-        message: "Authentication required",
+        message: "Authentication required.",
       });
     }
 
     // -----------------------------------------------------
-    // Extract token
-    // -----------------------------------------------------
-
-    const token = authHeader.split(" ")[1];
-
-    // -----------------------------------------------------
-    // Verify token
+    // Verify JWT
     // -----------------------------------------------------
 
     const decoded = jwt.verify(
@@ -36,23 +29,25 @@ const authenticateAdmin = (req, res, next) => {
     );
 
     // -----------------------------------------------------
-    // Attach admin to request
+    // Attach admin information to request
     // -----------------------------------------------------
 
-    req.admin = decoded;
+    req.admin = {
+      id: decoded.id,
+      email: decoded.email,
+      role: decoded.role,
+    };
 
     next();
   } catch (error) {
     console.error("Authentication error:", error.message);
 
+    // Invalid or expired JWT
     return res.status(401).json({
       success: false,
-      message: "Invalid or expired authentication token",
+      message: "Invalid or expired authentication.",
     });
   }
 };
 
-module.exports = {
-  authenticateAdmin,
-};
-*/
+module.exports = authMiddleware;
