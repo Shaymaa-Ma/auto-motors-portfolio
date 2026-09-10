@@ -1,32 +1,15 @@
-import React, {
-  useEffect,
-  useState,
-} from "react";
 
-import {
-  motion,
-} from "framer-motion";
+import React, { useEffect, useState } from "react";
+import { motion } from "framer-motion";
 
-import {
-  useLanguage,
-} from "../../context/LanguageContext";
-
-import {
-  getAbout,
-  getImageUrl,
-} from "../../api/api";
-
+import { useLanguage } from "../../context/LanguageContext";
+import { getAbout, getImageUrl } from "../../api/api";
 
 const AboutSection = () => {
-  const {
-    language,
-  } = useLanguage();
+  const { language } = useLanguage();
 
-  const [
-    about,
-    setAbout,
-  ] = useState(null);
-
+  const [about, setAbout] = useState(null);
+  const [hasScrolled, setHasScrolled] = useState(false);
 
   /* ==========================================================================
      LOAD ABOUT DATA
@@ -35,32 +18,53 @@ const AboutSection = () => {
   useEffect(() => {
     const loadAbout = async () => {
       try {
-        const data =
-          await getAbout();
-
-        setAbout(
-          data || null
-        );
+        const data = await getAbout();
+        setAbout(data || null);
       } catch (error) {
-        console.error(
-          "About data loading error:",
-          error
-        );
+        console.error("Failed to load About section:", error);
       }
     };
 
     loadAbout();
   }, []);
 
+  /* ==========================================================================
+     WAIT FOR THE USER TO ACTUALLY START SCROLLING
+     ========================================================================== */
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 20) {
+        setHasScrolled(true);
+
+        window.removeEventListener(
+          "scroll",
+          handleScroll
+        );
+      }
+    };
+
+    window.addEventListener(
+      "scroll",
+      handleScroll,
+      { passive: true }
+    );
+
+    return () => {
+      window.removeEventListener(
+        "scroll",
+        handleScroll
+      );
+    };
+  }, []);
 
   /* ==========================================================================
-     SAFETY
+     LOADING
      ========================================================================== */
 
   if (!about) {
     return null;
   }
-
 
   /* ==========================================================================
      LOCALIZED CONTENT
@@ -101,154 +105,239 @@ const AboutSection = () => {
       ? about.secondary_button_fr
       : about.secondary_button_en;
 
-
   /* ==========================================================================
-     CONTENT ANIMATION
+     ABOUT TITLE
      ========================================================================== */
 
-  const contentVariants = {
+  const titleVariants = {
     hidden: {
       opacity: 0,
-      x: -35,
-    },
-
-    visible: {
-      opacity: 1,
-      x: 0,
-
-      transition: {
-        duration: 0.8,
-
-        ease: [
-          0.22,
-          1,
-          0.36,
-          1,
-        ],
-
-        staggerChildren: 0.12,
-      },
-    },
-  };
-
-
-  /* ==========================================================================
-     CONTENT ITEM ANIMATION
-     ========================================================================== */
-
-  const itemVariants = {
-    hidden: {
-      opacity: 0,
-      y: 20,
+      y: 45,
+      filter: "blur(8px)",
     },
 
     visible: {
       opacity: 1,
       y: 0,
+      filter: "blur(0px)",
 
       transition: {
-        duration: 0.65,
-
-        ease: [
-          0.22,
-          1,
-          0.36,
-          1,
-        ],
+        duration: 0.8,
+        ease: [0.22, 1, 0.36, 1],
+        delay: 0,
       },
     },
   };
 
+  /* ==========================================================================
+     SUBTITLE
+     ========================================================================== */
+
+  const subtitleVariants = {
+    hidden: {
+      opacity: 0,
+      y: 30,
+      filter: "blur(6px)",
+    },
+
+    visible: {
+      opacity: 1,
+      y: 0,
+      filter: "blur(0px)",
+
+      transition: {
+        duration: 0.75,
+        ease: [0.22, 1, 0.36, 1],
+        delay: 0.12,
+      },
+    },
+  };
 
   /* ==========================================================================
-     IMAGE ANIMATION
+     DESCRIPTION
+     ========================================================================== */
+
+  const descriptionVariants = {
+    hidden: {
+      opacity: 0,
+      y: 30,
+      filter: "blur(6px)",
+    },
+
+    visible: {
+      opacity: 1,
+      y: 0,
+      filter: "blur(0px)",
+
+      transition: {
+        duration: 0.8,
+        ease: [0.22, 1, 0.36, 1],
+        delay: 0.22,
+      },
+    },
+  };
+
+  /* ==========================================================================
+     MISSION
+     ========================================================================== */
+
+  const missionVariants = {
+    hidden: {
+      opacity: 0,
+      y: 35,
+      scale: 0.97,
+      filter: "blur(7px)",
+    },
+
+    visible: {
+      opacity: 1,
+      y: 0,
+      scale: 1,
+      filter: "blur(0px)",
+
+      transition: {
+        duration: 0.8,
+        ease: [0.22, 1, 0.36, 1],
+        delay: 0.34,
+      },
+    },
+  };
+
+  /* ==========================================================================
+     MISSION ICON
+     ========================================================================== */
+
+  const missionIconVariants = {
+    hidden: {
+      opacity: 0,
+      scale: 0.7,
+      rotate: -8,
+    },
+
+    visible: {
+      opacity: 1,
+      scale: 1,
+      rotate: 0,
+
+      transition: {
+        duration: 0.55,
+        ease: [0.22, 1, 0.36, 1],
+        delay: 0.48,
+      },
+    },
+  };
+
+  /* ==========================================================================
+     IMAGE
      ========================================================================== */
 
   const imageVariants = {
     hidden: {
       opacity: 0,
-      x: 35,
-      scale: 0.965,
+      x: 70,
+      scale: 0.92,
+      filter: "blur(10px)",
     },
 
     visible: {
       opacity: 1,
       x: 0,
       scale: 1,
+      filter: "blur(0px)",
 
       transition: {
-        duration: 0.95,
-
-        ease: [
-          0.22,
-          1,
-          0.36,
-          1,
-        ],
+        duration: 1,
+        ease: [0.22, 1, 0.36, 1],
+        delay: 0.18,
       },
     },
   };
 
-
   /* ==========================================================================
-     IMAGE DECORATION ANIMATION
+     IMAGE DECORATION
      ========================================================================== */
 
   const decorationVariants = {
     hidden: {
       opacity: 0,
-      x: 10,
-      y: -8,
+      x: 35,
+      y: -20,
+      scale: 0.85,
+      rotate: -3,
     },
 
     visible: {
       opacity: 1,
       x: 0,
       y: 0,
+      scale: 1,
+      rotate: 0,
 
       transition: {
-        delay: 0.25,
         duration: 0.75,
-
-        ease: [
-          0.22,
-          1,
-          0.36,
-          1,
-        ],
+        ease: [0.22, 1, 0.36, 1],
+        delay: 0.65,
       },
     },
   };
 
-
   /* ==========================================================================
-     IMAGE CORNER ANIMATION
+     IMAGE CORNER
      ========================================================================== */
 
   const cornerVariants = {
     hidden: {
       opacity: 0,
-      scale: 0.85,
+      scale: 0.6,
+      x: 18,
+      y: 18,
     },
 
     visible: {
       opacity: 1,
       scale: 1,
+      x: 0,
+      y: 0,
 
       transition: {
-        delay: 0.55,
-        duration: 0.5,
-
-        ease: [
-          0.22,
-          1,
-          0.36,
-          1,
-        ],
+        duration: 0.6,
+        ease: [0.22, 1, 0.36, 1],
+        delay: 0.78,
       },
     },
   };
 
+  /* ==========================================================================
+     BUTTONS
+     ========================================================================== */
+
+  const buttonsVariants = {
+    hidden: {
+      opacity: 0,
+      y: 30,
+      filter: "blur(6px)",
+    },
+
+    visible: {
+      opacity: 1,
+      y: 0,
+      filter: "blur(0px)",
+
+      transition: {
+        duration: 0.7,
+        ease: [0.22, 1, 0.36, 1],
+        delay: 0.5,
+      },
+    },
+  };
+
+  /* ==========================================================================
+     BUTTON HOVER
+     ========================================================================== */
+
+  const buttonHover = {
+    y: -4,
+  };
 
   /* ==========================================================================
      RENDER
@@ -261,120 +350,138 @@ const AboutSection = () => {
     >
       <div className="container">
 
-        {/* ================================================================
-           ABOUT LAYOUT
-           ================================================================ */}
+        {/* ==================================================================
+            ABOUT GRID
 
-        <div className="about__grid">
+            This is ONLY the trigger.
 
-          {/* ==============================================================
-             ABOUT CONTENT
-             ============================================================== */}
+            It does not move the complete section.
 
-          <motion.div
-            className="about__content"
+            Each child below has its own animation.
+            ================================================================== */}
 
-            variants={
-              contentVariants
-            }
+        <motion.div
+          className="about__grid"
 
-            initial="hidden"
+          initial="hidden"
 
-            whileInView="visible"
+          /*
+           * Important:
+           *
+           * Before the user scrolls, About has no whileInView.
+           *
+           * Therefore refreshing at the Hero does not start
+           * the About animations.
+           */
+          {...(hasScrolled
+            ? {
+                whileInView: "visible",
 
-            viewport={{
-              once: true,
-              amount: 0.2,
-            }}
-          >
+                viewport: {
+                  once: true,
 
-            {/* ----------------------------------------------------------
-               TITLE
-               ---------------------------------------------------------- */}
+                  /*
+                   * About starts when a meaningful part of the
+                   * section reaches the viewport.
+                   */
+                  amount: 0.25,
+
+                  /*
+                   * Delays the trigger slightly so it does not
+                   * start while the Hero is still being viewed.
+                   */
+                  margin: "0px 0px -120px 0px",
+                },
+              }
+            : {})}
+        >
+
+          {/* ================================================================
+              LEFT CONTENT
+              ================================================================ */}
+
+          <div className="about__content">
+
+            {/* --------------------------------------------------------------
+                TITLE
+                -------------------------------------------------------------- */}
 
             {title && (
               <motion.h2
                 className="about__title"
 
-                variants={
-                  itemVariants
-                }
+                variants={titleVariants}
               >
                 {title}
               </motion.h2>
             )}
 
-
-            {/* ----------------------------------------------------------
-               SUBTITLE
-               ---------------------------------------------------------- */}
+            {/* --------------------------------------------------------------
+                SUBTITLE
+                -------------------------------------------------------------- */}
 
             {subtitle && (
               <motion.p
                 className="about__subtitle"
 
-                variants={
-                  itemVariants
-                }
+                variants={subtitleVariants}
               >
                 {subtitle}
               </motion.p>
             )}
 
-
-            {/* ----------------------------------------------------------
-               DESCRIPTION
-               ---------------------------------------------------------- */}
+            {/* --------------------------------------------------------------
+                DESCRIPTION
+                -------------------------------------------------------------- */}
 
             {description && (
               <motion.p
                 className="about__description"
 
-                variants={
-                  itemVariants
-                }
+                variants={descriptionVariants}
               >
                 {description}
               </motion.p>
             )}
 
-
-            {/* ----------------------------------------------------------
-               MISSION
-               ---------------------------------------------------------- */}
+            {/* ==============================================================
+                MISSION
+                ============================================================== */}
 
             {mission && (
               <motion.div
                 className="about__mission"
 
-                variants={
-                  itemVariants
-                }
+                variants={missionVariants}
 
                 whileHover={{
-                  y: -2,
+                  y: -5,
                 }}
 
                 transition={{
                   duration: 0.25,
-
                   ease: "easeOut",
                 }}
               >
 
-                {/* Mission icon */}
+                {/* ----------------------------------------------------------
+                    ICON
+                    ---------------------------------------------------------- */}
 
                 <motion.div
                   className="about__mission-icon"
 
+                  variants={
+                    missionIconVariants
+                  }
+
                   whileHover={{
-                    scale: 1.04,
-                    rotate: 4,
+                    scale: 1.1,
+                    rotate: 5,
                   }}
 
                   transition={{
                     duration: 0.25,
-
                     ease: "easeOut",
                   }}
                 >
@@ -384,12 +491,12 @@ const AboutSection = () => {
                   />
                 </motion.div>
 
+                {/* ----------------------------------------------------------
+                    MISSION CONTENT
+                    ---------------------------------------------------------- */}
 
-                {/* Mission content */}
+                <div className="about__mission-content">
 
-                <div
-                  className="about__mission-content"
-                >
                   {missionTitle && (
                     <h3>
                       {missionTitle}
@@ -399,29 +506,30 @@ const AboutSection = () => {
                   <p>
                     {mission}
                   </p>
+
                 </div>
 
               </motion.div>
             )}
 
-
-            {/* ==========================================================
-               ABOUT ACTIONS
-               ========================================================== */}
+            {/* ==============================================================
+                BUTTONS
+                ============================================================== */}
 
             {(primaryButton ||
               secondaryButton) && (
+
               <motion.div
                 className="about__actions"
 
                 variants={
-                  itemVariants
+                  buttonsVariants
                 }
               >
 
-                {/* ------------------------------------------------------
-                   PRIMARY BUTTON
-                   ------------------------------------------------------ */}
+                {/* ----------------------------------------------------------
+                    PRIMARY BUTTON
+                    ---------------------------------------------------------- */}
 
                 {primaryButton && (
                   <motion.a
@@ -432,16 +540,17 @@ const AboutSection = () => {
 
                     className="button button--primary"
 
-                    whileHover={{
-                      y: -2,
-                    }}
+                    whileHover={
+                      buttonHover
+                    }
 
                     whileTap={{
                       scale: 0.97,
                     }}
 
                     transition={{
-                      duration: 0.2,
+                      duration: 0.22,
+                      ease: "easeOut",
                     }}
                   >
                     <span>
@@ -450,24 +559,23 @@ const AboutSection = () => {
 
                     <motion.i
                       className="bi bi-arrow-right"
-
                       aria-hidden="true"
 
                       whileHover={{
-                        x: 3,
+                        x: 5,
                       }}
 
                       transition={{
                         duration: 0.2,
+                        ease: "easeOut",
                       }}
                     />
                   </motion.a>
                 )}
 
-
-                {/* ------------------------------------------------------
-                   SECONDARY BUTTON
-                   ------------------------------------------------------ */}
+                {/* ----------------------------------------------------------
+                    SECONDARY BUTTON
+                    ---------------------------------------------------------- */}
 
                 {secondaryButton && (
                   <motion.a
@@ -478,16 +586,17 @@ const AboutSection = () => {
 
                     className="button button--secondary"
 
-                    whileHover={{
-                      y: -2,
-                    }}
+                    whileHover={
+                      buttonHover
+                    }
 
                     whileTap={{
                       scale: 0.97,
                     }}
 
                     transition={{
-                      duration: 0.2,
+                      duration: 0.22,
+                      ease: "easeOut",
                     }}
                   >
                     {secondaryButton}
@@ -497,34 +606,23 @@ const AboutSection = () => {
               </motion.div>
             )}
 
-          </motion.div>
+          </div>
 
 
-          {/* ==============================================================
-             ABOUT IMAGE
-             ============================================================== */}
+          {/* ================================================================
+              RIGHT IMAGE
+              ================================================================ */}
 
           {about.image && (
             <motion.div
               className="about__image"
 
-              variants={
-                imageVariants
-              }
-
-              initial="hidden"
-
-              whileInView="visible"
-
-              viewport={{
-                once: true,
-                amount: 0.2,
-              }}
+              variants={imageVariants}
             >
 
-              {/* --------------------------------------------------------
-                 DECORATIVE BACKGROUND
-                 -------------------------------------------------------- */}
+              {/* ------------------------------------------------------------
+                  DECORATIVE SHAPE
+                  ------------------------------------------------------------ */}
 
               <motion.span
                 className="about__image-decoration"
@@ -536,17 +634,12 @@ const AboutSection = () => {
                 }
               />
 
-
-              {/* --------------------------------------------------------
-                 IMAGE
-                 -------------------------------------------------------- */}
+              {/* ------------------------------------------------------------
+                  MAIN IMAGE
+                  ------------------------------------------------------------ */}
 
               <motion.img
-                src={
-                  getImageUrl(
-                    about.image
-                  )
-                }
+                src={getImageUrl(about.image)}
 
                 alt={
                   language === "fr"
@@ -563,21 +656,14 @@ const AboutSection = () => {
                 }}
 
                 transition={{
-                  duration: 0.5,
-
-                  ease: [
-                    0.22,
-                    1,
-                    0.36,
-                    1,
-                  ],
+                  duration: 0.55,
+                  ease: [0.22, 1, 0.36, 1],
                 }}
               />
 
-
-              {/* --------------------------------------------------------
-                 BLUE CORNER ACCENT
-                 -------------------------------------------------------- */}
+              {/* ------------------------------------------------------------
+                  CORNER ACCENT
+                  ------------------------------------------------------------ */}
 
               <motion.span
                 className="about__image-corner"
@@ -592,12 +678,11 @@ const AboutSection = () => {
             </motion.div>
           )}
 
-        </div>
+        </motion.div>
 
       </div>
     </section>
   );
 };
-
 
 export default AboutSection;

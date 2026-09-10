@@ -1,3 +1,4 @@
+
 import React, {
   useEffect,
   useMemo,
@@ -21,8 +22,7 @@ const PRODUCTS_PER_PAGE_DESKTOP = 8;
 const PRODUCTS_PER_PAGE_CATEGORY_DESKTOP = 4;
 
 const ProductsSection = () => {
-  const { language } =
-    useLanguage();
+  const { language } = useLanguage();
 
   const [
     categories,
@@ -51,61 +51,50 @@ const ProductsSection = () => {
     PRODUCTS_PER_PAGE_DESKTOP
   );
 
-  // Load categories and products
+  /* ============================================================
+     LOAD PRODUCTS DATA
+     ============================================================ */
+
   useEffect(() => {
     let isMounted = true;
 
-    const loadProductsData =
-      async () => {
-        try {
-          const [
-            categoryData,
-            productData,
-          ] = await Promise.all([
-            getCategories(),
-            getProducts(),
-          ]);
+    const loadProductsData = async () => {
+      try {
+        const [
+          categoryData,
+          productData,
+        ] = await Promise.all([
+          getCategories(),
+          getProducts(),
+        ]);
 
-          if (!isMounted) {
-            return;
-          }
-
-          const sortedCategories =
-            [...(categoryData || [])].sort(
-              (a, b) =>
-                Number(
-                  a.display_order || 0
-                ) -
-                Number(
-                  b.display_order || 0
-                )
-            );
-
-          const sortedProducts =
-            [...(productData || [])].sort(
-              (a, b) =>
-                Number(
-                  a.display_order || 0
-                ) -
-                Number(
-                  b.display_order || 0
-                )
-            );
-
-          setCategories(
-            sortedCategories
-          );
-
-          setProducts(
-            sortedProducts
-          );
-        } catch (error) {
-          console.error(
-            "Products data loading error:",
-            error
-          );
+        if (!isMounted) {
+          return;
         }
-      };
+
+        const sortedCategories =
+          [...(categoryData || [])].sort(
+            (a, b) =>
+              Number(a.display_order || 0) -
+              Number(b.display_order || 0)
+          );
+
+        const sortedProducts =
+          [...(productData || [])].sort(
+            (a, b) =>
+              Number(a.display_order || 0) -
+              Number(b.display_order || 0)
+          );
+
+        setCategories(sortedCategories);
+        setProducts(sortedProducts);
+      } catch (error) {
+        console.error(
+          "Products data loading error:",
+          error
+        );
+      }
+    };
 
     loadProductsData();
 
@@ -114,44 +103,28 @@ const ProductsSection = () => {
     };
   }, []);
 
-  // Adjust products per page based on screen size
+  /* ============================================================
+     RESPONSIVE PRODUCTS PER PAGE
+     ============================================================ */
+
   useEffect(() => {
-    const updateProductsPerPage =
-      () => {
-        if (
-          window.innerWidth <=
-          575
-        ) {
-          /*
-           * Keep mobile exactly as before.
-           */
-          setProductsPerPage(4);
-          return;
-        }
+    const updateProductsPerPage = () => {
+      if (window.innerWidth <= 575) {
+        setProductsPerPage(4);
+        return;
+      }
 
-        if (
-          window.innerWidth <=
-          991
-        ) {
-          /*
-           * Keep tablet behavior exactly as before.
-           */
-          setProductsPerPage(6);
-          return;
-        }
+      if (window.innerWidth <= 991) {
+        setProductsPerPage(6);
+        return;
+      }
 
-        /*
-         * Desktop:
-         *
-         * All products = 8 per page.
-         * Specific category = 4 per page.
-         */
-        setProductsPerPage(
-          activeCategory === null
-            ? PRODUCTS_PER_PAGE_DESKTOP
-            : PRODUCTS_PER_PAGE_CATEGORY_DESKTOP
-        );
-      };
+      setProductsPerPage(
+        activeCategory === null
+          ? PRODUCTS_PER_PAGE_DESKTOP
+          : PRODUCTS_PER_PAGE_CATEGORY_DESKTOP
+      );
+    };
 
     updateProductsPerPage();
 
@@ -166,49 +139,40 @@ const ProductsSection = () => {
         updateProductsPerPage
       );
     };
+  }, [activeCategory]);
+
+  /* ============================================================
+     FILTER PRODUCTS BY CATEGORY
+     ============================================================ */
+
+  const filteredProducts = useMemo(() => {
+    if (activeCategory === null) {
+      return products;
+    }
+
+    return products.filter(
+      (product) =>
+        Number(product.category_id) ===
+        Number(activeCategory)
+    );
   }, [
+    products,
     activeCategory,
   ]);
 
-  // Filter products by selected category
-  const filteredProducts =
-    useMemo(() => {
-      if (
-        activeCategory === null
-      ) {
-        return products;
-      }
+  /* ============================================================
+     PAGINATION
+     ============================================================ */
 
-      return products.filter(
-        (product) =>
-          Number(
-            product.category_id
-          ) ===
-          Number(activeCategory)
-      );
-    }, [
-      products,
-      activeCategory,
-    ]);
+  const totalPages = Math.ceil(
+    filteredProducts.length /
+    productsPerPage
+  );
 
-  // Calculate the number of product pages
-  const totalPages =
-    Math.ceil(
-      filteredProducts.length /
-        productsPerPage
-    );
-
-  // Keep the current page valid
   useEffect(() => {
-    if (
-      currentPage >=
-      totalPages
-    ) {
+    if (currentPage >= totalPages) {
       setCurrentPage(
-        Math.max(
-          totalPages - 1,
-          0
-        )
+        Math.max(totalPages - 1, 0)
       );
     }
   }, [
@@ -216,25 +180,25 @@ const ProductsSection = () => {
     totalPages,
   ]);
 
-  // Get products for the current page
-  const currentProducts =
-    useMemo(() => {
-      const startIndex =
-        currentPage *
-        productsPerPage;
+  const currentProducts = useMemo(() => {
+    const startIndex =
+      currentPage *
+      productsPerPage;
 
-      return filteredProducts.slice(
-        startIndex,
-        startIndex +
-          productsPerPage
-      );
-    }, [
-      filteredProducts,
-      currentPage,
-      productsPerPage,
-    ]);
+    return filteredProducts.slice(
+      startIndex,
+      startIndex + productsPerPage
+    );
+  }, [
+    filteredProducts,
+    currentPage,
+    productsPerPage,
+  ]);
 
-  // Get the appropriate language field
+  /* ============================================================
+     LOCALIZED VALUES
+     ============================================================ */
+
   const getLocalizedValue = (
     item,
     field
@@ -244,26 +208,21 @@ const ProductsSection = () => {
     }
 
     return language === "fr"
-      ? item[
-          `${field}_fr`
-        ] || ""
-      : item[
-          `${field}_en`
-        ] || "";
+      ? item[`${field}_fr`] || ""
+      : item[`${field}_en`] || "";
   };
 
-  // Display the price exactly as entered by the admin
-  const displayPrice = (
-    product
-  ) => {
-    const price =
-      product?.price;
+  /* ============================================================
+     PRICE DISPLAY
+     ============================================================ */
+
+  const displayPrice = (product) => {
+    const price = product?.price;
 
     if (
       price === null ||
       price === undefined ||
-      String(price).trim() ===
-        ""
+      String(price).trim() === ""
     ) {
       return language === "fr"
         ? "Nous consulter"
@@ -273,51 +232,47 @@ const ProductsSection = () => {
     return String(price).trim();
   };
 
-  // Change category and return to the first page
+  /* ============================================================
+     CATEGORY CHANGE
+     ============================================================ */
+
   const handleCategoryChange = (
     categoryId
   ) => {
-    setActiveCategory(
-      categoryId
-    );
-
+    setActiveCategory(categoryId);
     setCurrentPage(0);
   };
 
-  // Change product page
+  /* ============================================================
+     PAGE CHANGE
+     ============================================================ */
+
   const handlePageChange = (
     pageIndex
   ) => {
-    if (
-      pageIndex ===
-      currentPage
-    ) {
+    if (pageIndex === currentPage) {
       return;
     }
 
-    setCurrentPage(
-      pageIndex
-    );
+    setCurrentPage(pageIndex);
 
-    // Bring the products section back into view
     const productsSection =
       document.getElementById(
         "products"
       );
 
-    if (
-      productsSection
-    ) {
-      productsSection.scrollIntoView(
-        {
-          behavior: "smooth",
-          block: "start",
-        }
-      );
+    if (productsSection) {
+      productsSection.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
     }
   };
 
-  // Do not render the section when there is no data
+  /* ============================================================
+     SECTION DATA
+     ============================================================ */
+
   if (
     !categories.length &&
     !products.length
@@ -325,8 +280,7 @@ const ProductsSection = () => {
     return null;
   }
 
-  const firstCategory =
-    categories[0];
+  const firstCategory = categories[0];
 
   const sectionTitle =
     getLocalizedValue(
@@ -340,19 +294,25 @@ const ProductsSection = () => {
       "section_subtitle"
     );
 
-  // Section heading animation
-  const filtersVariants = {
+  /* ============================================================
+     ANIMATION VARIANTS
+     ============================================================ */
+
+  // Section heading enters from below.
+  const headingVariants = {
     hidden: {
       opacity: 0,
-      y: 20,
+      y: 35,
+      filter: "blur(7px)",
     },
 
     visible: {
       opacity: 1,
       y: 0,
+      filter: "blur(0px)",
 
       transition: {
-        duration: 0.6,
+        duration: 0.85,
         ease: [
           0.22,
           1,
@@ -363,32 +323,93 @@ const ProductsSection = () => {
     },
   };
 
-  // Product grid animation
-  const gridVariants = {
-    hidden: {},
+  // Category filters appear after the heading.
+  const filtersVariants = {
+    hidden: {
+      opacity: 0,
+      y: 25,
+      filter: "blur(5px)",
+    },
 
     visible: {
+      opacity: 1,
+      y: 0,
+      filter: "blur(0px)",
+
       transition: {
-        staggerChildren: 0.08,
+        duration: 0.7,
+        delay: 0.15,
+        ease: [
+          0.22,
+          1,
+          0.36,
+          1,
+        ],
       },
     },
   };
 
-  // Product card animation
+  // Result information appears subtly.
+  const resultsVariants = {
+    hidden: {
+      opacity: 0,
+      y: 15,
+    },
+
+    visible: {
+      opacity: 1,
+      y: 0,
+
+      transition: {
+        duration: 0.55,
+        delay: 0.2,
+        ease: [
+          0.22,
+          1,
+          0.36,
+          1,
+        ],
+      },
+    },
+  };
+
+  // Controls the stagger of product cards.
+  const gridVariants = {
+    hidden: {
+      opacity: 1,
+    },
+
+    visible: {
+      opacity: 1,
+
+      transition: {
+        delayChildren: 0.08,
+        staggerChildren: 0.1,
+      },
+    },
+
+    exit: {
+      opacity: 1,
+    },
+  };
+
+  // Product cards enter from below with a subtle scale and blur.
   const cardVariants = {
     hidden: {
       opacity: 0,
-      y: 35,
-      scale: 0.97,
+      y: 45,
+      scale: 0.96,
+      filter: "blur(6px)",
     },
 
     visible: {
       opacity: 1,
       y: 0,
       scale: 1,
+      filter: "blur(0px)",
 
       transition: {
-        duration: 0.55,
+        duration: 0.7,
         ease: [
           0.22,
           1,
@@ -400,12 +421,61 @@ const ProductsSection = () => {
 
     exit: {
       opacity: 0,
-      y: 20,
-      scale: 0.97,
+      y: -20,
+      scale: 0.98,
+      filter: "blur(3px)",
 
       transition: {
-        duration: 0.25,
+        duration: 0.3,
         ease: "easeInOut",
+      },
+    },
+  };
+
+  // Product image has a very subtle entrance.
+  const imageVariants = {
+    hidden: {
+      opacity: 0,
+      scale: 0.97,
+    },
+
+    visible: {
+      opacity: 1,
+      scale: 1,
+
+      transition: {
+        duration: 0.6,
+        delay: 0.08,
+        ease: [
+          0.22,
+          1,
+          0.36,
+          1,
+        ],
+      },
+    },
+  };
+
+  // Pagination appears after the cards.
+  const paginationVariants = {
+    hidden: {
+      opacity: 0,
+      y: 18,
+    },
+
+    visible: {
+      opacity: 1,
+      y: 0,
+
+      transition: {
+        duration: 0.6,
+        delay: 0.3,
+        ease: [
+          0.22,
+          1,
+          0.36,
+          1,
+        ],
       },
     },
   };
@@ -418,44 +488,33 @@ const ProductsSection = () => {
     >
       <div className="container">
 
-        {/* Section heading */}
+        {/* ======================================================
+            SECTION HEADING
+            ====================================================== */}
+
         <motion.div
-          initial={{
-            opacity: 0,
-            y: 30,
-          }}
-          whileInView={{
-            opacity: 1,
-            y: 0,
-          }}
+          variants={headingVariants}
+          initial="hidden"
+          whileInView="visible"
           viewport={{
             once: true,
             amount: 0.3,
-          }}
-          transition={{
-            duration: 0.7,
-            ease: [
-              0.22,
-              1,
-              0.36,
-              1,
-            ],
+            margin:
+              "0px 0px -80px 0px",
           }}
         >
           <SectionHeading
-            title={
-              sectionTitle
-            }
-            subtitle={
-              sectionSubtitle
-            }
+            title={sectionTitle}
+            subtitle={sectionSubtitle}
             id="products-heading"
           />
         </motion.div>
 
-        {/* Category filters */}
-        {categories.length >
-          0 && (
+        {/* ======================================================
+            CATEGORY FILTERS
+            ====================================================== */}
+
+        {categories.length > 0 && (
           <motion.div
             className="products__filters"
             role="group"
@@ -464,32 +523,28 @@ const ProductsSection = () => {
                 ? "Filtrer les produits"
                 : "Filter products"
             }
-            variants={
-              filtersVariants
-            }
+            variants={filtersVariants}
             initial="hidden"
             whileInView="visible"
             viewport={{
               once: true,
               amount: 0.2,
+              margin:
+                "0px 0px -60px 0px",
             }}
           >
             <motion.button
               type="button"
               className={
-                activeCategory ===
-                null
+                activeCategory === null
                   ? "active"
                   : ""
               }
               aria-pressed={
-                activeCategory ===
-                null
+                activeCategory === null
               }
               onClick={() =>
-                handleCategoryChange(
-                  null
-                )
+                handleCategoryChange(null)
               }
               whileHover={{
                 y: -2,
@@ -512,18 +567,12 @@ const ProductsSection = () => {
                   );
 
                 const isActive =
-                  Number(
-                    activeCategory
-                  ) ===
-                  Number(
-                    category.id
-                  );
+                  Number(activeCategory) ===
+                  Number(category.id);
 
                 return (
                   <motion.button
-                    key={
-                      category.id
-                    }
+                    key={category.id}
                     type="button"
                     className={
                       isActive
@@ -553,55 +602,58 @@ const ProductsSection = () => {
           </motion.div>
         )}
 
-        {/* Product results information */}
-        {filteredProducts.length >
-          0 && (
-          <div className="products__results-info">
+        {/* ======================================================
+            RESULTS INFORMATION
+            ====================================================== */}
+
+        {filteredProducts.length > 0 && (
+          <motion.div
+            className="products__results-info"
+            variants={resultsVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{
+              once: true,
+              amount: 0.15,
+            }}
+          >
             <span>
               {language === "fr"
-                ? `Affichage de ${
-                    currentPage *
-                      productsPerPage +
-                    1
-                  }–${Math.min(
-                    (currentPage +
-                      1) *
-                      productsPerPage,
-                    filteredProducts.length
-                  )} sur ${
-                    filteredProducts.length
-                  } produits`
-                : `Showing ${
-                    currentPage *
-                      productsPerPage +
-                    1
-                  }–${Math.min(
-                    (currentPage +
-                      1) *
-                      productsPerPage,
-                    filteredProducts.length
-                  )} of ${
-                    filteredProducts.length
-                  } products`}
+                ? `Affichage de ${currentPage *
+                productsPerPage +
+                1
+                }–${Math.min(
+                  (currentPage + 1) *
+                  productsPerPage,
+                  filteredProducts.length
+                )} sur ${filteredProducts.length
+                } produits`
+                : `Showing ${currentPage *
+                productsPerPage +
+                1
+                }–${Math.min(
+                  (currentPage + 1) *
+                  productsPerPage,
+                  filteredProducts.length
+                )} of ${filteredProducts.length
+                } products`}
             </span>
-          </div>
+          </motion.div>
         )}
 
-        {/* Product grid */}
-        {filteredProducts.length >
-        0 ? (
-          <AnimatePresence
-            mode="wait"
-          >
+        {/* ======================================================
+            PRODUCT GRID
+            ====================================================== */}
+
+        {filteredProducts.length > 0 ? (
+          <AnimatePresence mode="wait">
             <motion.div
               key={`${activeCategory ?? "all"}-${currentPage}-${productsPerPage}`}
               className="products__grid"
-              variants={
-                gridVariants
-              }
+              variants={gridVariants}
               initial="hidden"
               animate="visible"
-              exit="hidden"
+              exit="exit"
             >
               {currentProducts.map(
                 (product) => {
@@ -618,19 +670,13 @@ const ProductsSection = () => {
                     );
 
                   const price =
-                    displayPrice(
-                      product
-                    );
+                    displayPrice(product);
 
                   return (
                     <motion.article
-                      key={
-                        product.id
-                      }
+                      key={product.id}
                       className="product-card"
-                      variants={
-                        cardVariants
-                      }
+                      variants={cardVariants}
                       whileHover={{
                         y: -7,
                       }}
@@ -638,10 +684,16 @@ const ProductsSection = () => {
                         scale: 0.98,
                       }}
                     >
-                      {/* Product image */}
+                      {/* ==================================================
+                          PRODUCT IMAGE
+                          ================================================== */}
+
                       {product.image && (
                         <motion.div
                           className="product-card__image"
+                          variants={
+                            imageVariants
+                          }
                           whileHover={{
                             scale: 1.02,
                           }}
@@ -664,28 +716,25 @@ const ProductsSection = () => {
                         </motion.div>
                       )}
 
-                      {/* Product content */}
+                      {/* ==================================================
+                          PRODUCT CONTENT
+                          ================================================== */}
+
                       <div className="product-card__content">
                         {name && (
-                          <h3>
-                            {name}
-                          </h3>
+                          <h3>{name}</h3>
                         )}
 
                         {description && (
                           <p>
-                            {
-                              description
-                            }
+                            {description}
                           </p>
                         )}
 
                         {/* Product footer */}
                         <div className="product-card__footer">
                           <span className="product-card__price">
-                            {
-                              price
-                            }
+                            {price}
                           </span>
 
                           <motion.a
@@ -693,7 +742,7 @@ const ProductsSection = () => {
                             className="product-card__link"
                             aria-label={
                               language ===
-                              "fr"
+                                "fr"
                                 ? `Demander des informations sur ${name}`
                                 : `Inquire about ${name}`
                             }
@@ -705,7 +754,7 @@ const ProductsSection = () => {
                             }}
                           >
                             {language ===
-                            "fr"
+                              "fr"
                               ? "Demander"
                               : "Inquire"}
 
@@ -729,18 +778,24 @@ const ProductsSection = () => {
             </motion.div>
           </AnimatePresence>
         ) : (
+          /* ======================================================
+             EMPTY STATE
+             ====================================================== */
+
           <motion.div
             className="products__empty"
             initial={{
               opacity: 0,
               y: 20,
+              filter: "blur(5px)",
             }}
             animate={{
               opacity: 1,
               y: 0,
+              filter: "blur(0px)",
             }}
             transition={{
-              duration: 0.5,
+              duration: 0.6,
               ease: [
                 0.22,
                 1,
@@ -767,25 +822,34 @@ const ProductsSection = () => {
             />
 
             <p>
-              {language ===
-              "fr"
+              {language === "fr"
                 ? "Aucun produit disponible dans cette catégorie."
                 : "No products available in this category."}
             </p>
           </motion.div>
         )}
 
-        {/* Product pagination */}
+        {/* ======================================================
+            PRODUCT PAGINATION
+            ====================================================== */}
+
         {totalPages > 1 && (
-          <nav
+          <motion.nav
             className="products__pagination"
             aria-label={
               language === "fr"
                 ? "Pages des produits"
                 : "Product pages"
             }
+            variants={paginationVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{
+              once: true,
+              amount: 0.2,
+            }}
           >
-            <button
+            <motion.button
               type="button"
               className="products__pagination-button products__pagination-prev"
               onClick={() =>
@@ -801,48 +865,56 @@ const ProductsSection = () => {
                   ? "Page précédente"
                   : "Previous page"
               }
+              whileHover={{
+                y: -2,
+              }}
+              whileTap={{
+                scale: 0.92,
+              }}
             >
               <i
                 className="bi bi-chevron-left"
                 aria-hidden="true"
               />
-            </button>
+            </motion.button>
 
             <div className="products__pagination-pages">
               {Array.from(
                 {
-                  length:
-                    totalPages,
+                  length: totalPages,
                 },
                 (_, index) => (
-                  <button
+                  <motion.button
                     key={index}
                     type="button"
-                    className={`products__page-button ${
-                      currentPage ===
-                      index
+                    className={`products__page-button ${currentPage === index
                         ? "active"
                         : ""
-                    }`}
+                      }`}
                     onClick={() =>
                       handlePageChange(
                         index
                       )
                     }
                     aria-current={
-                      currentPage ===
-                      index
+                      currentPage === index
                         ? "page"
                         : undefined
                     }
+                    whileHover={{
+                      y: -2,
+                    }}
+                    whileTap={{
+                      scale: 0.92,
+                    }}
                   >
                     {index + 1}
-                  </button>
+                  </motion.button>
                 )
               )}
             </div>
 
-            <button
+            <motion.button
               type="button"
               className="products__pagination-button products__pagination-next"
               onClick={() =>
@@ -859,13 +931,19 @@ const ProductsSection = () => {
                   ? "Page suivante"
                   : "Next page"
               }
+              whileHover={{
+                y: -2,
+              }}
+              whileTap={{
+                scale: 0.92,
+              }}
             >
               <i
                 className="bi bi-chevron-right"
                 aria-hidden="true"
               />
-            </button>
-          </nav>
+            </motion.button>
+          </motion.nav>
         )}
       </div>
     </section>

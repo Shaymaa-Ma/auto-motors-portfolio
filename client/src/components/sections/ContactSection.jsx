@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useLanguage } from "../../context/LanguageContext";
@@ -45,6 +46,10 @@ const ContactSection = () => {
   };
 
   if (!company) return null;
+
+  /* ==========================================================================
+     LOCALIZED CONTENT
+     ========================================================================== */
 
   const contactTitle =
     getSetting(`contact_title_${language}`) ||
@@ -103,73 +108,138 @@ const ContactSection = () => {
     (social) => Number(social.is_active) === 1
   );
 
-  const layoutVariants = {
+  /* ==========================================================================
+     ANIMATION VARIANTS
+     ========================================================================== */
+
+  // Main section heading
+  const headingVariants = {
     hidden: {
       opacity: 0,
       y: 35,
+      filter: "blur(7px)",
     },
+
     visible: {
       opacity: 1,
       y: 0,
+      filter: "blur(0px)",
       transition: {
-        duration: 0.7,
-        ease: "easeOut",
+        duration: 0.85,
+        ease: [0.22, 1, 0.36, 1],
       },
     },
   };
 
+  // Left side intro
   const introVariants = {
     hidden: {
       opacity: 0,
-      x: -35,
+      x: -45,
+      filter: "blur(7px)",
     },
+
     visible: {
       opacity: 1,
       x: 0,
+      filter: "blur(0px)",
       transition: {
-        duration: 0.7,
-        ease: "easeOut",
+        duration: 0.9,
+        ease: [0.22, 1, 0.36, 1],
       },
     },
   };
 
+  // Right side information
   const infoVariants = {
     hidden: {
       opacity: 0,
-      x: 35,
+      x: 45,
+      filter: "blur(7px)",
     },
+
     visible: {
       opacity: 1,
       x: 0,
+      filter: "blur(0px)",
       transition: {
-        duration: 0.7,
-        ease: "easeOut",
+        duration: 0.9,
+        ease: [0.22, 1, 0.36, 1],
       },
     },
   };
 
+  // Contact cards stagger
   const itemsContainerVariants = {
-    hidden: {},
+    hidden: {
+      opacity: 1,
+    },
+
     visible: {
+      opacity: 1,
       transition: {
+        delayChildren: 0.08,
         staggerChildren: 0.12,
       },
     },
   };
 
+  // Individual contact card
   const itemVariants = {
     hidden: {
       opacity: 0,
-      y: 25,
+      y: 30,
       scale: 0.97,
+      filter: "blur(5px)",
     },
+
     visible: {
       opacity: 1,
       y: 0,
       scale: 1,
+      filter: "blur(0px)",
       transition: {
-        duration: 0.55,
-        ease: "easeOut",
+        duration: 0.7,
+        ease: [0.22, 1, 0.36, 1],
+      },
+    },
+  };
+
+  // Contact icons
+  const iconVariants = {
+    hidden: {
+      opacity: 0,
+      scale: 0.7,
+      rotate: -8,
+    },
+
+    visible: {
+      opacity: 1,
+      scale: 1,
+      rotate: 0,
+      transition: {
+        duration: 0.5,
+        delay: 0.12,
+        ease: [0.22, 1, 0.36, 1],
+      },
+    },
+  };
+
+  // Social section
+  const socialVariants = {
+    hidden: {
+      opacity: 0,
+      y: 25,
+      filter: "blur(5px)",
+    },
+
+    visible: {
+      opacity: 1,
+      y: 0,
+      filter: "blur(0px)",
+      transition: {
+        duration: 0.7,
+        ease: [0.22, 1, 0.36, 1],
       },
     },
   };
@@ -178,13 +248,18 @@ const ContactSection = () => {
     <section id="contact" className="contact section">
       <div className="container">
 
+        {/* ==================================================================
+            SECTION HEADING
+            ================================================================== */}
+
         <motion.div
-          variants={layoutVariants}
+          variants={headingVariants}
           initial="hidden"
           whileInView="visible"
           viewport={{
             once: true,
-            amount: 0.2,
+            amount: 0.3,
+            margin: "0px 0px -80px 0px",
           }}
         >
           <SectionHeading
@@ -193,9 +268,16 @@ const ContactSection = () => {
           />
         </motion.div>
 
+        {/* ==================================================================
+            CONTACT LAYOUT
+            ================================================================== */}
+
         <div className="contact__layout">
 
-          {/* INTRO */}
+          {/* ================================================================
+              INTRO
+              ================================================================ */}
+
           <motion.div
             className="contact__intro"
             variants={introVariants}
@@ -203,7 +285,8 @@ const ContactSection = () => {
             whileInView="visible"
             viewport={{
               once: true,
-              amount: 0.15,
+              amount: 0.2,
+              margin: "0px 0px -70px 0px",
             }}
           >
             <span className="contact__label">
@@ -216,18 +299,31 @@ const ContactSection = () => {
 
             {infoDescription && <p>{infoDescription}</p>}
 
+            {/* Call button */}
             {company.phone_1 && (
               <motion.a
                 href={`tel:${company.phone_1}`}
                 className="contact__call"
-                whileHover={{ x: 5 }}
-                whileTap={{ scale: 0.98 }}
-                transition={{ duration: 0.2 }}
+                whileHover={{
+                  x: 5,
+                }}
+                whileTap={{
+                  scale: 0.98,
+                }}
+                transition={{
+                  duration: 0.2,
+                  ease: "easeOut",
+                }}
               >
                 <motion.i
                   className="bi bi-telephone"
                   aria-hidden="true"
-                  whileHover={{ scale: 1.1 }}
+                  whileHover={{
+                    scale: 1.1,
+                  }}
+                  transition={{
+                    duration: 0.2,
+                  }}
                 ></motion.i>
 
                 <span>{callButton}</span>
@@ -235,13 +331,21 @@ const ContactSection = () => {
                 <motion.i
                   className="bi bi-arrow-right"
                   aria-hidden="true"
-                  whileHover={{ x: 5 }}
+                  whileHover={{
+                    x: 5,
+                  }}
+                  transition={{
+                    duration: 0.2,
+                  }}
                 ></motion.i>
               </motion.a>
             )}
           </motion.div>
 
-          {/* INFORMATION */}
+          {/* ================================================================
+              INFORMATION
+              ================================================================ */}
+
           <motion.div
             className="contact__info"
             variants={infoVariants}
@@ -249,7 +353,8 @@ const ContactSection = () => {
             whileInView="visible"
             viewport={{
               once: true,
-              amount: 0.15,
+              amount: 0.2,
+              margin: "0px 0px -70px 0px",
             }}
           >
             {infoTitle && <h3>{infoTitle}</h3>}
@@ -260,29 +365,42 @@ const ContactSection = () => {
               whileInView="visible"
               viewport={{
                 once: true,
-                amount: 0.1,
+                amount: 0.15,
+                margin: "0px 0px -60px 0px",
               }}
             >
 
-              {/* PHONES */}
+              {/* ============================================================
+                  PHONES
+                  ============================================================ */}
+
               {phones.length > 0 && (
                 <motion.div
                   className="contact__item"
                   variants={itemVariants}
-                  whileHover={{ y: -5 }}
-                  transition={{ duration: 0.2 }}
+                  whileHover={{
+                    y: -5,
+                  }}
+                  transition={{
+                    duration: 0.25,
+                    ease: "easeOut",
+                  }}
                 >
                   <motion.div
                     className="contact__item-icon"
-                    whileHover={{
-                      scale: 1.08,
-                      rotate: -3,
-                    }}
+                    variants={iconVariants}
                   >
-                    <i
+                    <motion.i
                       className="bi bi-telephone"
                       aria-hidden="true"
-                    ></i>
+                      whileHover={{
+                        scale: 1.08,
+                        rotate: -3,
+                      }}
+                      transition={{
+                        duration: 0.2,
+                      }}
+                    ></motion.i>
                   </motion.div>
 
                   <div className="contact__item-content">
@@ -302,25 +420,37 @@ const ContactSection = () => {
                 </motion.div>
               )}
 
-              {/* EMAIL */}
+              {/* ============================================================
+                  EMAIL
+                  ============================================================ */}
+
               {company.email && (
                 <motion.div
                   className="contact__item"
                   variants={itemVariants}
-                  whileHover={{ y: -5 }}
-                  transition={{ duration: 0.2 }}
+                  whileHover={{
+                    y: -5,
+                  }}
+                  transition={{
+                    duration: 0.25,
+                    ease: "easeOut",
+                  }}
                 >
                   <motion.div
                     className="contact__item-icon"
-                    whileHover={{
-                      scale: 1.08,
-                      rotate: -3,
-                    }}
+                    variants={iconVariants}
                   >
-                    <i
+                    <motion.i
                       className="bi bi-envelope"
                       aria-hidden="true"
-                    ></i>
+                      whileHover={{
+                        scale: 1.08,
+                        rotate: -3,
+                      }}
+                      transition={{
+                        duration: 0.2,
+                      }}
+                    ></motion.i>
                   </motion.div>
 
                   <div className="contact__item-content">
@@ -333,25 +463,37 @@ const ContactSection = () => {
                 </motion.div>
               )}
 
-              {/* ADDRESS */}
+              {/* ============================================================
+                  ADDRESS
+                  ============================================================ */}
+
               {address && (
                 <motion.div
                   className="contact__item"
                   variants={itemVariants}
-                  whileHover={{ y: -5 }}
-                  transition={{ duration: 0.2 }}
+                  whileHover={{
+                    y: -5,
+                  }}
+                  transition={{
+                    duration: 0.25,
+                    ease: "easeOut",
+                  }}
                 >
                   <motion.div
                     className="contact__item-icon"
-                    whileHover={{
-                      scale: 1.08,
-                      rotate: -3,
-                    }}
+                    variants={iconVariants}
                   >
-                    <i
+                    <motion.i
                       className="bi bi-geo-alt"
                       aria-hidden="true"
-                    ></i>
+                      whileHover={{
+                        scale: 1.08,
+                        rotate: -3,
+                      }}
+                      transition={{
+                        duration: 0.2,
+                      }}
+                    ></motion.i>
                   </motion.div>
 
                   <div className="contact__item-content">
@@ -362,25 +504,37 @@ const ContactSection = () => {
                 </motion.div>
               )}
 
-              {/* DELIVERY */}
+              {/* ============================================================
+                  DELIVERY
+                  ============================================================ */}
+
               {deliveryDescription && (
                 <motion.div
                   className="contact__delivery"
                   variants={itemVariants}
-                  whileHover={{ y: -5 }}
-                  transition={{ duration: 0.2 }}
+                  whileHover={{
+                    y: -5,
+                  }}
+                  transition={{
+                    duration: 0.25,
+                    ease: "easeOut",
+                  }}
                 >
                   <motion.div
                     className="contact__delivery-icon"
-                    whileHover={{
-                      scale: 1.1,
-                      rotate: -4,
-                    }}
+                    variants={iconVariants}
                   >
-                    <i
+                    <motion.i
                       className="bi bi-truck"
                       aria-hidden="true"
-                    ></i>
+                      whileHover={{
+                        scale: 1.1,
+                        rotate: -4,
+                      }}
+                      transition={{
+                        duration: 0.2,
+                      }}
+                    ></motion.i>
                   </motion.div>
 
                   <div>
@@ -397,16 +551,20 @@ const ContactSection = () => {
           </motion.div>
         </div>
 
-        {/* SOCIAL */}
+        {/* ==================================================================
+            SOCIAL LINKS
+            ================================================================== */}
+
         {activeSocialLinks.length > 0 && (
           <motion.div
             className="contact__social"
-            variants={layoutVariants}
+            variants={socialVariants}
             initial="hidden"
             whileInView="visible"
             viewport={{
               once: true,
-              amount: 0.15,
+              amount: 0.2,
+              margin: "0px 0px -70px 0px",
             }}
           >
             <span className="contact__social-label">
@@ -421,6 +579,7 @@ const ContactSection = () => {
               viewport={{
                 once: true,
                 amount: 0.2,
+                margin: "0px 0px -60px 0px",
               }}
             >
               {activeSocialLinks.map((social) => (
@@ -435,14 +594,24 @@ const ContactSection = () => {
                     y: -5,
                     scale: 1.05,
                   }}
-                  whileTap={{ scale: 0.95 }}
-                  transition={{ duration: 0.2 }}
+                  whileTap={{
+                    scale: 0.95,
+                  }}
+                  transition={{
+                    duration: 0.2,
+                    ease: "easeOut",
+                  }}
                 >
                   {social.icon && (
                     <motion.i
                       className={`bi ${social.icon}`}
                       aria-hidden="true"
-                      whileHover={{ scale: 1.08 }}
+                      whileHover={{
+                        scale: 1.08,
+                      }}
+                      transition={{
+                        duration: 0.2,
+                      }}
                     ></motion.i>
                   )}
                 </motion.a>

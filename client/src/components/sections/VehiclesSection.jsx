@@ -1,4 +1,9 @@
-import React, { useEffect, useMemo, useState } from "react";
+
+import React, {
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { motion } from "framer-motion";
 import { useLanguage } from "../../context/LanguageContext";
 import {
@@ -12,10 +17,15 @@ const VehiclesSection = () => {
 
   const [vehicles, setVehicles] = useState([]);
 
+  /* ============================================================
+     LOAD VEHICLES
+     ============================================================ */
+
   useEffect(() => {
     const loadVehicles = async () => {
       try {
         const data = await getVehicles();
+
         setVehicles(data || []);
       } catch (error) {
         console.error(
@@ -28,24 +38,33 @@ const VehiclesSection = () => {
     loadVehicles();
   }, []);
 
+  /* ============================================================
+     GROUP VEHICLES BY TYPE
+     ============================================================ */
+
   const groupedVehicles = useMemo(() => {
-    return vehicles.reduce((groups, vehicle) => {
-      const type =
-        language === "fr"
-          ? vehicle.type_fr
-          : vehicle.type_en;
+    return vehicles.reduce(
+      (groups, vehicle) => {
+        const type =
+          language === "fr"
+            ? vehicle.type_fr
+            : vehicle.type_en;
 
-      if (!groups[type]) {
-        groups[type] = [];
-      }
+        if (!groups[type]) {
+          groups[type] = [];
+        }
 
-      groups[type].push(vehicle);
+        groups[type].push(vehicle);
 
-      return groups;
-    }, {});
+        return groups;
+      },
+      {}
+    );
   }, [vehicles, language]);
 
-  if (!vehicles.length) return null;
+  if (!vehicles.length) {
+    return null;
+  }
 
   const firstVehicle = vehicles[0];
 
@@ -59,82 +78,172 @@ const VehiclesSection = () => {
       ? firstVehicle.section_subtitle_fr
       : firstVehicle.section_subtitle_en;
 
-  /* --------------------------------------------------------------------------
+  /* ============================================================
      ANIMATION VARIANTS
-     -------------------------------------------------------------------------- */
+     ============================================================ */
 
-  const sectionVariants = {
-    hidden: {
-      opacity: 0,
-      y: 40,
-    },
-
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        duration: 0.7,
-        ease: "easeOut",
-      },
-    },
-  };
-
-  const groupVariants = {
-    hidden: {
-      opacity: 0,
-      y: 35,
-    },
-
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        duration: 0.6,
-        ease: "easeOut",
-      },
-    },
-  };
-
+  // Main section heading.
   const headingVariants = {
     hidden: {
       opacity: 0,
-      x: -25,
+      y: 35,
+      filter: "blur(7px)",
+    },
+
+    visible: {
+      opacity: 1,
+      y: 0,
+      filter: "blur(0px)",
+
+      transition: {
+        duration: 0.85,
+        ease: [
+          0.22,
+          1,
+          0.36,
+          1,
+        ],
+      },
+    },
+  };
+
+  // Each vehicle group enters from below.
+  const groupVariants = {
+    hidden: {
+      opacity: 0,
+      y: 45,
+      filter: "blur(6px)",
+    },
+
+    visible: {
+      opacity: 1,
+      y: 0,
+      filter: "blur(0px)",
+
+      transition: {
+        duration: 0.8,
+        ease: [
+          0.22,
+          1,
+          0.36,
+          1,
+        ],
+      },
+    },
+  };
+
+  // Group title enters from the left.
+  const groupHeadingVariants = {
+    hidden: {
+      opacity: 0,
+      x: -35,
+      filter: "blur(5px)",
     },
 
     visible: {
       opacity: 1,
       x: 0,
+      filter: "blur(0px)",
+
       transition: {
-        duration: 0.5,
-        ease: "easeOut",
+        duration: 0.7,
+        ease: [
+          0.22,
+          1,
+          0.36,
+          1,
+        ],
       },
     },
   };
 
+  // Controls the stagger of vehicle cards.
   const cardsContainerVariants = {
-    hidden: {},
+    hidden: {
+      opacity: 1,
+    },
 
     visible: {
+      opacity: 1,
+
       transition: {
+        delayChildren: 0.12,
         staggerChildren: 0.12,
       },
     },
   };
 
+  // Vehicle cards rise into position.
   const cardVariants = {
     hidden: {
       opacity: 0,
-      y: 30,
-      scale: 0.97,
+      y: 45,
+      scale: 0.96,
+      filter: "blur(6px)",
     },
 
     visible: {
       opacity: 1,
       y: 0,
       scale: 1,
+      filter: "blur(0px)",
+
       transition: {
-        duration: 0.5,
-        ease: "easeOut",
+        duration: 0.7,
+        ease: [
+          0.22,
+          1,
+          0.36,
+          1,
+        ],
+      },
+    },
+  };
+
+  // Vehicle image enters slightly after the card.
+  const imageVariants = {
+    hidden: {
+      opacity: 0,
+      scale: 1.04,
+    },
+
+    visible: {
+      opacity: 1,
+      scale: 1,
+
+      transition: {
+        duration: 0.65,
+        ease: [
+          0.22,
+          1,
+          0.36,
+          1,
+        ],
+      },
+    },
+  };
+
+  // Group icon entrance.
+  const iconVariants = {
+    hidden: {
+      opacity: 0,
+      scale: 0.7,
+      rotate: -8,
+    },
+
+    visible: {
+      opacity: 1,
+      scale: 1,
+      rotate: 0,
+
+      transition: {
+        duration: 0.55,
+        ease: [
+          0.22,
+          1,
+          0.36,
+          1,
+        ],
       },
     },
   };
@@ -146,17 +255,19 @@ const VehiclesSection = () => {
     >
       <div className="container">
 
-        {/* ------------------------------------------------------------------
+        {/* ======================================================
             SECTION HEADING
-            ------------------------------------------------------------------ */}
+            ====================================================== */}
 
         <motion.div
-          variants={sectionVariants}
+          variants={headingVariants}
           initial="hidden"
           whileInView="visible"
           viewport={{
             once: true,
-            amount: 0.2,
+            amount: 0.3,
+            margin:
+              "0px 0px -80px 0px",
           }}
         >
           <SectionHeading
@@ -165,28 +276,25 @@ const VehiclesSection = () => {
           />
         </motion.div>
 
-        {/* ------------------------------------------------------------------
+        {/* ======================================================
             VEHICLE GROUPS
-            ------------------------------------------------------------------ */}
+            ====================================================== */}
 
         <div className="vehicles__groups">
-          {Object.entries(groupedVehicles).map(
-            ([type, items]) => {
+          {Object.entries(
+            groupedVehicles
+          ).map(
+            ([type, items], groupIndex) => {
 
               /*
                * Use the icon stored in the database.
                *
-               * We take the first vehicle in the group because all
-               * vehicles belonging to the same type/group can share
-               * the same icon.
-               *
-               * Example DB value:
-               * bi-car-front
-               * bi-truck
-               * bi-bicycle
+               * The first vehicle in each group provides
+               * the icon for that group.
                */
               const groupIcon =
-                items[0]?.icon || "bi-truck";
+                items[0]?.icon ||
+                "bi-truck";
 
               return (
                 <motion.div
@@ -197,26 +305,27 @@ const VehiclesSection = () => {
                   whileInView="visible"
                   viewport={{
                     once: true,
-                    amount: 0.15,
+                    amount: 0.18,
+                    margin:
+                      "0px 0px -70px 0px",
                   }}
                 >
 
-                  {/* --------------------------------------------------------
+                  {/* ==================================================
                       GROUP HEADING
-                      -------------------------------------------------------- */}
+                      ================================================== */}
 
                   <motion.div
                     className="vehicles__group-heading"
-                    variants={headingVariants}
-                    initial="hidden"
-                    whileInView="visible"
-                    viewport={{
-                      once: true,
-                      amount: 0.3,
-                    }}
+                    variants={
+                      groupHeadingVariants
+                    }
                   >
                     <motion.div
                       className="vehicles__group-icon"
+                      variants={
+                        iconVariants
+                      }
                       whileHover={{
                         scale: 1.08,
                         rotate: -3,
@@ -229,105 +338,103 @@ const VehiclesSection = () => {
                         <i
                           className={`bi ${groupIcon}`}
                           aria-hidden="true"
-                        ></i>
+                        />
                       )}
                     </motion.div>
 
                     <h3>{type}</h3>
                   </motion.div>
 
-                  {/* --------------------------------------------------------
-                      VEHICLES GRID
-                      -------------------------------------------------------- */}
+                  {/* ==================================================
+                      VEHICLE GRID
+                      ================================================== */}
 
                   <motion.div
                     className="vehicles__grid"
-                    variants={cardsContainerVariants}
-                    initial="hidden"
-                    whileInView="visible"
-                    viewport={{
-                      once: true,
-                      amount: 0.1,
-                    }}
+                    variants={
+                      cardsContainerVariants
+                    }
                   >
-                    {items.map((vehicle) => {
+                    {items.map(
+                      (vehicle) => {
+                        const name =
+                          language === "fr"
+                            ? vehicle.name_fr
+                            : vehicle.name_en;
 
-                      const name =
-                        language === "fr"
-                          ? vehicle.name_fr
-                          : vehicle.name_en;
+                        const description =
+                          language === "fr"
+                            ? vehicle.description_fr
+                            : vehicle.description_en;
 
-                      const description =
-                        language === "fr"
-                          ? vehicle.description_fr
-                          : vehicle.description_en;
+                        return (
+                          <motion.article
+                            className="vehicle-card"
+                            key={vehicle.id}
+                            variants={
+                              cardVariants
+                            }
+                            whileHover={{
+                              y: -7,
+                            }}
+                            whileTap={{
+                              scale: 0.98,
+                            }}
+                          >
 
-                      return (
-                        <motion.article
-                          className="vehicle-card"
-                          key={vehicle.id}
-                          variants={cardVariants}
-                          whileHover={{
-                            y: -6,
-                            transition: {
-                              duration: 0.2,
-                            },
-                          }}
-                        >
+                            {/* ========================================
+                                VEHICLE IMAGE
+                                ======================================== */}
 
-                          {/* ------------------------------------------------
-                              VEHICLE IMAGE
-                              ------------------------------------------------ */}
-
-                          {vehicle.image && (
-                            <motion.div
-                              className="vehicle-card__image"
-                              initial={{
-                                opacity: 0,
-                                scale: 1.04,
-                              }}
-                              whileInView={{
-                                opacity: 1,
-                                scale: 1,
-                              }}
-                              viewport={{
-                                once: true,
-                                amount: 0.2,
-                              }}
-                              transition={{
-                                duration: 0.6,
-                                ease: "easeOut",
-                              }}
-                            >
-                              <img
-                                src={getImageUrl(
-                                  vehicle.image
-                                )}
-                                alt={name}
-                                loading="lazy"
-                                decoding="async"
-                              />
-                            </motion.div>
-                          )}
-
-                          {/* ------------------------------------------------
-                              VEHICLE CONTENT
-                              ------------------------------------------------ */}
-
-                          <div className="vehicle-card__content">
-
-                            {name && (
-                              <h4>{name}</h4>
+                            {vehicle.image && (
+                              <motion.div
+                                className="vehicle-card__image"
+                                variants={
+                                  imageVariants
+                                }
+                                whileHover={{
+                                  scale: 1.025,
+                                }}
+                                transition={{
+                                  duration: 0.35,
+                                  ease: "easeOut",
+                                }}
+                              >
+                                <img
+                                  src={getImageUrl(
+                                    vehicle.image
+                                  )}
+                                  alt={
+                                    name ||
+                                    "Vehicle"
+                                  }
+                                  loading="lazy"
+                                  decoding="async"
+                                />
+                              </motion.div>
                             )}
 
-                            {description && (
-                              <p>{description}</p>
-                            )}
+                            {/* ========================================
+                                VEHICLE CONTENT
+                                ======================================== */}
 
-                          </div>
-                        </motion.article>
-                      );
-                    })}
+                            <div className="vehicle-card__content">
+                              {name && (
+                                <h4>
+                                  {name}
+                                </h4>
+                              )}
+
+                              {description && (
+                                <p>
+                                  {description}
+                                </p>
+                              )}
+                            </div>
+                          </motion.article>
+                        );
+                      }
+                    )}
                   </motion.div>
                 </motion.div>
               );

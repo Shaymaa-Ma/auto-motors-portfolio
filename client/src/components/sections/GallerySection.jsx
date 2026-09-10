@@ -1,3 +1,4 @@
+
 import React, {
   useEffect,
   useState,
@@ -16,8 +17,7 @@ import {
 import SectionHeading from "../common/SectionHeading";
 
 const GallerySection = () => {
-  const { language } =
-    useLanguage();
+  const { language } = useLanguage();
 
   const [
     gallery,
@@ -29,50 +29,45 @@ const GallerySection = () => {
     setSelectedImage,
   ] = useState(null);
 
+  /* ============================================================
+     LOAD GALLERY
+     ============================================================ */
+
   useEffect(() => {
-    const loadGallery =
-      async () => {
-        try {
-          const data =
-            await getGallery();
+    const loadGallery = async () => {
+      try {
+        const data = await getGallery();
 
-          const sortedGallery =
-            [...(data || [])].sort(
-              (a, b) =>
-                Number(
-                  a.display_order || 0
-                ) -
-                Number(
-                  b.display_order || 0
-                )
-            );
+        const sortedGallery =
+          [...(data || [])].sort(
+            (a, b) =>
+              Number(a.display_order || 0) -
+              Number(b.display_order || 0)
+          );
 
-          setGallery(
-            sortedGallery
-          );
-        } catch (error) {
-          console.error(
-            "Gallery data loading error:",
-            error
-          );
-        }
-      };
+        setGallery(sortedGallery);
+      } catch (error) {
+        console.error(
+          "Gallery data loading error:",
+          error
+        );
+      }
+    };
 
     loadGallery();
   }, []);
 
-  // Handle Escape key for the lightbox
+  /* ============================================================
+     LIGHTBOX KEYBOARD / BODY SCROLL
+     ============================================================ */
+
   useEffect(() => {
     if (!selectedImage) {
       return;
     }
 
-    const handleKeyDown = (
-      event
-    ) => {
-      if (
-        event.key === "Escape"
-      ) {
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") {
         setSelectedImage(null);
       }
     };
@@ -100,8 +95,7 @@ const GallerySection = () => {
     return null;
   }
 
-  const firstGallery =
-    gallery[0];
+  const firstGallery = gallery[0];
 
   const sectionTitle =
     language === "fr"
@@ -113,32 +107,118 @@ const GallerySection = () => {
       ? firstGallery.section_subtitle_fr
       : firstGallery.section_subtitle_en;
 
-  // Keep the animation slow as more images are added
-  const galleryDuration =
-    Math.max(
-      gallery.length * 7,
-      35
-    );
+  /* ============================================================
+     GALLERY SLIDER SPEED
+     ============================================================ */
 
-  // Section heading animation
+  const galleryDuration = Math.max(
+    gallery.length * 7,
+    35
+  );
+
+  /* ============================================================
+     ANIMATION VARIANTS
+     ============================================================ */
+
+  // Section heading enters from below with a subtle blur.
   const headingVariants = {
     hidden: {
       opacity: 0,
       y: 35,
+      filter: "blur(7px)",
     },
 
     visible: {
       opacity: 1,
       y: 0,
+      filter: "blur(0px)",
 
       transition: {
-        duration: 0.7,
-        ease: "easeOut",
+        duration: 0.85,
+        ease: [
+          0.22,
+          1,
+          0.36,
+          1,
+        ],
       },
     },
   };
 
-  // Lightbox animation
+  // Gallery viewport enters after the heading.
+  const galleryVariants = {
+    hidden: {
+      opacity: 0,
+      y: 45,
+      scale: 0.98,
+      filter: "blur(6px)",
+    },
+
+    visible: {
+      opacity: 1,
+      y: 0,
+      scale: 1,
+      filter: "blur(0px)",
+
+      transition: {
+        duration: 0.9,
+        delay: 0.12,
+        ease: [
+          0.22,
+          1,
+          0.36,
+          1,
+        ],
+      },
+    },
+  };
+
+  // Gallery cards appear one after another.
+  const galleryGroupVariants = {
+    hidden: {
+      opacity: 1,
+    },
+
+    visible: {
+      opacity: 1,
+
+      transition: {
+        delayChildren: 0.15,
+        staggerChildren: 0.1,
+      },
+    },
+  };
+
+  const galleryCardVariants = {
+    hidden: {
+      opacity: 0,
+      y: 30,
+      scale: 0.97,
+      filter: "blur(5px)",
+    },
+
+    visible: {
+      opacity: 1,
+      y: 0,
+      scale: 1,
+      filter: "blur(0px)",
+
+      transition: {
+        duration: 0.65,
+        ease: [
+          0.22,
+          1,
+          0.36,
+          1,
+        ],
+      },
+    },
+  };
+
+  /* ============================================================
+     LIGHTBOX ANIMATIONS
+     ============================================================ */
+
   const lightboxVariants = {
     hidden: {
       opacity: 0,
@@ -163,7 +243,6 @@ const GallerySection = () => {
     },
   };
 
-  // Lightbox image animation
   const lightboxImageVariants = {
     hidden: {
       opacity: 0,
@@ -191,7 +270,10 @@ const GallerySection = () => {
     },
   };
 
-  // Render one gallery item
+  /* ============================================================
+     GALLERY ITEM
+     ============================================================ */
+
   const renderGalleryItem = (
     item,
     copyIndex
@@ -211,6 +293,9 @@ const GallerySection = () => {
         type="button"
         key={`${item.id}-${copyIndex}`}
         className="gallery-card"
+        variants={
+          galleryCardVariants
+        }
         onClick={() =>
           setSelectedImage(item)
         }
@@ -231,11 +316,12 @@ const GallerySection = () => {
             : "Enlarge image"
         }
       >
-        {/* Gallery image */}
+        {/* ======================================================
+            GALLERY IMAGE
+            ====================================================== */}
+
         <motion.img
-          src={getImageUrl(
-            item.image
-          )}
+          src={getImageUrl(item.image)}
           alt={
             title ||
             "AUTO MOTORS SARL"
@@ -251,18 +337,18 @@ const GallerySection = () => {
           }}
         />
 
-        {/* Gallery information */}
-        {(title ||
-          description) && (
+        {/* ======================================================
+            GALLERY INFORMATION
+            ====================================================== */}
+
+        {(title || description) && (
           <div className="gallery-card__content">
             {title && (
               <h3>{title}</h3>
             )}
 
             {description && (
-              <p>
-                {description}
-              </p>
+              <p>{description}</p>
             )}
           </div>
         )}
@@ -278,66 +364,90 @@ const GallerySection = () => {
       >
         <div className="container">
 
-          {/* Section heading */}
+          {/* ====================================================
+              SECTION HEADING
+              ==================================================== */}
+
           <motion.div
-            variants={
-              headingVariants
-            }
+            variants={headingVariants}
             initial="hidden"
             whileInView="visible"
             viewport={{
               once: true,
-              amount: 0.2,
+              amount: 0.3,
+              margin:
+                "0px 0px -80px 0px",
             }}
           >
             <SectionHeading
-              title={
-                sectionTitle
-              }
-              subtitle={
-                sectionSubtitle
-              }
+              title={sectionTitle}
+              subtitle={sectionSubtitle}
             />
           </motion.div>
 
-          {/* Automatic gallery slider */}
-          <div className="gallery__viewport">
+          {/* ====================================================
+              AUTOMATIC GALLERY SLIDER
+              ==================================================== */}
+
+          <motion.div
+            className="gallery__viewport"
+            variants={galleryVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{
+              once: true,
+              amount: 0.15,
+              margin:
+                "0px 0px -60px 0px",
+            }}
+          >
             <motion.div
               className="gallery__track"
               style={{
                 "--gallery-duration": `${galleryDuration}s`,
               }}
+              variants={
+                galleryGroupVariants
+              }
             >
-              {/* First copy */}
+              {/* ==================================================
+                  FIRST COPY
+                  ================================================== */}
+
               <div className="gallery__group">
-                {gallery.map(
-                  (item) =>
-                    renderGalleryItem(
-                      item,
-                      "first"
-                    )
+                {gallery.map((item) =>
+                  renderGalleryItem(
+                    item,
+                    "first"
+                  )
                 )}
               </div>
 
-              {/* Second copy for seamless looping */}
+              {/* ==================================================
+                  SECOND COPY
+                  Seamless infinite loop
+                  ================================================== */}
+
               <div
                 className="gallery__group"
                 aria-hidden="true"
               >
-                {gallery.map(
-                  (item) =>
-                    renderGalleryItem(
-                      item,
-                      "second"
-                    )
+                {gallery.map((item) =>
+                  renderGalleryItem(
+                    item,
+                    "second"
+                  )
                 )}
               </div>
             </motion.div>
-          </div>
+          </motion.div>
         </div>
       </section>
 
-      {/* Lightbox */}
+      {/* ========================================================
+          LIGHTBOX
+          ======================================================== */}
+
       <AnimatePresence>
         {selectedImage && (
           <motion.div
@@ -349,9 +459,7 @@ const GallerySection = () => {
                 ? "Aperçu de l'image"
                 : "Image preview"
             }
-            variants={
-              lightboxVariants
-            }
+            variants={lightboxVariants}
             initial="hidden"
             animate="visible"
             exit="exit"
@@ -359,14 +467,15 @@ const GallerySection = () => {
               setSelectedImage(null)
             }
           >
-            {/* Close button */}
+            {/* ==================================================
+                CLOSE BUTTON
+                ================================================== */}
+
             <motion.button
               type="button"
               className="gallery-lightbox__close"
               onClick={() =>
-                setSelectedImage(
-                  null
-                )
+                setSelectedImage(null)
               }
               aria-label={
                 language === "fr"
@@ -399,7 +508,10 @@ const GallerySection = () => {
               />
             </motion.button>
 
-            {/* Lightbox image */}
+            {/* ==================================================
+                LIGHTBOX IMAGE
+                ================================================== */}
+
             <motion.img
               src={getImageUrl(
                 selectedImage.image

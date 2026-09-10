@@ -17,10 +17,7 @@ const FAQSection = () => {
         const data = await getFaqs();
         setFaqs(data || []);
       } catch (error) {
-        console.error(
-          "FAQ data loading error:",
-          error
-        );
+        console.error("FAQ data loading error:", error);
       }
     };
 
@@ -42,47 +39,64 @@ const FAQSection = () => {
       : firstFaq.section_subtitle_en;
 
   const toggleFaq = (id) => {
-    setOpenFaq((current) =>
-      current === id ? null : id
-    );
+    setOpenFaq((current) => (current === id ? null : id));
   };
 
-  // Animation variants
+  /* ==========================================================================
+     ANIMATION VARIANTS
+     ========================================================================== */
+
+  // Section heading reveal
   const headingVariants = {
     hidden: {
       opacity: 0,
       y: 35,
+      filter: "blur(7px)",
     },
+
     visible: {
       opacity: 1,
       y: 0,
+      filter: "blur(0px)",
       transition: {
-        duration: 0.7,
-        ease: "easeOut",
+        duration: 0.85,
+        ease: [0.22, 1, 0.36, 1],
       },
     },
   };
 
+  // FAQ list controls the stagger sequence
   const listVariants = {
-    hidden: {},
+    hidden: {
+      opacity: 1,
+    },
+
     visible: {
+      opacity: 1,
       transition: {
+        delayChildren: 0.08,
         staggerChildren: 0.12,
       },
     },
   };
 
+  // Individual FAQ row entrance
   const itemVariants = {
     hidden: {
       opacity: 0,
-      y: 30,
+      y: 35,
+      scale: 0.98,
+      filter: "blur(5px)",
     },
+
     visible: {
       opacity: 1,
       y: 0,
+      scale: 1,
+      filter: "blur(0px)",
       transition: {
-        duration: 0.5,
-        ease: "easeOut",
+        duration: 0.7,
+        ease: [0.22, 1, 0.36, 1],
       },
     },
   };
@@ -91,14 +105,18 @@ const FAQSection = () => {
     <section id="faq" className="faq section">
       <div className="container">
 
-        {/* Section Heading */}
+        {/* ==================================================================
+            SECTION HEADING
+            ================================================================== */}
+
         <motion.div
           variants={headingVariants}
           initial="hidden"
           whileInView="visible"
           viewport={{
             once: true,
-            amount: 0.2,
+            amount: 0.3,
+            margin: "0px 0px -80px 0px",
           }}
         >
           <SectionHeading
@@ -107,7 +125,10 @@ const FAQSection = () => {
           />
         </motion.div>
 
-        {/* FAQ List */}
+        {/* ==================================================================
+            FAQ LIST
+            ================================================================== */}
+
         <motion.div
           className="faq__list"
           variants={listVariants}
@@ -115,7 +136,8 @@ const FAQSection = () => {
           whileInView="visible"
           viewport={{
             once: true,
-            amount: 0.1,
+            amount: 0.15,
+            margin: "0px 0px -70px 0px",
           }}
         >
           {faqs.map((faq) => {
@@ -139,27 +161,37 @@ const FAQSection = () => {
                 }`}
                 variants={itemVariants}
               >
+                {/* ==========================================================
+                    QUESTION
+                    ========================================================== */}
+
                 <motion.button
                   type="button"
                   className="faq-item__question"
-                  onClick={() =>
-                    toggleFaq(faq.id)
-                  }
+                  onClick={() => toggleFaq(faq.id)}
                   aria-expanded={isOpen}
+                  whileHover={{
+                    y: -2,
+                  }}
                   whileTap={{
                     scale: 0.99,
+                  }}
+                  transition={{
+                    duration: 0.2,
+                    ease: "easeOut",
                   }}
                 >
                   <span>{question}</span>
 
+                  {/* Plus / Minus Icon */}
                   <motion.i
                     className="bi"
                     animate={{
                       rotate: isOpen ? 180 : 0,
                     }}
                     transition={{
-                      duration: 0.25,
-                      ease: "easeOut",
+                      duration: 0.3,
+                      ease: [0.22, 1, 0.36, 1],
                     }}
                     aria-hidden="true"
                   >
@@ -173,7 +205,10 @@ const FAQSection = () => {
                   </motion.i>
                 </motion.button>
 
-                {/* Animated Answer */}
+                {/* ==========================================================
+                    ANSWER
+                    ========================================================== */}
+
                 <AnimatePresence initial={false}>
                   {isOpen && answer && (
                     <motion.div
@@ -192,11 +227,11 @@ const FAQSection = () => {
                       }}
                       transition={{
                         height: {
-                          duration: 0.3,
-                          ease: "easeInOut",
+                          duration: 0.35,
+                          ease: [0.22, 1, 0.36, 1],
                         },
                         opacity: {
-                          duration: 0.2,
+                          duration: 0.22,
                           ease: "easeOut",
                         },
                       }}
@@ -206,17 +241,21 @@ const FAQSection = () => {
                     >
                       <motion.p
                         initial={{
+                          opacity: 0,
                           y: -8,
                         }}
                         animate={{
+                          opacity: 1,
                           y: 0,
                         }}
                         exit={{
+                          opacity: 0,
                           y: -8,
                         }}
                         transition={{
-                          duration: 0.25,
-                          ease: "easeOut",
+                          duration: 0.3,
+                          delay: 0.04,
+                          ease: [0.22, 1, 0.36, 1],
                         }}
                       >
                         {answer}

@@ -5174,6 +5174,9 @@ body.menu-open {
    ========================================================================== */
 
 .vehicles {
+  position:
+    relative;
+
   background:
     var(--color-section-alt);
 }
@@ -5200,6 +5203,9 @@ body.menu-open {
    ========================================================================== */
 
 .vehicles__group-heading {
+  position:
+    relative;
+
   display:
     flex;
 
@@ -5211,9 +5217,52 @@ body.menu-open {
 
   margin-bottom:
     22px;
+
+  padding-left:
+    2px;
 }
 
+
+/* Small technical blue marker */
+
+.vehicles__group-heading::before {
+  content:
+    "";
+
+  width:
+    3px;
+
+  height:
+    28px;
+
+  flex:
+    0 0 3px;
+
+  border-radius:
+    var(--radius-pill);
+
+  background:
+    linear-gradient(
+      to bottom,
+      var(--color-primary-light),
+      var(--color-primary)
+    );
+
+  box-shadow:
+    0 0 10px
+    rgba(
+      25,
+      167,
+      255,
+      0.25
+    );
+}
+
+
 .vehicles__group-icon {
+  position:
+    relative;
+
   display:
     flex;
 
@@ -5233,28 +5282,64 @@ body.menu-open {
     0 0 45px;
 
   border:
-    1px solid rgba(25,
+    1px solid
+    rgba(
+      25,
       167,
       255,
-      0.15);
+      0.15
+    );
 
   border-radius:
     var(--radius-sm);
 
   background:
-    rgba(8,
+    rgba(
+      8,
       120,
       209,
-      0.1);
+      0.1
+    );
 
   color:
     var(--color-primary-light);
 
   font-size:
     1.2rem;
+
+  transition:
+    transform var(--transition-base),
+    border-color var(--transition-base),
+    background var(--transition-base);
 }
 
+
+.vehicles__group-icon:hover {
+  transform:
+    translateY(-2px);
+
+  border-color:
+    rgba(
+      25,
+      167,
+      255,
+      0.35
+    );
+
+  background:
+    rgba(
+      8,
+      120,
+      209,
+      0.16
+    );
+}
+
+
 .vehicles__group-heading h3 {
+  position:
+    relative;
+
   min-width:
     0;
 
@@ -5275,6 +5360,35 @@ body.menu-open {
 }
 
 
+/* Small line beside the heading */
+
+.vehicles__group-heading h3::after {
+  content:
+    "";
+
+  display:
+    inline-block;
+
+  width:
+    24px;
+
+  height:
+    2px;
+
+  margin-left:
+    10px;
+
+  vertical-align:
+    middle;
+
+  background:
+    var(--color-primary-light);
+
+  opacity:
+    0.65;
+}
+
+
 /* ==========================================================================
    VEHICLES GRID
    ========================================================================== */
@@ -5284,8 +5398,13 @@ body.menu-open {
     grid;
 
   grid-template-columns:
-    repeat(4,
-      minmax(0, 1fr));
+    repeat(
+      4,
+      minmax(
+        0,
+        1fr
+      )
+    );
 
   gap:
     20px;
@@ -5303,6 +5422,9 @@ body.menu-open {
    ========================================================================== */
 
 .vehicle-card {
+  position:
+    relative;
+
   display:
     flex;
 
@@ -5316,7 +5438,8 @@ body.menu-open {
     hidden;
 
   border:
-    1px solid var(--color-border);
+    1px solid
+    var(--color-border);
 
   border-radius:
     var(--radius-md);
@@ -5333,12 +5456,130 @@ body.menu-open {
     border-color var(--transition-base);
 }
 
-.vehicle-card:hover {
-  border-color:
-    rgba(25,
+
+/* Top technical accent */
+
+.vehicle-card::before {
+  content:
+    "";
+
+  position:
+    absolute;
+
+  z-index:
+    5;
+
+  top:
+    0;
+
+  left:
+    0;
+
+  width:
+    0;
+
+  height:
+    2px;
+
+  background:
+    linear-gradient(
+      90deg,
+      var(--color-primary),
+      var(--color-primary-light)
+    );
+
+  transition:
+    width 0.4s
+    cubic-bezier(
+      0.22,
+      1,
+      0.36,
+      1
+    );
+}
+
+
+.vehicle-card:hover::before {
+  width:
+    100%;
+}
+
+
+/* Small technical corner */
+
+.vehicle-card::after {
+  content:
+    "";
+
+  position:
+    absolute;
+
+  z-index:
+    6;
+
+  right:
+    0;
+
+  bottom:
+    0;
+
+  width:
+    22px;
+
+  height:
+    22px;
+
+  border-right:
+    2px solid
+    rgba(
+      25,
       167,
       255,
-      0.25);
+      0.6
+    );
+
+  border-bottom:
+    2px solid
+    rgba(
+      25,
+      167,
+      255,
+      0.6
+    );
+
+  pointer-events:
+    none;
+
+  opacity:
+    0.75;
+
+  transition:
+    width var(--transition-base),
+    height var(--transition-base),
+    opacity var(--transition-base);
+}
+
+
+.vehicle-card:hover::after {
+  width:
+    28px;
+
+  height:
+    28px;
+
+  opacity:
+    1;
+}
+
+
+.vehicle-card:hover {
+  border-color:
+    rgba(
+      25,
+      167,
+      255,
+      0.25
+    );
 
   box-shadow:
     var(--shadow-md);
@@ -5353,6 +5594,9 @@ body.menu-open {
    ========================================================================== */
 
 .vehicle-card__image {
+  position:
+    relative;
+
   width:
     100%;
 
@@ -5365,6 +5609,54 @@ body.menu-open {
   background:
     var(--color-dark-soft);
 }
+
+
+/* Subtle image overlay */
+
+.vehicle-card__image::after {
+  content:
+    "";
+
+  position:
+    absolute;
+
+  inset:
+    0;
+
+  pointer-events:
+    none;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(
+        7,
+        26,
+        43,
+        0.02
+      ),
+      rgba(
+        7,
+        26,
+        43,
+        0.18
+      )
+    );
+
+  opacity:
+    0.8;
+
+  transition:
+    opacity var(--transition-base);
+}
+
+
+.vehicle-card:hover
+  .vehicle-card__image::after {
+  opacity:
+    0.45;
+}
+
 
 .vehicle-card__image img {
   display:
@@ -5383,7 +5675,9 @@ body.menu-open {
     transform var(--transition-slow);
 }
 
-.vehicle-card:hover .vehicle-card__image img {
+
+.vehicle-card:hover
+  .vehicle-card__image img {
   transform:
     scale(1.04);
 }
@@ -5394,6 +5688,9 @@ body.menu-open {
    ========================================================================== */
 
 .vehicle-card__content {
+  position:
+    relative;
+
   display:
     flex;
 
@@ -5409,6 +5706,47 @@ body.menu-open {
   padding:
     18px;
 }
+
+
+/* Small decorative separator */
+
+.vehicle-card__content::before {
+  content:
+    "";
+
+  width:
+    25px;
+
+  height:
+    2px;
+
+  margin-bottom:
+    11px;
+
+  border-radius:
+    var(--radius-pill);
+
+  background:
+    var(--color-primary-light);
+
+  opacity:
+    0.65;
+
+  transition:
+    width var(--transition-base),
+    opacity var(--transition-base);
+}
+
+
+.vehicle-card:hover
+  .vehicle-card__content::before {
+  width:
+    40px;
+
+  opacity:
+    1;
+}
+
 
 .vehicle-card__content h4 {
   margin:
@@ -5428,7 +5766,18 @@ body.menu-open {
 
   line-height:
     1.35;
+
+  transition:
+    color var(--transition-base);
 }
+
+
+.vehicle-card:hover
+  .vehicle-card__content h4 {
+  color:
+    var(--color-primary-light);
+}
+
 
 .vehicle-card__content p {
   margin:
@@ -5459,14 +5808,21 @@ body.menu-open {
       45px;
   }
 
+
   .vehicles__grid {
     grid-template-columns:
-      repeat(3,
-        minmax(0, 1fr));
+      repeat(
+        3,
+        minmax(
+          0,
+          1fr
+        )
+      );
 
     gap:
       14px;
   }
+
 
   .vehicles__group-heading {
     gap:
@@ -5475,6 +5831,13 @@ body.menu-open {
     margin-bottom:
       18px;
   }
+
+
+  .vehicles__group-heading::before {
+    height:
+      25px;
+  }
+
 
   .vehicles__group-icon {
     width:
@@ -5490,25 +5853,39 @@ body.menu-open {
       1.1rem;
   }
 
+
   .vehicles__group-heading h3 {
     font-size:
       1.15rem;
   }
+
+
+  .vehicles__group-heading h3::after {
+    width:
+      18px;
+
+    margin-left:
+      7px;
+  }
+
 
   .vehicle-card__image {
     height:
       170px;
   }
 
+
   .vehicle-card__content {
     padding:
       15px;
   }
 
+
   .vehicle-card__content h4 {
     font-size:
       0.9rem;
   }
+
 
   .vehicle-card__content p {
     font-size:
@@ -5544,6 +5921,19 @@ body.menu-open {
       15px;
   }
 
+
+  .vehicles__group-heading::before {
+    width:
+      2px;
+
+    flex-basis:
+      2px;
+
+    height:
+      22px;
+  }
+
+
   .vehicles__group-icon {
     width:
       38px;
@@ -5561,12 +5951,25 @@ body.menu-open {
       1rem;
   }
 
+
   .vehicles__group-heading h3 {
     font-size:
       1rem;
 
     line-height:
       1.3;
+  }
+
+
+  .vehicles__group-heading h3::after {
+    width:
+      14px;
+
+    height:
+      1px;
+
+    margin-left:
+      5px;
   }
 
 
@@ -5612,15 +6015,18 @@ body.menu-open {
       contain;
   }
 
+
   .vehicles__grid::-webkit-scrollbar {
     height:
       4px;
   }
 
+
   .vehicles__grid::-webkit-scrollbar-track {
     background:
       transparent;
   }
+
 
   .vehicles__grid::-webkit-scrollbar-thumb {
     background:
@@ -5652,9 +6058,29 @@ body.menu-open {
       normal;
   }
 
+
   .vehicle-card:hover {
     transform:
       none;
+  }
+
+
+  /* Keep technical accent visible on mobile */
+
+  .vehicle-card::before {
+    width:
+      35%;
+  }
+
+
+  /* Keep corner subtle on mobile */
+
+  .vehicle-card::after {
+    width:
+      18px;
+
+    height:
+      18px;
   }
 
 
@@ -5677,6 +6103,16 @@ body.menu-open {
       14px;
   }
 
+
+  .vehicle-card__content::before {
+    width:
+      20px;
+
+    margin-bottom:
+      9px;
+  }
+
+
   .vehicle-card__content h4 {
     margin-bottom:
       6px;
@@ -5684,6 +6120,7 @@ body.menu-open {
     font-size:
       0.82rem;
   }
+
 
   .vehicle-card__content p {
     font-size:
@@ -5719,6 +6156,13 @@ body.menu-open {
       13px;
   }
 
+
+  .vehicles__group-heading::before {
+    height:
+      20px;
+  }
+
+
   .vehicles__group-icon {
     width:
       35px;
@@ -5733,9 +6177,19 @@ body.menu-open {
       0.9rem;
   }
 
+
   .vehicles__group-heading h3 {
     font-size:
       0.9rem;
+  }
+
+
+  .vehicles__group-heading h3::after {
+    width:
+      10px;
+
+    margin-left:
+      4px;
   }
 
 
@@ -5787,6 +6241,19 @@ body.menu-open {
       11px;
   }
 
+
+  .vehicle-card__content::before {
+    width:
+      17px;
+
+    height:
+      1px;
+
+    margin-bottom:
+      7px;
+  }
+
+
   .vehicle-card__content h4 {
     margin-bottom:
       5px;
@@ -5794,6 +6261,7 @@ body.menu-open {
     font-size:
       0.72rem;
   }
+
 
   .vehicle-card__content p {
     font-size:
@@ -5803,6 +6271,10 @@ body.menu-open {
       1.45;
   }
 }
+
+
+
+
 
 /* Advantages */
 .advantages {
