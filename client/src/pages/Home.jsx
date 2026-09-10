@@ -23,9 +23,9 @@ function Home() {
         <HeroSection />
         <AboutSection />
         <ServicesSection />
+        <AdvantagesSection />
         <ProductsSection />
         <VehiclesSection />
-        <AdvantagesSection />
         <GallerySection />
         <FAQSection />
         <ContactSection />

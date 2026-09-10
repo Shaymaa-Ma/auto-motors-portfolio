@@ -7,25 +7,27 @@ const {
   getAdminProductById,
   createProduct,
   updateProduct,
+  deleteProduct,
 } = require("../controllers/productController");
 
-const authMiddleware = require("../middleware/authMiddleware");
+const authenticateAdmin = require(
+  "../middleware/authMiddleware"
+);
 
 const {
   createImageUpload,
 } = require("../middleware/uploadMiddleware");
 
-const router =
-  express.Router();
+const router = express.Router();
 
-// Configure Product image upload
-const productUpload =
+// Reusable product image upload
+const uploadProductImage =
   createImageUpload(
     "products",
     "product"
   );
 
-// Get active products for the client
+// Get active products
 router.get(
   "/",
   getProducts
@@ -34,18 +36,18 @@ router.get(
 // Get all products for Admin
 router.get(
   "/admin",
-  authMiddleware,
+  authenticateAdmin,
   getAdminProducts
 );
 
 // Get one product for Admin
 router.get(
   "/admin/:id",
-  authMiddleware,
+  authenticateAdmin,
   getAdminProductById
 );
 
-// Get one active product for the client
+// Get one active product
 router.get(
   "/:id",
   getProductById
@@ -54,21 +56,24 @@ router.get(
 // Create a product
 router.post(
   "/",
-  authMiddleware,
-  productUpload.single(
-    "image"
-  ),
+  authenticateAdmin,
+  uploadProductImage.single("image"),
   createProduct
 );
 
 // Update a product
 router.put(
   "/:id",
-  authMiddleware,
-  productUpload.single(
-    "image"
-  ),
+  authenticateAdmin,
+  uploadProductImage.single("image"),
   updateProduct
+);
+
+// Delete a product
+router.delete(
+  "/:id",
+  authenticateAdmin,
+  deleteProduct
 );
 
 module.exports = router;

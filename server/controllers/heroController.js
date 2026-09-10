@@ -7,7 +7,10 @@ const {
   sendError,
 } = require("../utils/response");
 
-// Get the existing Hero record
+// ============================================================
+// GET EXISTING HERO RECORD
+// ============================================================
+
 const getHeroRecord = async () => {
   const [rows] = await db.query(
     "SELECT * FROM hero ORDER BY id ASC LIMIT 1"
@@ -18,16 +21,15 @@ const getHeroRecord = async () => {
     : null;
 };
 
-// Get Hero information
+// ============================================================
+// GET HERO
 // GET /api/hero
 // Public
-const getHero = async (
-  req,
-  res
-) => {
+// ============================================================
+
+const getHero = async (req, res) => {
   try {
-    const hero =
-      await getHeroRecord();
+    const hero = await getHeroRecord();
 
     if (!hero) {
       return sendError(
@@ -55,19 +57,21 @@ const getHero = async (
   }
 };
 
-// Update Hero information
+// ============================================================
+// UPDATE HERO
 // PUT /api/hero
 // Protected
-const updateHero = async (
-  req,
-  res
-) => {
-  let uploadedFilePath = null;
+// ============================================================
+
+const updateHero = async (req, res) => {
+  const uploadedFiles = [];
 
   try {
-    // Get existing Hero information
-    const hero =
-      await getHeroRecord();
+    // --------------------------------------------------------
+    // Get existing Hero
+    // --------------------------------------------------------
+
+    const hero = await getHeroRecord();
 
     if (!hero) {
       return sendError(
@@ -77,39 +81,82 @@ const updateHero = async (
       );
     }
 
-    // Keep the current image when no new image is uploaded
-    let backgroundImage =
-      hero.background_image;
+    // --------------------------------------------------------
+    // Existing images
+    // --------------------------------------------------------
 
-    // Handle the new uploaded image
-    if (req.file) {
-      backgroundImage =
-        `hero/${req.file.filename}`;
+    let backgroundImageDesktop =
+      hero.background_image_desktop;
 
-      uploadedFilePath =
+    let backgroundImageMobile =
+      hero.background_image_mobile;
+
+    // --------------------------------------------------------
+    // Handle desktop image
+    // --------------------------------------------------------
+
+    if (req.files?.background_image_desktop?.[0]) {
+      const file =
+        req.files.background_image_desktop[0];
+
+      backgroundImageDesktop =
+        `hero/${file.filename}`;
+
+      uploadedFiles.push(
         path.join(
           __dirname,
           "../uploads",
-          backgroundImage
-        );
+          backgroundImageDesktop
+        )
+      );
     }
 
-    // Update Hero information
+    // --------------------------------------------------------
+    // Handle mobile image
+    // --------------------------------------------------------
+
+    if (req.files?.background_image_mobile?.[0]) {
+      const file =
+        req.files.background_image_mobile[0];
+
+      backgroundImageMobile =
+        `hero/${file.filename}`;
+
+      uploadedFiles.push(
+        path.join(
+          __dirname,
+          "../uploads",
+          backgroundImageMobile
+        )
+      );
+    }
+
+    // --------------------------------------------------------
+    // Update database
+    // --------------------------------------------------------
+
     await db.query(
       `
         UPDATE hero
         SET
           title_fr = ?,
           title_en = ?,
+
           subtitle_fr = ?,
           subtitle_en = ?,
+
           description_fr = ?,
           description_en = ?,
+
           primary_button_fr = ?,
           primary_button_en = ?,
+
           secondary_button_fr = ?,
           secondary_button_en = ?,
-          background_image = ?
+
+          background_image_desktop = ?,
+          background_image_mobile = ?
+
         WHERE id = ?
       `,
       [
@@ -143,13 +190,18 @@ const updateHero = async (
         req.body.secondary_button_en ??
           hero.secondary_button_en,
 
-        backgroundImage,
+        backgroundImageDesktop,
+
+        backgroundImageMobile,
 
         hero.id,
       ]
     );
 
-    // Get the updated Hero information
+    // --------------------------------------------------------
+    // Get updated Hero
+    // --------------------------------------------------------
+
     const updatedHero =
       await getHeroRecord();
 
@@ -164,22 +216,21 @@ const updateHero = async (
       error
     );
 
-    // Remove the new image if the database update failed
-    if (
-      uploadedFilePath &&
-      fs.existsSync(
-        uploadedFilePath
-      )
-    ) {
-      try {
-        fs.unlinkSync(
-          uploadedFilePath
-        );
-      } catch (fileError) {
-        console.error(
-          "Failed to remove uploaded hero image:",
-          fileError
-        );
+    // --------------------------------------------------------
+    // Delete newly uploaded files
+    // if database update failed
+    // --------------------------------------------------------
+
+    for (const filePath of uploadedFiles) {
+      if (fs.existsSync(filePath)) {
+        try {
+          fs.unlinkSync(filePath);
+        } catch (fileError) {
+          console.error(
+            "Failed to remove uploaded hero image:",
+            fileError
+          );
+        }
       }
     }
 

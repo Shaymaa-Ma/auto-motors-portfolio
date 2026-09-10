@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useLanguage } from "../../context/LanguageContext";
@@ -13,6 +12,10 @@ const HeroSection = () => {
 
   const [hero, setHero] = useState(null);
   const [company, setCompany] = useState(null);
+
+  // ==========================================================
+  // LOAD HERO + COMPANY
+  // ==========================================================
 
   useEffect(() => {
     const loadData = async () => {
@@ -32,10 +35,22 @@ const HeroSection = () => {
     loadData();
   }, []);
 
-  if (!hero) return null;
+  // ==========================================================
+  // LOADING
+  // ==========================================================
+
+  if (!hero) {
+    return null;
+  }
+
+  // ==========================================================
+  // LANGUAGE CONTENT
+  // ==========================================================
 
   const title =
-    language === "fr" ? hero.title_fr : hero.title_en;
+    language === "fr"
+      ? hero.title_fr
+      : hero.title_en;
 
   const subtitle =
     language === "fr"
@@ -57,13 +72,25 @@ const HeroSection = () => {
       ? hero.secondary_button_fr
       : hero.secondary_button_en;
 
-  const backgroundImage = hero.background_image
-    ? getImageUrl(hero.background_image)
+  // ==========================================================
+  // HERO IMAGES
+  // ==========================================================
+
+  const desktopImage = hero.background_image_desktop
+    ? getImageUrl(hero.background_image_desktop)
     : "";
 
-  // Animation settings
+  const mobileImage = hero.background_image_mobile
+    ? getImageUrl(hero.background_image_mobile)
+    : desktopImage;
+
+  // ==========================================================
+  // ANIMATIONS
+  // ==========================================================
+
   const containerVariants = {
     hidden: {},
+
     visible: {
       transition: {
         staggerChildren: 0.15,
@@ -76,9 +103,11 @@ const HeroSection = () => {
       opacity: 0,
       y: 30,
     },
+
     visible: {
       opacity: 1,
       y: 0,
+
       transition: {
         duration: 0.8,
         ease: [0.22, 1, 0.36, 1],
@@ -86,30 +115,64 @@ const HeroSection = () => {
     },
   };
 
+  // ==========================================================
+  // RENDER
+  // ==========================================================
+
   return (
     <section
       id="home"
       className="hero"
-      style={
-        backgroundImage
-          ? {
-              backgroundImage: `url("${backgroundImage}")`,
-            }
-          : undefined
-      }
     >
-      {/* Background animation */}
+      {/* =====================================================
+          RESPONSIVE HERO BACKGROUND
+          ===================================================== */}
+
+      {desktopImage && (
+        <picture className="hero__background">
+          {mobileImage && (
+            <source
+              media="(max-width: 767.98px)"
+              srcSet={mobileImage}
+            />
+          )}
+
+          <img
+            src={desktopImage}
+            alt=""
+            className="hero__background-image"
+            aria-hidden="true"
+          />
+        </picture>
+      )}
+
+      {/* =====================================================
+          BACKGROUND ANIMATION
+          ===================================================== */}
+
       <motion.div
         className="hero__animated-bg"
-        initial={{ scale: 1.05 }}
-        animate={{ scale: 1 }}
+        initial={{
+          scale: 1.05,
+        }}
+        animate={{
+          scale: 1,
+        }}
         transition={{
           duration: 2,
           ease: "easeOut",
         }}
       />
 
+      {/* =====================================================
+          OVERLAY
+          ===================================================== */}
+
       <div className="hero__overlay"></div>
+
+      {/* =====================================================
+          CONTENT
+          ===================================================== */}
 
       <div className="container hero__container">
         <motion.div
@@ -118,7 +181,10 @@ const HeroSection = () => {
           initial="hidden"
           animate="visible"
         >
-          {/* Company */}
+          {/* =================================================
+              COMPANY
+              ================================================= */}
+
           {company?.company_name && (
             <motion.span
               className="hero__eyebrow"
@@ -128,17 +194,18 @@ const HeroSection = () => {
             </motion.span>
           )}
 
-          {/* Main title */}
+          {/* =================================================
+              TITLE — TYPEWRITER EFFECT
+              ================================================= */}
+
           {title && (
-            <motion.h1
-              className="hero__title"
-              variants={itemVariants}
-            >
-              {title}
-            </motion.h1>
+            <TypewriterTitle title={title} />
           )}
 
-          {/* Subtitle */}
+          {/* =================================================
+              SUBTITLE
+              ================================================= */}
+
           {subtitle && (
             <motion.p
               className="hero__subtitle"
@@ -148,7 +215,10 @@ const HeroSection = () => {
             </motion.p>
           )}
 
-          {/* Description */}
+          {/* =================================================
+              DESCRIPTION
+              ================================================= */}
+
           {description && (
             <motion.p
               className="hero__description"
@@ -158,12 +228,19 @@ const HeroSection = () => {
             </motion.p>
           )}
 
-          {/* Buttons */}
+          {/* =================================================
+              BUTTONS
+              ================================================= */}
+
           {(primaryButton || secondaryButton) && (
             <motion.div
               className="hero__actions"
               variants={itemVariants}
             >
+              {/* =================================================
+                  PRIMARY
+                  ================================================= */}
+
               {primaryButton && (
                 <motion.a
                   href="#products"
@@ -179,7 +256,9 @@ const HeroSection = () => {
                     duration: 0.2,
                   }}
                 >
-                  <span>{primaryButton}</span>
+                  <span>
+                    {primaryButton}
+                  </span>
 
                   <motion.i
                     className="bi bi-arrow-right"
@@ -190,6 +269,10 @@ const HeroSection = () => {
                   ></motion.i>
                 </motion.a>
               )}
+
+              {/* =================================================
+                  SECONDARY
+                  ================================================= */}
 
               {secondaryButton && (
                 <motion.a
@@ -214,46 +297,119 @@ const HeroSection = () => {
         </motion.div>
       </div>
 
-      {/* Scroll indicator */}
-      <motion.a
-        href="#about"
-        className="hero__scroll"
-        aria-label={
-          language === "fr"
-            ? "Découvrir la section À propos"
-            : "Discover the About section"
-        }
-        initial={{
-          opacity: 0,
-          y: 15,
-        }}
+      {/* =====================================================
+          SCROLL INDICATOR
+          ===================================================== */}
+
+    </section>
+  );
+};
+
+
+// ============================================================
+// TYPEWRITER TITLE
+// ============================================================
+
+const TypewriterTitle = ({ title }) => {
+  const [displayedText, setDisplayedText] = useState("");
+
+  useEffect(() => {
+    let currentIndex = 0;
+    let timeoutId;
+
+    const typeSpeed = 90;
+    const deleteSpeed = 55;
+    const pauseAfterTyping = 2200;
+    const pauseBeforeTyping = 700;
+
+    const typeText = () => {
+      if (currentIndex < title.length) {
+        currentIndex++;
+
+        setDisplayedText(
+          title.substring(0, currentIndex)
+        );
+
+        timeoutId = setTimeout(
+          typeText,
+          typeSpeed
+        );
+
+        return;
+      }
+
+      timeoutId = setTimeout(
+        deleteText,
+        pauseAfterTyping
+      );
+    };
+
+    const deleteText = () => {
+      if (currentIndex > 0) {
+        currentIndex--;
+
+        setDisplayedText(
+          title.substring(0, currentIndex)
+        );
+
+        timeoutId = setTimeout(
+          deleteText,
+          deleteSpeed
+        );
+
+        return;
+      }
+
+      timeoutId = setTimeout(
+        typeText,
+        pauseBeforeTyping
+      );
+    };
+
+    timeoutId = setTimeout(
+      typeText,
+      pauseBeforeTyping
+    );
+
+    return () => {
+      clearTimeout(timeoutId);
+    };
+  }, [title]);
+
+  return (
+    <motion.h1
+      className="hero__title"
+      initial={{
+        opacity: 0,
+        y: 20,
+      }}
+      animate={{
+        opacity: 1,
+        y: 0,
+      }}
+      transition={{
+        duration: 0.8,
+        ease: [0.22, 1, 0.36, 1],
+      }}
+    >
+      {displayedText}
+
+      {/* Elegant blinking cursor */}
+      <motion.span
+        className="hero__title-cursor"
+        aria-hidden="true"
         animate={{
-          opacity: 1,
-          y: 0,
+          opacity: [1, 0, 1],
         }}
         transition={{
-          delay: 1.4,
           duration: 0.8,
+          repeat: Infinity,
+          ease: "easeInOut",
         }}
       >
-        <span>
-          {language === "fr" ? "Découvrir" : "Discover"}
-        </span>
-
-        <motion.i
-          className="bi bi-arrow-down"
-          aria-hidden="true"
-          animate={{
-            y: [0, 6, 0],
-          }}
-          transition={{
-            duration: 1.5,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-        ></motion.i>
-      </motion.a>
-    </section>
+        |
+      </motion.span>
+    </motion.h1>
   );
 };
 

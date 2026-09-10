@@ -18,7 +18,12 @@ const Hero = () => {
     secondary_button_en: "",
   });
 
-  const [selectedImage, setSelectedImage] = useState(null);
+  // Separate image states
+  const [selectedDesktopImage, setSelectedDesktopImage] =
+    useState(null);
+
+  const [selectedMobileImage, setSelectedMobileImage] =
+    useState(null);
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -39,11 +44,9 @@ const Hero = () => {
       setLoading(true);
       setErrorMessage("");
 
-      const response =
-        await heroApi.get();
+      const response = await heroApi.get();
 
-      const heroData =
-        response?.data;
+      const heroData = response?.data;
 
       if (!heroData) {
         throw new Error(
@@ -54,17 +57,11 @@ const Hero = () => {
       setHero(heroData);
 
       setFormData({
-        title_fr:
-          heroData.title_fr || "",
+        title_fr: heroData.title_fr || "",
+        title_en: heroData.title_en || "",
 
-        title_en:
-          heroData.title_en || "",
-
-        subtitle_fr:
-          heroData.subtitle_fr || "",
-
-        subtitle_en:
-          heroData.subtitle_en || "",
+        subtitle_fr: heroData.subtitle_fr || "",
+        subtitle_en: heroData.subtitle_en || "",
 
         description_fr:
           heroData.description_fr || "",
@@ -84,11 +81,11 @@ const Hero = () => {
         secondary_button_en:
           heroData.secondary_button_en || "",
       });
+
+      setSelectedDesktopImage(null);
+      setSelectedMobileImage(null);
     } catch (error) {
-      console.error(
-        "Load Hero error:",
-        error
-      );
+      console.error("Load Hero error:", error);
 
       setErrorMessage(
         error?.response?.data?.message ||
@@ -102,10 +99,7 @@ const Hero = () => {
 
   // Handle text field changes
   const handleChange = (event) => {
-    const {
-      name,
-      value,
-    } = event.target;
+    const { name, value } = event.target;
 
     setFormData((current) => ({
       ...current,
@@ -116,9 +110,17 @@ const Hero = () => {
     setErrorMessage("");
   };
 
-  // Handle image selection
-  const handleImageChange = (file) => {
-    setSelectedImage(file);
+  // Handle desktop image selection
+  const handleDesktopImageChange = (file) => {
+    setSelectedDesktopImage(file);
+
+    setSuccessMessage("");
+    setErrorMessage("");
+  };
+
+  // Handle mobile image selection
+  const handleMobileImageChange = (file) => {
+    setSelectedMobileImage(file);
 
     setSuccessMessage("");
     setErrorMessage("");
@@ -133,29 +135,33 @@ const Hero = () => {
       setSuccessMessage("");
       setErrorMessage("");
 
-      const data =
-        new FormData();
+      const data = new FormData();
 
+      // Append text fields
       Object.entries(formData).forEach(
         ([key, value]) => {
-          data.append(
-            key,
-            value
-          );
+          data.append(key, value);
         }
       );
 
-      if (selectedImage) {
+      // Desktop image
+      if (selectedDesktopImage) {
         data.append(
-          "background_image",
-          selectedImage
+          "background_image_desktop",
+          selectedDesktopImage
+        );
+      }
+
+      // Mobile image
+      if (selectedMobileImage) {
+        data.append(
+          "background_image_mobile",
+          selectedMobileImage
         );
       }
 
       const response =
-        await heroApi.update(
-          data
-        );
+        await heroApi.update(data);
 
       const updatedHero =
         response?.data;
@@ -196,7 +202,9 @@ const Hero = () => {
         });
       }
 
-      setSelectedImage(null);
+      // Clear selected images after successful save
+      setSelectedDesktopImage(null);
+      setSelectedMobileImage(null);
 
       setSuccessMessage(
         "Hero information updated successfully."
@@ -246,9 +254,9 @@ const Hero = () => {
           </h1>
 
           <p>
-            Manage the main content and
-            background image displayed on
-            your homepage.
+            Manage the main content and responsive
+            background images displayed on your
+            homepage Hero section.
           </p>
         </div>
       </div>
@@ -284,38 +292,142 @@ const Hero = () => {
         onSubmit={handleSubmit}
       >
 
-        {/* Hero image */}
+        {/* ============================================================
+            HERO BACKGROUND IMAGES
+            ============================================================ */}
         <section className="admin-card hero-image-card">
+
           <div className="admin-card-header">
             <div>
               <h2>
-                Background Image
+                Hero Background Images
               </h2>
 
               <p>
-                This image is displayed as
-                the main background of the
-                homepage Hero section.
+                Upload separate images for desktop
+                and mobile screens.
               </p>
             </div>
           </div>
 
-          <ImageUploader
-            currentImage={
-              hero?.background_image
-            }
-            selectedImage={
-              selectedImage
-            }
-            onChange={
-              handleImageChange
-            }
-            label="Hero Background"
-          />
+          {/* Image size notes */}
+          <div className="hero-image-notes">
+
+            <div className="hero-image-note">
+              <div className="hero-image-note-icon">
+                DESKTOP
+              </div>
+
+              <div className="hero-image-note-content">
+                <strong>
+                  Recommended size: 1365 × 768 px
+                </strong>
+
+                <span>
+                  Aspect ratio: 16:9 ·
+                  Orientation: Landscape
+                </span>
+
+                <small>
+                  Use this size when uploading or
+                  replacing the desktop Hero image.
+                </small>
+              </div>
+            </div>
+
+            <div className="hero-image-note">
+              <div className="hero-image-note-icon">
+                MOBILE
+              </div>
+
+              <div className="hero-image-note-content">
+                <strong>
+                  Recommended size: 884 × 1779 px
+                </strong>
+
+                <span>
+                  Aspect ratio: approximately 1:2.01 ·
+                  Orientation: Portrait / Mobile
+                </span>
+
+                <small>
+                  Use this size when uploading or
+                  replacing the mobile Hero image.
+                </small>
+              </div>
+            </div>
+
+          </div>
+
+          {/* Image uploaders */}
+          <div className="hero-images-grid">
+
+            {/* Desktop */}
+            <div className="hero-image-upload-item">
+
+              <div className="hero-image-upload-heading">
+                <h3>
+                  Desktop Hero Image
+                </h3>
+
+                <p>
+                  Displayed on desktop and larger
+                  screens.
+                </p>
+              </div>
+
+              <ImageUploader
+                currentImage={
+                  hero?.background_image_desktop
+                }
+                selectedImage={
+                  selectedDesktopImage
+                }
+                onChange={
+                  handleDesktopImageChange
+                }
+                label="Desktop Background"
+              />
+
+            </div>
+
+            {/* Mobile */}
+            <div className="hero-image-upload-item">
+
+              <div className="hero-image-upload-heading">
+                <h3>
+                  Mobile Hero Image
+                </h3>
+
+                <p>
+                  Displayed on phones and small
+                  screens.
+                </p>
+              </div>
+
+              <ImageUploader
+                currentImage={
+                  hero?.background_image_mobile
+                }
+                selectedImage={
+                  selectedMobileImage
+                }
+                onChange={
+                  handleMobileImageChange
+                }
+                label="Mobile Background"
+              />
+
+            </div>
+
+          </div>
         </section>
 
-        {/* French content */}
+        {/* ============================================================
+            FRENCH CONTENT
+            ============================================================ */}
         <section className="admin-card">
+
           <div className="admin-card-header">
             <div>
               <span className="admin-language-label">
@@ -328,8 +440,8 @@ const Hero = () => {
                 </h2>
 
                 <p>
-                  Content displayed when
-                  French is selected.
+                  Content displayed when French is
+                  selected.
                 </p>
               </div>
             </div>
@@ -346,12 +458,8 @@ const Hero = () => {
                 id="title_fr"
                 type="text"
                 name="title_fr"
-                value={
-                  formData.title_fr
-                }
-                onChange={
-                  handleChange
-                }
+                value={formData.title_fr}
+                onChange={handleChange}
                 placeholder="Enter French title"
               />
             </div>
@@ -365,12 +473,8 @@ const Hero = () => {
                 id="subtitle_fr"
                 type="text"
                 name="subtitle_fr"
-                value={
-                  formData.subtitle_fr
-                }
-                onChange={
-                  handleChange
-                }
+                value={formData.subtitle_fr}
+                onChange={handleChange}
                 placeholder="Enter French subtitle"
               />
             </div>
@@ -386,9 +490,7 @@ const Hero = () => {
                 value={
                   formData.description_fr
                 }
-                onChange={
-                  handleChange
-                }
+                onChange={handleChange}
                 placeholder="Enter French description"
                 rows="5"
               />
@@ -406,9 +508,7 @@ const Hero = () => {
                 value={
                   formData.primary_button_fr
                 }
-                onChange={
-                  handleChange
-                }
+                onChange={handleChange}
                 placeholder="Enter primary button text"
               />
             </div>
@@ -425,9 +525,7 @@ const Hero = () => {
                 value={
                   formData.secondary_button_fr
                 }
-                onChange={
-                  handleChange
-                }
+                onChange={handleChange}
                 placeholder="Enter secondary button text"
               />
             </div>
@@ -435,8 +533,11 @@ const Hero = () => {
           </div>
         </section>
 
-        {/* English content */}
+        {/* ============================================================
+            ENGLISH CONTENT
+            ============================================================ */}
         <section className="admin-card">
+
           <div className="admin-card-header">
             <div>
               <span className="admin-language-label">
@@ -449,8 +550,8 @@ const Hero = () => {
                 </h2>
 
                 <p>
-                  Content displayed when
-                  English is selected.
+                  Content displayed when English is
+                  selected.
                 </p>
               </div>
             </div>
@@ -467,12 +568,8 @@ const Hero = () => {
                 id="title_en"
                 type="text"
                 name="title_en"
-                value={
-                  formData.title_en
-                }
-                onChange={
-                  handleChange
-                }
+                value={formData.title_en}
+                onChange={handleChange}
                 placeholder="Enter English title"
               />
             </div>
@@ -486,12 +583,8 @@ const Hero = () => {
                 id="subtitle_en"
                 type="text"
                 name="subtitle_en"
-                value={
-                  formData.subtitle_en
-                }
-                onChange={
-                  handleChange
-                }
+                value={formData.subtitle_en}
+                onChange={handleChange}
                 placeholder="Enter English subtitle"
               />
             </div>
@@ -507,9 +600,7 @@ const Hero = () => {
                 value={
                   formData.description_en
                 }
-                onChange={
-                  handleChange
-                }
+                onChange={handleChange}
                 placeholder="Enter English description"
                 rows="5"
               />
@@ -527,9 +618,7 @@ const Hero = () => {
                 value={
                   formData.primary_button_en
                 }
-                onChange={
-                  handleChange
-                }
+                onChange={handleChange}
                 placeholder="Enter primary button text"
               />
             </div>
@@ -546,9 +635,7 @@ const Hero = () => {
                 value={
                   formData.secondary_button_en
                 }
-                onChange={
-                  handleChange
-                }
+                onChange={handleChange}
                 placeholder="Enter secondary button text"
               />
             </div>
@@ -558,6 +645,7 @@ const Hero = () => {
 
         {/* Save button */}
         <div className="hero-form-actions">
+
           <button
             type="submit"
             className="admin-primary-button"
@@ -572,6 +660,7 @@ const Hero = () => {
               "Save Changes"
             )}
           </button>
+
         </div>
 
       </form>

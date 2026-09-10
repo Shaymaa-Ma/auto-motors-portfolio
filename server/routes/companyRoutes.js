@@ -1,11 +1,40 @@
-
-//Company route
-
 const express = require("express");
-const router = express.Router();
 
-const { getCompany } = require("../controllers/companyController");
+const {
+  getCompany,
+  updateCompany,
+} = require("../controllers/companyController");
 
-router.get("/", getCompany);
+const authMiddleware = require("../middleware/authMiddleware");
+
+const {
+  createImageUpload,
+} = require("../middleware/uploadMiddleware");
+
+const router =
+  express.Router();
+
+// Configure Company logo upload
+const companyUpload =
+  createImageUpload(
+    "logo",
+    "company-logo"
+  );
+
+// Get Company information
+router.get(
+  "/",
+  getCompany
+);
+
+// Update Company information
+router.put(
+  "/",
+  authMiddleware,
+  companyUpload.single(
+    "logo"
+  ),
+  updateCompany
+);
 
 module.exports = router;

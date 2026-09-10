@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { useLanguage } from "../../context/LanguageContext";
 import { motion } from "framer-motion";
@@ -46,6 +47,12 @@ const Footer = () => {
       ? company.tagline_fr
       : company.tagline_en;
 
+  /* ==========================================================================
+     FOOTER NAVIGATION
+
+     Follows the main website structure while keeping the footer concise.
+     ========================================================================== */
+
   const navigation = [
     {
       href: "#home",
@@ -64,6 +71,13 @@ const Footer = () => {
     {
       href: "#services",
       label: "Services",
+    },
+    {
+      href: "#advantages",
+      label:
+        language === "fr"
+          ? "Avantages"
+          : "Advantages",
     },
     {
       href: "#products",
@@ -85,7 +99,10 @@ const Footer = () => {
     },
   ];
 
-  const navigationLabel = "Navigation";
+  const navigationLabel =
+    language === "fr"
+      ? "Navigation"
+      : "Navigation";
 
   const socialLabel =
     language === "fr"
@@ -110,6 +127,10 @@ const Footer = () => {
     <footer className="footer">
       <div className="container">
 
+        {/* ====================================================================
+           MAIN FOOTER CONTENT
+           ==================================================================== */}
+
         <motion.div
           className="footer__grid"
           initial={{
@@ -130,7 +151,10 @@ const Footer = () => {
           }}
         >
 
-          {/* BRAND */}
+          {/* ==================================================================
+             BRAND
+             ================================================================== */}
+
           <div className="footer__brand">
 
             <a
@@ -171,7 +195,10 @@ const Footer = () => {
 
           </div>
 
-          {/* NAVIGATION */}
+          {/* ==================================================================
+             NAVIGATION
+             ================================================================== */}
+
           <div className="footer__navigation">
 
             <h3>{navigationLabel}</h3>
@@ -189,7 +216,10 @@ const Footer = () => {
 
           </div>
 
-          {/* SOCIAL */}
+          {/* ==================================================================
+             SOCIAL
+             ================================================================== */}
+
           <div className="footer__social-column">
 
             <h3>{socialLabel}</h3>
@@ -255,7 +285,10 @@ const Footer = () => {
 
         </motion.div>
 
-        {/* BOTTOM */}
+        {/* ====================================================================
+           BOTTOM
+           ==================================================================== */}
+
         <motion.div
           className="footer__bottom"
           initial={{ opacity: 0 }}

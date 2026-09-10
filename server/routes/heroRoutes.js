@@ -13,26 +13,49 @@ const {
 
 const router = express.Router();
 
-// Configure Hero image upload
+// ============================================================
+// HERO IMAGE UPLOAD
+// ============================================================
+
 const heroUpload =
   createImageUpload(
     "hero",
     "hero"
   );
 
-// Get Hero information
+// ============================================================
+// GET HERO
+// ============================================================
+
 router.get(
   "/",
   getHero
 );
 
-// Update Hero information
+// ============================================================
+// UPDATE HERO
+// ============================================================
+//
+// Supports two separate images:
+//
+// background_image_desktop
+// background_image_mobile
+//
+// ============================================================
+
 router.put(
   "/",
   authMiddleware,
-  heroUpload.single(
-    "background_image"
-  ),
+  heroUpload.fields([
+    {
+      name: "background_image_desktop",
+      maxCount: 1,
+    },
+    {
+      name: "background_image_mobile",
+      maxCount: 1,
+    },
+  ]),
   updateHero
 );
 

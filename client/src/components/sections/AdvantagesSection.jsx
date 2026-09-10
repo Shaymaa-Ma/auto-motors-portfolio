@@ -1,4 +1,8 @@
-import React, { useEffect, useState } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { motion } from "framer-motion";
 import { useLanguage } from "../../context/LanguageContext";
 import { getAdvantages } from "../../api/api";
@@ -9,22 +13,39 @@ const AdvantagesSection = () => {
 
   const [advantages, setAdvantages] = useState([]);
 
+  const advantagesScrollerRef =
+    useRef(null);
+
   useEffect(() => {
     const loadAdvantages = async () => {
       try {
         const data = await getAdvantages();
-        setAdvantages(data || []);
+
+        const sortedAdvantages =
+          [...(data || [])].sort(
+            (a, b) =>
+              Number(a.display_order || 0) -
+              Number(b.display_order || 0)
+          );
+
+        setAdvantages(sortedAdvantages);
       } catch (error) {
-        console.error("Advantages data loading error:", error);
+        console.error(
+          "Advantages data loading error:",
+          error
+        );
       }
     };
 
     loadAdvantages();
   }, []);
 
-  if (!advantages.length) return null;
+  if (!advantages.length) {
+    return null;
+  }
 
-  const firstAdvantage = advantages[0];
+  const firstAdvantage =
+    advantages[0];
 
   const sectionTitle =
     language === "fr"
@@ -36,51 +57,77 @@ const AdvantagesSection = () => {
       ? firstAdvantage.section_subtitle_fr
       : firstAdvantage.section_subtitle_en;
 
+  // Convert mouse wheel movement into horizontal scrolling
+  const handleWheel = (event) => {
+    const element =
+      advantagesScrollerRef.current;
+
+    if (!element) {
+      return;
+    }
+
+    if (
+      element.scrollWidth <=
+      element.clientWidth
+    ) {
+      return;
+    }
+
+    if (
+      Math.abs(event.deltaY) >
+      Math.abs(event.deltaX)
+    ) {
+      event.preventDefault();
+
+      element.scrollBy({
+        left: event.deltaY,
+        behavior: "smooth",
+      });
+    }
+  };
+
   const headingVariants = {
     hidden: {
       opacity: 0,
-      y: 35,
+      y: 30,
     },
+
     visible: {
       opacity: 1,
       y: 0,
+
       transition: {
         duration: 0.7,
-        ease: "easeOut",
+        ease: [0.22, 1, 0.36, 1],
       },
     },
   };
 
-  const cardsContainerVariants = {
-    hidden: {},
-    visible: {
-      transition: {
-        staggerChildren: 0.12,
-      },
-    },
-  };
-
-  const cardVariants = {
+  const itemVariants = {
     hidden: {
       opacity: 0,
-      y: 35,
-      scale: 0.97,
+      x: 20,
     },
+
     visible: {
       opacity: 1,
-      y: 0,
-      scale: 1,
+      x: 0,
+
       transition: {
-        duration: 0.5,
-        ease: "easeOut",
+        duration: 0.45,
+        ease: [0.22, 1, 0.36, 1],
       },
     },
   };
 
   return (
-    <section id="advantages" className="advantages section">
+    <section
+      id="advantages"
+      className="advantages section"
+    >
       <div className="container">
 
+        {/* Section heading */}
         <motion.div
           variants={headingVariants}
           initial="hidden"
@@ -96,68 +143,75 @@ const AdvantagesSection = () => {
           />
         </motion.div>
 
-        <motion.div
-          className="advantages__grid"
-          variants={cardsContainerVariants}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{
-            once: true,
-            amount: 0.1,
-          }}
+        {/* Horizontal advantages */}
+        <div
+          ref={advantagesScrollerRef}
+          className="advantages__scroll"
+          onWheel={handleWheel}
         >
-          {advantages.map((advantage) => {
-            const title =
-              language === "fr"
-                ? advantage.title_fr
-                : advantage.title_en;
+          <motion.div
+            className="advantages__track"
+            initial="hidden"
+            whileInView="visible"
+            viewport={{
+              once: true,
+              amount: 0.05,
+            }}
+          >
+            {advantages.map(
+              (advantage, index) => {
+                const title =
+                  language === "fr"
+                    ? advantage.title_fr
+                    : advantage.title_en;
 
-            const description =
-              language === "fr"
-                ? advantage.description_fr
-                : advantage.description_en;
+                const description =
+                  language === "fr"
+                    ? advantage.description_fr
+                    : advantage.description_en;
 
-            return (
-              <motion.article
-                key={advantage.id}
-                className="advantage-card"
-                variants={cardVariants}
-                whileHover={{
-                  y: -7,
-                  transition: {
-                    duration: 0.2,
-                    ease: "easeOut",
-                  },
-                }}
-              >
-                <motion.div
-                  className="advantage-card__icon"
-                  whileHover={{
-                    scale: 1.1,
-                    rotate: -4,
-                  }}
-                  transition={{
-                    duration: 0.2,
-                    ease: "easeOut",
-                  }}
-                >
-                  {advantage.icon && (
-                    <i
-                      className={`bi ${advantage.icon}`}
-                      aria-hidden="true"
-                    ></i>
-                  )}
-                </motion.div>
+                return (
+                  <motion.div
+                    key={advantage.id}
+                    className="advantage-item"
+                    variants={itemVariants}
+                  >
+                    {/* Advantage icon */}
+                    <div className="advantage-item__icon">
+                      {advantage.icon && (
+                        <i
+                          className={`bi ${advantage.icon}`}
+                          aria-hidden="true"
+                        />
+                      )}
+                    </div>
 
-                <div className="advantage-card__content">
-                  {title && <h3>{title}</h3>}
+                    {/* Advantage text */}
+                    <div className="advantage-item__content">
+                      {title && (
+                        <h3>{title}</h3>
+                      )}
 
-                  {description && <p>{description}</p>}
-                </div>
-              </motion.article>
-            );
-          })}
-        </motion.div>
+                      {description && (
+                        <p>{description}</p>
+                      )}
+                    </div>
+
+                    {/* Separator */}
+                    {index <
+                      advantages.length -
+                        1 && (
+                      <span
+                        className="advantage-item__separator"
+                        aria-hidden="true"
+                      />
+                    )}
+                  </motion.div>
+                );
+              }
+            )}
+          </motion.div>
+        </div>
       </div>
     </section>
   );

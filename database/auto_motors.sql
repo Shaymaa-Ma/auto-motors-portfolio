@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1:3306
--- Generation Time: Sep 08, 2026 at 01:47 PM
+-- Generation Time: Sep 10, 2026 at 06:49 AM
 -- Server version: 8.4.7
 -- PHP Version: 8.3.28
 
@@ -57,7 +57,7 @@ CREATE TABLE IF NOT EXISTS `about` (
 --
 
 INSERT INTO `about` (`id`, `title_fr`, `title_en`, `subtitle_fr`, `subtitle_en`, `description_fr`, `description_en`, `mission_title_fr`, `mission_title_en`, `mission_fr`, `mission_en`, `image`, `primary_button_fr`, `primary_button_en`, `primary_button_link`, `secondary_button_fr`, `secondary_button_en`, `secondary_button_link`, `created_at`, `updated_at`) VALUES
-(1, 'Votre partenaire en produits automobiles', 'Your Automotive Products Partner', 'Des produits de qualité et un service fiable', 'Quality products and reliable service', 'Nous sommes spécialisés dans la vente de pièces automobiles, notamment les batteries, lubrifiants, pneus et pièces détachées. Nous proposons des produits de qualité et un service fiable.', 'We specialize in the sale of automotive products and spare parts, including batteries, lubricants, tires, and various vehicle components. We provide quality products and reliable service.', 'Notre mission', 'Our Mission', 'Fournir des pièces de qualité à des prix compétitifs.', 'Provide quality automotive parts at competitive prices.', 'about/about-main.jpg', 'Découvrir nos produits', 'Explore Our Products', '#products', 'Nous contacter', 'Contact Us', '#contact', '2026-09-05 12:55:50', '2026-09-06 06:47:48');
+(1, 'Votre partenaire en produits automobiles', 'Your Automotive Products Partner', 'Des produits de qualité et un service fiable', 'Quality products and reliable service', 'Nous sommes spécialisés dans la vente de pièces automobiles, notamment les batteries, lubrifiants, pneus et pièces détachées. Nous proposons des produits de qualité et un service fiable.', 'We specialize in the sale of automotive products and spare parts, including batteries, lubricants, tires, and various vehicle components. We provide quality products and reliable service.', 'Notre mission', 'Our Mission', 'Fournir des pièces de qualité à des prix compétitifs.', 'Provide quality automotive parts at competitive prices.', 'about/about-main.jpg', 'Découvrir nos produits', 'Explore Our Products', '#products', 'Nous contacter', 'Contact Us', '#contact', '2026-09-05 12:55:50', '2026-09-09 03:21:09');
 
 -- --------------------------------------------------------
 
@@ -77,7 +77,14 @@ CREATE TABLE IF NOT EXISTS `admins` (
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `email` (`email`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `admins`
+--
+
+INSERT INTO `admins` (`id`, `name`, `email`, `password_hash`, `role`, `is_active`, `created_at`, `updated_at`) VALUES
+(1, 'Development Admin', 'admin@automotors.local', '$2b$12$ja4yoCc2De0Eed2qjLqUDOTYorPomzLrpl2xxr0X.m2.apmndxQ0.', 'admin', 1, '2026-09-08 13:56:39', '2026-09-08 13:56:39');
 
 -- --------------------------------------------------------
 
@@ -102,14 +109,14 @@ CREATE TABLE IF NOT EXISTS `advantages` (
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `advantages`
 --
 
 INSERT INTO `advantages` (`id`, `section_title_fr`, `section_title_en`, `section_subtitle_fr`, `section_subtitle_en`, `title_fr`, `title_en`, `description_fr`, `description_en`, `icon`, `display_order`, `is_active`, `created_at`, `updated_at`) VALUES
-(1, 'La qualité au service de nos clients', 'Quality at the Service of Our Customers', 'Notre engagement pour des produits fiables et un service professionnel', 'Our commitment to reliable products and professional service', 'Produits de qualité', 'Quality Products', 'Nous proposons des produits de qualité pour répondre aux besoins de nos clients.', 'We provide quality products to meet our customers’ needs.', 'bi-award', 1, 1, '2026-09-05 07:20:28', '2026-09-08 13:14:39'),
+(1, 'La qualité au service de nos clients', 'Quality at the Service of Our Customers', 'Notre engagement pour des produits fiables et un service professionnel', 'Our commitment to reliable products and professional service', 'Produits de qualité', 'Quality Products', 'Nous proposons des produits de qualité pour répondre aux besoins de nos clients.', 'We provide quality products to meet our customers’ needs.', 'bi-award', 1, 1, '2026-09-05 07:20:28', '2026-09-09 08:07:15'),
 (2, 'La qualité au service de nos clients', 'Quality at the Service of Our Customers', 'Notre engagement pour des produits fiables et un service professionnel', 'Our commitment to reliable products and professional service', 'Prix compétitifs', 'Competitive Prices', 'Des prix compétitifs pour les particuliers et les professionnels.', 'Competitive prices for individuals and professionals.', 'bi-tags', 2, 1, '2026-09-05 07:20:28', '2026-09-08 13:14:39'),
 (3, 'La qualité au service de nos clients', 'Quality at the Service of Our Customers', 'Notre engagement pour des produits fiables et un service professionnel', 'Our commitment to reliable products and professional service', 'Importation fiable', 'Reliable Importation', 'Une activité d’importation dédiée aux produits et équipements automobiles.', 'Reliable importation of automotive products and equipment.', 'bi-box-seam', 3, 1, '2026-09-05 07:20:28', '2026-09-08 13:14:39'),
 (4, 'La qualité au service de nos clients', 'Quality at the Service of Our Customers', 'Notre engagement pour des produits fiables et un service professionnel', 'Our commitment to reliable products and professional service', 'Large gamme de produits', 'Wide Range of Products', 'Une gamme comprenant batteries, pneus, lubrifiants et pièces détachées.', 'A range including batteries, tires, lubricants and spare parts.', 'bi-grid-3x3-gap', 4, 1, '2026-09-05 07:20:28', '2026-09-08 13:14:39'),
@@ -179,7 +186,7 @@ CREATE TABLE IF NOT EXISTS `faqs` (
 --
 
 INSERT INTO `faqs` (`id`, `section_title_fr`, `section_title_en`, `section_subtitle_fr`, `section_subtitle_en`, `question_fr`, `question_en`, `answer_fr`, `answer_en`, `display_order`, `is_active`, `created_at`, `updated_at`) VALUES
-(1, 'Vous avez des questions ?', 'Have Questions?', 'Retrouvez les réponses aux questions les plus fréquentes', 'Find answers to the most frequently asked questions', 'Quels produits proposez-vous ?', 'What products do you offer?', 'Nous proposons des batteries, pneus, lubrifiants, huiles moteur et différentes pièces détachées automobiles.', 'We offer batteries, tires, lubricants, motor oils and various automotive spare parts.', 1, 1, '2026-09-05 07:20:28', '2026-09-05 12:55:50'),
+(1, 'Vous avez des questions ?', 'Have Questions?', 'Retrouvez les réponses aux questions les plus fréquentes', 'Find answers to the most frequently asked questions', 'Quels produits proposez-vous ?', 'What products do you offer?', 'Nous proposons des batteries, pneus, lubrifiants, huiles moteur et différentes pièces détachées automobiles.', 'We offer batteries, tires, lubricants, motor oils and various automotive spare parts.', 1, 1, '2026-09-05 07:20:28', '2026-09-09 08:44:50'),
 (2, 'Vous avez des questions ?', 'Have Questions?', 'Retrouvez les réponses aux questions les plus fréquentes', 'Find answers to the most frequently asked questions', 'Proposez-vous la livraison ?', 'Do you offer delivery?', 'Oui, nous proposons la livraison selon les besoins de nos clients.', 'Yes, we provide delivery according to our customers’ needs.', 2, 1, '2026-09-05 07:20:28', '2026-09-05 12:55:50'),
 (3, 'Vous avez des questions ?', 'Have Questions?', 'Retrouvez les réponses aux questions les plus fréquentes', 'Find answers to the most frequently asked questions', 'Faites-vous de la vente en gros ?', 'Do you offer wholesale?', 'Oui, nous fournissons nos produits aux magasins, revendeurs et professionnels.', 'Yes, we supply our products to stores, resellers and professionals.', 3, 1, '2026-09-05 07:20:28', '2026-09-05 12:55:50'),
 (4, 'Vous avez des questions ?', 'Have Questions?', 'Retrouvez les réponses aux questions les plus fréquentes', 'Find answers to the most frequently asked questions', 'Où êtes-vous situés ?', 'Where are you located?', 'Nous sommes situés à San Pedro, Gar Cartier Sotref, en face de SACC Cacao.', 'We are located in San Pedro, Gar Cartier Sotref, opposite SACC Cacao.', 4, 1, '2026-09-05 07:20:28', '2026-09-05 12:55:50'),
@@ -215,7 +222,7 @@ CREATE TABLE IF NOT EXISTS `gallery` (
 --
 
 INSERT INTO `gallery` (`id`, `section_title_fr`, `section_title_en`, `section_subtitle_fr`, `section_subtitle_en`, `title_fr`, `title_en`, `description_fr`, `description_en`, `image`, `display_order`, `is_active`, `created_at`, `updated_at`) VALUES
-(1, 'Découvrez notre activité', 'Discover Our Business', 'Un aperçu de notre entreprise, de nos produits et de notre activité', 'An overview of our company, products and activities', 'Notre entreprise', 'Our Company', 'Découvrez l’environnement et les installations d’AUTO MOTORS SARL.', 'Discover the environment and facilities of AUTO MOTORS SARL.', 'gallery/company.jpg', 1, 1, '2026-09-05 07:20:28', '2026-09-05 12:55:50'),
+(1, 'Découvrez notre activité', 'Discover Our Business', 'Un aperçu de notre entreprise, de nos produits et de notre activité', 'An overview of our company, products and activities', 'Notre entreprise', 'Our Company', 'Découvrez l’environnement et les installations d’AUTO MOTORS SARL.', 'Discover the environment and facilities of AUTO MOTORS SARL.', 'gallery/company.jpg', 1, 1, '2026-09-05 07:20:28', '2026-09-09 08:36:22'),
 (2, 'Découvrez notre activité', 'Discover Our Business', 'Un aperçu de notre entreprise, de nos produits et de notre activité', 'An overview of our company, products and activities', 'Nos produits', 'Our Products', 'Une sélection de produits automobiles.', 'A selection of automotive products.', 'gallery/products.jpg', 2, 1, '2026-09-05 07:20:28', '2026-09-05 12:55:50'),
 (3, 'Découvrez notre activité', 'Discover Our Business', 'Un aperçu de notre entreprise, de nos produits et de notre activité', 'An overview of our company, products and activities', 'Notre équipe', 'Our Team', 'Une équipe dédiée au service de nos clients.', 'A team dedicated to serving our customers.', 'gallery/team.jpg', 3, 1, '2026-09-05 07:20:28', '2026-09-05 12:55:50'),
 (4, 'Découvrez notre activité', 'Discover Our Business', 'Un aperçu de notre entreprise, de nos produits et de notre activité', 'An overview of our company, products and activities', 'Notre espace de travail', 'Our Workplace', 'Un environnement organisé pour assurer un service fiable.', 'An organized environment designed to provide reliable service.', 'gallery/workplace.jpg', 4, 1, '2026-09-05 07:20:28', '2026-09-05 12:55:50'),
@@ -241,9 +248,10 @@ CREATE TABLE IF NOT EXISTS `hero` (
   `primary_button_en` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `secondary_button_fr` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `secondary_button_en` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `background_image` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `background_image_desktop` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `background_image_mobile` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   PRIMARY KEY (`id`)
 ) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -251,8 +259,8 @@ CREATE TABLE IF NOT EXISTS `hero` (
 -- Dumping data for table `hero`
 --
 
-INSERT INTO `hero` (`id`, `title_fr`, `title_en`, `subtitle_fr`, `subtitle_en`, `description_fr`, `description_en`, `primary_button_fr`, `primary_button_en`, `secondary_button_fr`, `secondary_button_en`, `background_image`, `created_at`, `updated_at`) VALUES
-(1, 'AUTO MOTORS SARL', 'AUTO MOTORS SARL', 'Votre partenaire en pièces automobiles', 'Your Automotive Parts Partner', 'Des produits de qualité, des prix compétitifs et un service fiable pour répondre aux besoins des particuliers et des professionnels.', 'Quality products, competitive prices and reliable service to meet the needs of individuals and professionals.', 'Découvrir nos produits', 'Explore Our Products', 'Nous contacter', 'Contact Us', 'hero/hero-main.jpg', '2026-09-05 07:20:28', '2026-09-05 07:20:28');
+INSERT INTO `hero` (`id`, `title_fr`, `title_en`, `subtitle_fr`, `subtitle_en`, `description_fr`, `description_en`, `primary_button_fr`, `primary_button_en`, `secondary_button_fr`, `secondary_button_en`, `background_image_desktop`, `created_at`, `updated_at`, `background_image_mobile`) VALUES
+(1, 'AUTO MOTORS SARL', 'AUTO MOTORS SARL', 'Votre partenaire en pièces automobiles', 'Your Automotive Parts Partner', 'Des produits de qualité, des prix compétitifs et un service fiable pour répondre aux besoins des particuliers et des professionnels.', 'Quality products, competitive prices and reliable service to meet the needs of individuals and professionals.', 'Découvrir nos produits', 'Explore Our Products', 'Nous contacter', 'Contact Us', 'hero/hero-main-desktop.jpg', '2026-09-05 07:20:28', '2026-09-09 11:50:35', 'hero/hero-main-mobile.jpg');
 
 -- --------------------------------------------------------
 
@@ -277,14 +285,14 @@ CREATE TABLE IF NOT EXISTS `products` (
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `fk_products_category` (`category_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=16 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `products`
 --
 
 INSERT INTO `products` (`id`, `category_id`, `name_fr`, `name_en`, `description_fr`, `description_en`, `price`, `image`, `image_number`, `display_order`, `is_active`, `created_at`, `updated_at`) VALUES
-(1, 1, 'Batterie automobile 12V', '12V Automotive Battery', 'Batterie destinée aux véhicules automobiles.', 'Battery designed for automotive vehicles.', '70 $', 'products/battery-001.jpg', '001', 1, 1, '2026-09-05 07:20:28', '2026-09-08 11:07:23'),
+(1, 1, 'Batterie automobile 12V', '12V Automotive Battery', 'Batterie destinée aux véhicules automobiles.', 'Battery designed for automotive vehicles.', '70 $', 'products/battery-001.jpg', '001', 1, 1, '2026-09-05 07:20:28', '2026-09-09 09:56:09'),
 (2, 1, 'Batterie automobile 24V', '24V Automotive Battery', 'Batterie adaptée aux véhicules professionnels et poids lourds.', 'Battery suitable for professional and heavy-duty vehicles.', '120 $', 'products/battery-002.jpg', '002', 2, 1, '2026-09-05 07:20:28', '2026-09-08 11:07:23'),
 (3, 1, 'Batterie haute performance', 'High-Performance Battery', 'Batterie fiable adaptée aux besoins des véhicules professionnels.', 'Reliable battery suitable for professional vehicle needs.', '95 $', 'products/battery-003.jpg', '003', 3, 1, '2026-09-05 07:20:28', '2026-09-08 11:07:23'),
 (4, 2, 'Pneu pour camion', 'Truck Tire', 'Pneu destiné aux véhicules et camions.', 'Tire designed for vehicles and trucks.', '150 $', 'products/tire-001.jpg', '004', 4, 1, '2026-09-05 07:20:28', '2026-09-08 11:07:23'),
@@ -329,7 +337,7 @@ CREATE TABLE IF NOT EXISTS `product_categories` (
 --
 
 INSERT INTO `product_categories` (`id`, `section_title_fr`, `section_title_en`, `section_subtitle_fr`, `section_subtitle_en`, `name_fr`, `name_en`, `description_fr`, `description_en`, `image`, `display_order`, `is_active`, `created_at`, `updated_at`) VALUES
-(1, 'Des produits automobiles de qualité', 'Quality Automotive Products', 'Batteries, pneus, lubrifiants et pièces détachées', 'Batteries, tires, lubricants and spare parts', 'Batteries', 'Batteries', 'Batteries automobiles pour différents types de véhicules.', 'Automotive batteries for different types of vehicles.', 'categories/batteries.jpg', 1, 1, '2026-09-05 07:20:28', '2026-09-05 12:55:50'),
+(1, 'Des produits automobiles de qualité', 'Quality Automotive Products', 'Batteries, pneus, lubrifiants et pièces détachées', 'Batteries, tires, lubricants and spare parts', 'Batteries', 'Batteries', 'Batteries automobiles pour différents types de véhicules.', 'Automotive batteries for different types of vehicles.', 'categories/batteries.jpg', 1, 1, '2026-09-05 07:20:28', '2026-09-09 09:15:28'),
 (2, 'Des produits automobiles de qualité', 'Quality Automotive Products', 'Batteries, pneus, lubrifiants et pièces détachées', 'Batteries, tires, lubricants and spare parts', 'Pneus', 'Tires', 'Pneus adaptés aux voitures, camionnettes et véhicules lourds.', 'Tires suitable for cars, light trucks and heavy-duty vehicles.', 'categories/tires.jpg', 2, 1, '2026-09-05 07:20:28', '2026-09-05 12:55:50'),
 (3, 'Des produits automobiles de qualité', 'Quality Automotive Products', 'Batteries, pneus, lubrifiants et pièces détachées', 'Batteries, tires, lubricants and spare parts', 'Lubrifiants', 'Lubricants', 'Lubrifiants et huiles moteur pour différents types de véhicules.', 'Lubricants and motor oils for different types of vehicles.', 'categories/lubricants.jpg', 3, 1, '2026-09-05 07:20:28', '2026-09-05 12:55:50'),
 (4, 'Des produits automobiles de qualité', 'Quality Automotive Products', 'Batteries, pneus, lubrifiants et pièces détachées', 'Batteries, tires, lubricants and spare parts', 'Pièces détachées', 'Spare Parts', 'Pièces et composants automobiles pour différents besoins.', 'Automotive parts and components for different needs.', 'categories/spare-parts.jpg', 4, 1, '2026-09-05 07:20:28', '2026-09-05 12:55:50');
@@ -357,14 +365,14 @@ CREATE TABLE IF NOT EXISTS `services` (
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `services`
 --
 
 INSERT INTO `services` (`id`, `section_title_fr`, `section_title_en`, `section_subtitle_fr`, `section_subtitle_en`, `name_fr`, `name_en`, `description_fr`, `description_en`, `icon`, `display_order`, `is_active`, `created_at`, `updated_at`) VALUES
-(1, 'Des solutions automobiles adaptées à vos besoins', 'Automotive Solutions Tailored to Your Needs', 'Une gamme de services pour les particuliers et les professionnels', 'A range of services for individuals and professionals', 'Importation de pièces automobiles', 'Automotive Parts Importation', 'Importation de pièces et équipements automobiles de qualité.', 'Importation of quality automotive parts and equipment.', 'bi-car-front', 1, 1, '2026-09-05 07:20:28', '2026-09-08 13:10:22'),
+(1, 'Des solutions automobiles adaptées à vos besoins', 'Automotive Solutions Tailored to Your Needs', 'Une gamme de services pour les particuliers et les professionnels', 'A range of services for individuals and professionals', 'Importation de pièces automobiles', 'Automotive Parts Importation', 'Importation de pièces et équipements automobiles de qualité.', 'Importation of quality automotive parts and equipment.', 'bi-car-front', 1, 1, '2026-09-05 07:20:28', '2026-09-09 08:40:09'),
 (2, 'Des solutions automobiles adaptées à vos besoins', 'Automotive Solutions Tailored to Your Needs', 'Une gamme de services pour les particuliers et les professionnels', 'A range of services for individuals and professionals', 'Pneus pour véhicules et camions', 'Tires for Vehicles and Trucks', 'Fourniture de pneus adaptés aux différents types de véhicules.', 'Supply of tires suitable for different types of vehicles.', 'bi-circle', 2, 1, '2026-09-05 07:20:28', '2026-09-08 13:10:22'),
 (3, 'Des solutions automobiles adaptées à vos besoins', 'Automotive Solutions Tailored to Your Needs', 'Une gamme de services pour les particuliers et les professionnels', 'A range of services for individuals and professionals', 'Batteries automobiles', 'Automotive Batteries', 'Vente de batteries fiables pour voitures et véhicules professionnels.', 'Sale of reliable batteries for cars and professional vehicles.', 'bi-battery-full', 3, 1, '2026-09-05 07:20:28', '2026-09-08 13:10:22'),
 (4, 'Des solutions automobiles adaptées à vos besoins', 'Automotive Solutions Tailored to Your Needs', 'Une gamme de services pour les particuliers et les professionnels', 'A range of services for individuals and professionals', 'Lubrifiants et huiles moteur', 'Lubricants and Motor Oils', 'Distribution de lubrifiants et huiles moteur TOTAL.', 'Distribution of TOTAL lubricants and motor oils.', 'bi-droplet', 4, 1, '2026-09-05 07:20:28', '2026-09-08 13:10:22'),
@@ -420,8 +428,7 @@ INSERT INTO `site_settings` (`id`, `setting_key`, `setting_value`, `created_at`,
 (25, 'contact_email_label_fr', 'Email', '2026-09-05 13:39:27', '2026-09-05 13:39:27'),
 (26, 'contact_email_label_en', 'Email', '2026-09-05 13:39:27', '2026-09-05 13:39:27'),
 (27, 'contact_address_label_fr', 'Adresse', '2026-09-05 13:39:27', '2026-09-05 13:39:27'),
-(28, 'contact_address_label_en', 'Address', '2026-09-05 13:39:27', '2026-09-05 13:39:27'),
-(29, 'usd_exchange_rate', '565', '2026-09-05 15:18:28', '2026-09-05 15:18:28');
+(28, 'contact_address_label_en', 'Address', '2026-09-05 13:39:27', '2026-09-05 13:39:27');
 
 -- --------------------------------------------------------
 
@@ -444,14 +451,14 @@ CREATE TABLE IF NOT EXISTS `social_links` (
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `social_links`
 --
 
 INSERT INTO `social_links` (`id`, `section_title_fr`, `section_title_en`, `section_subtitle_fr`, `section_subtitle_en`, `platform`, `url`, `icon`, `display_order`, `is_active`, `created_at`, `updated_at`) VALUES
-(1, 'Suivez-nous', 'Follow Us', 'Restez connectés avec AUTO MOTORS SARL', 'Stay connected with AUTO MOTORS SARL', 'Facebook', 'https://facebook.com/auto-motors-demo', 'bi-facebook', 1, 1, '2026-09-05 07:20:28', '2026-09-08 13:14:52'),
+(1, 'Suivez-nous', 'Follow Us', 'Restez connectés avec AUTO MOTORS SARL', 'Stay connected with AUTO MOTORS SARL', 'Facebook', 'https://facebook.com/auto-motors-demo', 'bi-facebook', 1, 1, '2026-09-05 07:20:28', '2026-09-09 10:12:26'),
 (2, 'Suivez-nous', 'Follow Us', 'Restez connectés avec AUTO MOTORS SARL', 'Stay connected with AUTO MOTORS SARL', 'Instagram', 'https://instagram.com/auto_motors_demo', 'bi-instagram', 2, 1, '2026-09-05 07:20:28', '2026-09-08 13:14:52'),
 (3, 'Suivez-nous', 'Follow Us', 'Restez connectés avec AUTO MOTORS SARL', 'Stay connected with AUTO MOTORS SARL', 'WhatsApp', 'https://wa.me/2250749616161', 'bi-whatsapp', 3, 1, '2026-09-05 07:20:28', '2026-09-08 13:14:52'),
 (4, 'Suivez-nous', 'Follow Us', 'Restez connectés avec AUTO MOTORS SARL', 'Stay connected with AUTO MOTORS SARL', 'LinkedIn', 'https://linkedin.com/company/auto-motors-demo', 'bi-linkedin', 4, 1, '2026-09-05 07:20:28', '2026-09-08 13:14:52');

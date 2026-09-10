@@ -8,7 +8,6 @@ import {
   getImageUrl,
 } from "../../api/api";
 
-
 const Navbar = () => {
   const { language, toggleLanguage } = useLanguage();
 
@@ -156,6 +155,17 @@ const Navbar = () => {
 
   /* ==========================================================================
      NAVIGATION
+
+     Order follows the actual page structure:
+
+     Home
+     About
+     Services
+     Advantages
+     Products
+     Vehicles
+     Gallery
+     FAQ
      ========================================================================== */
 
   const navigation = [
@@ -172,16 +182,16 @@ const Navbar = () => {
       label: "Services",
     },
     {
+      href: "#advantages",
+      label: language === "fr" ? "Avantages" : "Advantages",
+    },
+    {
       href: "#products",
       label: language === "fr" ? "Produits" : "Products",
     },
     {
       href: "#vehicles",
       label: language === "fr" ? "Véhicules" : "Vehicles",
-    },
-    {
-      href: "#advantages",
-      label: language === "fr" ? "Avantages" : "Advantages",
     },
     {
       href: "#gallery",

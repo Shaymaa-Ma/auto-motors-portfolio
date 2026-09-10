@@ -1,30 +1,116 @@
-import React, { useEffect, useState } from "react";
-import { motion } from "framer-motion";
-import { useLanguage } from "../../context/LanguageContext";
-import { getServices } from "../../api/api";
+import {
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+import {
+  AnimatePresence,
+  motion,
+} from "framer-motion";
+import {
+  useLanguage,
+} from "../../context/LanguageContext";
+import {
+  getServices,
+} from "../../api/api";
 import SectionHeading from "../common/SectionHeading";
 
-const ServicesSection = () => {
-  const { language } = useLanguage();
+const SERVICES_PER_PAGE = 3;
 
-  const [services, setServices] = useState([]);
+const ServicesSection = () => {
+  const { language } =
+    useLanguage();
+
+  const [
+    services,
+    setServices,
+  ] = useState([]);
+
+  const [
+    currentPage,
+    setCurrentPage,
+  ] = useState(0);
 
   useEffect(() => {
-    const loadServices = async () => {
-      try {
-        const data = await getServices();
-        setServices(data || []);
-      } catch (error) {
-        console.error("Services data loading error:", error);
-      }
-    };
+    const loadServices =
+      async () => {
+        try {
+          const data =
+            await getServices();
+
+          const sortedServices =
+            [...(data || [])].sort(
+              (a, b) =>
+                Number(
+                  a.display_order || 0
+                ) -
+                Number(
+                  b.display_order || 0
+                )
+            );
+
+          setServices(
+            sortedServices
+          );
+        } catch (error) {
+          console.error(
+            "Services data loading error:",
+            error
+          );
+        }
+      };
 
     loadServices();
   }, []);
 
-  if (!services.length) return null;
+  // Calculate the number of pages
+  const totalPages =
+    Math.ceil(
+      services.length /
+        SERVICES_PER_PAGE
+    );
 
-  const firstService = services[0];
+  // Keep the current page valid
+  useEffect(() => {
+    if (
+      currentPage >=
+      totalPages
+    ) {
+      setCurrentPage(
+        Math.max(
+          totalPages - 1,
+          0
+        )
+      );
+    }
+  }, [
+    currentPage,
+    totalPages,
+  ]);
+
+  // Get exactly three services for the current page
+  const currentServices =
+    useMemo(() => {
+      const startIndex =
+        currentPage *
+        SERVICES_PER_PAGE;
+
+      return services.slice(
+        startIndex,
+        startIndex +
+          SERVICES_PER_PAGE
+      );
+    }, [
+      services,
+      currentPage,
+    ]);
+
+  if (!services.length) {
+    return null;
+  }
+
+  const firstService =
+    services[0];
 
   const sectionTitle =
     language === "fr"
@@ -42,51 +128,98 @@ const ServicesSection = () => {
       opacity: 0,
       y: 30,
     },
+
     visible: {
       opacity: 1,
       y: 0,
+
       transition: {
         duration: 0.7,
-        ease: [0.22, 1, 0.36, 1],
+        ease: [
+          0.22,
+          1,
+          0.36,
+          1,
+        ],
       },
     },
   };
 
-  // Card container animation
+  // Services container animation
   const gridVariants = {
     hidden: {},
+
     visible: {
       transition: {
-        staggerChildren: 0.12,
+        staggerChildren: 0.1,
       },
     },
   };
 
-  // Individual card animation
+  // Individual service animation
   const cardVariants = {
     hidden: {
       opacity: 0,
-      y: 45,
+      y: 30,
       scale: 0.97,
     },
+
     visible: {
       opacity: 1,
       y: 0,
       scale: 1,
+
       transition: {
-        duration: 0.65,
-        ease: [0.22, 1, 0.36, 1],
+        duration: 0.55,
+        ease: [
+          0.22,
+          1,
+          0.36,
+          1,
+        ],
+      },
+    },
+
+    exit: {
+      opacity: 0,
+      y: -20,
+      scale: 0.98,
+
+      transition: {
+        duration: 0.25,
+        ease: "easeIn",
       },
     },
   };
 
+  // Change the visible service page
+  const handlePageChange = (
+    pageIndex
+  ) => {
+    if (
+      pageIndex ===
+      currentPage
+    ) {
+      return;
+    }
+
+    setCurrentPage(
+      pageIndex
+    );
+  };
+
   return (
-    <section id="services" className="services section">
+    <section
+      id="services"
+      className="services section"
+    >
       <div className="container">
 
         {/* Section heading */}
         <motion.div
-          variants={headingVariants}
+          variants={
+            headingVariants
+          }
           initial="hidden"
           whileInView="visible"
           viewport={{
@@ -95,82 +228,146 @@ const ServicesSection = () => {
           }}
         >
           <SectionHeading
-            title={sectionTitle}
-            subtitle={sectionSubtitle}
+            title={
+              sectionTitle
+            }
+            subtitle={
+              sectionSubtitle
+            }
           />
         </motion.div>
 
         {/* Services */}
-        <motion.div
-          className="services__grid"
-          variants={gridVariants}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{
-            once: true,
-            amount: 0.15,
-          }}
+        <AnimatePresence
+          mode="wait"
         >
-          {services.map((service) => {
-            const name =
-              language === "fr"
-                ? service.name_fr
-                : service.name_en;
+          <motion.div
+            key={currentPage}
+            className="services__grid"
+            variants={
+              gridVariants
+            }
+            initial="hidden"
+            animate="visible"
+          >
+            {currentServices.map(
+              (service) => {
+                const name =
+                  language === "fr"
+                    ? service.name_fr
+                    : service.name_en;
 
-            const description =
-              language === "fr"
-                ? service.description_fr
-                : service.description_en;
+                const description =
+                  language === "fr"
+                    ? service.description_fr
+                    : service.description_en;
 
-            return (
-              <motion.article
-                key={service.id}
-                className="service-card"
-                variants={cardVariants}
-                whileHover={{
-                  y: -8,
-                  transition: {
-                    duration: 0.25,
-                    ease: "easeOut",
-                  },
-                }}
-                whileTap={{
-                  scale: 0.98,
-                }}
-              >
-                {/* Icon loaded directly from database */}
-                <motion.div
-                  className="service-card__icon"
-                  whileHover={{
-                    scale: 1.08,
-                    rotate: 4,
-                  }}
-                  transition={{
-                    duration: 0.25,
-                    ease: "easeOut",
-                  }}
+                return (
+                  <motion.article
+                    key={
+                      service.id
+                    }
+                    className="service-card"
+                    variants={
+                      cardVariants
+                    }
+                    whileHover={{
+                      y: -6,
+
+                      transition: {
+                        duration: 0.25,
+                        ease: "easeOut",
+                      },
+                    }}
+                    whileTap={{
+                      scale: 0.98,
+                    }}
+                  >
+                    {/* Service icon */}
+                    <motion.div
+                      className="service-card__icon"
+                      whileHover={{
+                        scale: 1.08,
+                        rotate: 4,
+                      }}
+                      transition={{
+                        duration: 0.25,
+                        ease: "easeOut",
+                      }}
+                    >
+                      {service.icon && (
+                        <i
+                          className={`bi ${service.icon}`}
+                          aria-hidden="true"
+                        />
+                      )}
+                    </motion.div>
+
+                    {/* Service content */}
+                    <div className="service-card__content">
+                      {name && (
+                        <h3>
+                          {name}
+                        </h3>
+                      )}
+
+                      {description && (
+                        <p>
+                          {
+                            description
+                          }
+                        </p>
+                      )}
+                    </div>
+                  </motion.article>
+                );
+              }
+            )}
+          </motion.div>
+        </AnimatePresence>
+
+        {/* Service page navigation */}
+        {totalPages > 1 && (
+          <div
+            className="services__pagination"
+            aria-label="Services pages"
+          >
+            {Array.from(
+              {
+                length:
+                  totalPages,
+              },
+              (_, index) => (
+                <button
+                  key={index}
+                  type="button"
+                  className={`services__page-button ${
+                    currentPage ===
+                    index
+                      ? "is-active"
+                      : ""
+                  }`}
+                  onClick={() =>
+                    handlePageChange(
+                      index
+                    )
+                  }
+                  aria-label={`Show services page ${
+                    index + 1
+                  }`}
+                  aria-current={
+                    currentPage ===
+                    index
+                      ? "page"
+                      : undefined
+                  }
                 >
-                  {service.icon && (
-                    <i
-                      className={`bi ${service.icon}`}
-                      aria-hidden="true"
-                    ></i>
-                  )}
-                </motion.div>
-
-                {/* Content */}
-                <div className="service-card__content">
-                  {name && <h3>{name}</h3>}
-
-                  {description && (
-                    <p>{description}</p>
-                  )}
-                </div>
-              </motion.article>
-            );
-          })}
-        </motion.div>
-
+                  {index + 1}
+                </button>
+              )
+            )}
+          </div>
+        )}
       </div>
     </section>
   );
