@@ -1,12 +1,9 @@
 import { useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
 
-import { useAuth } from "../context/AuthContext";
 import { companyApi } from "../api/endpoints";
 
 const Sidebar = ({ isOpen, onClose }) => {
-  const { admin } = useAuth();
-
   const [companyLogo, setCompanyLogo] = useState("");
 
   const navGroups = [
@@ -87,14 +84,14 @@ const Sidebar = ({ isOpen, onClose }) => {
           icon: "bi-building-gear",
         },
         {
+          label: "Contact",
+          path: "/contact",
+          icon: "bi-telephone",
+        },
+        {
           label: "Social Links",
           path: "/social-links",
           icon: "bi-share",
-        },
-        {
-          label: "Site Settings",
-          path: "/settings",
-          icon: "bi-gear",
         },
       ],
     },
@@ -293,42 +290,45 @@ const Sidebar = ({ isOpen, onClose }) => {
 
 
         {/* ===================================================
-    VIEW WEBSITE
-=================================================== */}
+            VIEW WEBSITE
+        =================================================== */}
 
-<div className="sidebar-footer">
+        <div className="sidebar-footer">
 
-  <a
-    href="http://localhost:3000"
-    target="_blank"
-    rel="noopener noreferrer"
-    className="sidebar-website-link"
-  >
-    <div className="sidebar-website-icon">
-      <i
-        className="bi bi-globe2"
-        aria-hidden="true"
-      ></i>
-    </div>
+          <a
+            href="http://localhost:3000"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="sidebar-website-link"
+          >
 
-    <div className="sidebar-website-info">
-      <strong>
-        View Website
-      </strong>
+            <div className="sidebar-website-icon">
+              <i
+                className="bi bi-globe2"
+                aria-hidden="true"
+              ></i>
+            </div>
 
-      <span>
-        Open public site
-      </span>
-    </div>
+            <div className="sidebar-website-info">
 
-    <i
-      className="bi bi-box-arrow-up-right sidebar-website-arrow"
-      aria-hidden="true"
-    ></i>
+              <strong>
+                View Website
+              </strong>
 
-  </a>
+              <span>
+                Open public site
+              </span>
 
-</div>
+            </div>
+
+            <i
+              className="bi bi-box-arrow-up-right sidebar-website-arrow"
+              aria-hidden="true"
+            ></i>
+
+          </a>
+
+        </div>
 
       </aside>
     </>

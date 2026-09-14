@@ -5,7 +5,7 @@ import { useLanguage } from "../../context/LanguageContext";
 import {
   getCompany,
   getSocialLinks,
-  getSiteSettings,
+  getContact,
 } from "../../api/api";
 import SectionHeading from "../common/SectionHeading";
 
@@ -13,22 +13,28 @@ const ContactSection = () => {
   const { language } = useLanguage();
 
   const [company, setCompany] = useState(null);
+  const [contact, setContact] = useState(null);
   const [socialLinks, setSocialLinks] = useState([]);
-  const [siteSettings, setSiteSettings] = useState([]);
+
+  /*
+  |--------------------------------------------------------------------------
+  | LOAD CONTACT DATA
+  |--------------------------------------------------------------------------
+  */
 
   useEffect(() => {
     const loadContactData = async () => {
       try {
-        const [companyData, socialData, settingsData] =
+        const [companyData, contactData, socialData] =
           await Promise.all([
             getCompany(),
+            getContact(),
             getSocialLinks(),
-            getSiteSettings(),
           ]);
 
         setCompany(companyData || null);
+        setContact(contactData || null);
         setSocialLinks(socialData || []);
-        setSiteSettings(settingsData || []);
       } catch (error) {
         console.error("Contact data loading error:", error);
       }
@@ -37,61 +43,80 @@ const ContactSection = () => {
     loadContactData();
   }, []);
 
-  const getSetting = (key) => {
-    const setting = siteSettings.find(
-      (item) => item.setting_key === key
-    );
+  /*
+  |--------------------------------------------------------------------------
+  | LOCALIZED CONTACT CONTENT
+  |--------------------------------------------------------------------------
+  */
 
-    return setting?.setting_value || "";
+  const getLocalizedValue = (field) => {
+    if (!contact) return "";
+
+    return contact[`${field}_${language}`] || "";
   };
 
-  if (!company) return null;
-
-  /* ==========================================================================
-     LOCALIZED CONTENT
-     ========================================================================== */
+  /*
+  |--------------------------------------------------------------------------
+  | FALLBACK CONTENT
+  |--------------------------------------------------------------------------
+  */
 
   const contactTitle =
-    getSetting(`contact_title_${language}`) ||
+    getLocalizedValue("title") ||
     (language === "fr" ? "Contactez-nous" : "Contact Us");
 
-  const contactSubtitle =
-    getSetting(`contact_subtitle_${language}`);
-
-  const introTitle =
-    getSetting(`contact_intro_title_${language}`);
-
-  const infoTitle =
-    getSetting(`contact_info_title_${language}`);
-
-  const infoDescription =
-    getSetting(`contact_info_description_${language}`);
-
   const callButton =
-    getSetting(`contact_call_button_${language}`) ||
+    getLocalizedValue("call_button") ||
     (language === "fr" ? "Nous appeler" : "Call us");
 
-  const deliveryTitle =
-    getSetting(`contact_delivery_title_${language}`);
-
-  const deliveryDescription =
-    getSetting(`contact_delivery_description_${language}`);
-
   const followTitle =
-    getSetting(`contact_follow_title_${language}`) ||
+    getLocalizedValue("follow_title") ||
     (language === "fr" ? "Suivez-nous" : "Follow Us");
 
   const phoneLabel =
-    getSetting(`contact_phone_label_${language}`) ||
+    getLocalizedValue("phone_label") ||
     (language === "fr" ? "Téléphone" : "Phone");
 
   const emailLabel =
-    getSetting(`contact_email_label_${language}`) ||
-    "Email";
+    getLocalizedValue("email_label") || "Email";
 
   const addressLabel =
-    getSetting(`contact_address_label_${language}`) ||
+    getLocalizedValue("address_label") ||
     (language === "fr" ? "Adresse" : "Address");
+
+  /*
+  |--------------------------------------------------------------------------
+  | CONTACT CONTENT
+  |--------------------------------------------------------------------------
+  */
+
+  const contactSubtitle = getLocalizedValue("subtitle");
+
+  const introTitle = getLocalizedValue("intro_title");
+
+  const introDescription =
+    getLocalizedValue("intro_description");
+
+  const infoTitle = getLocalizedValue("info_title");
+
+  const infoDescription =
+    getLocalizedValue("info_description");
+
+  const deliveryTitle =
+    getLocalizedValue("delivery_title");
+
+  const deliveryDescription =
+    getLocalizedValue("delivery_description");
+
+  /*
+  |--------------------------------------------------------------------------
+  | COMPANY CONTACT INFORMATION
+  |--------------------------------------------------------------------------
+  */
+
+  if (!company || !contact) {
+    return null;
+  }
 
   const address =
     language === "fr"
@@ -104,15 +129,25 @@ const ContactSection = () => {
     company.phone_3,
   ].filter(Boolean);
 
+  const deliveryAvailable =
+    Number(contact.delivery_available) === 1;
+
+  /*
+  |--------------------------------------------------------------------------
+  | ACTIVE SOCIAL LINKS
+  |--------------------------------------------------------------------------
+  */
+
   const activeSocialLinks = socialLinks.filter(
     (social) => Number(social.is_active) === 1
   );
 
-  /* ==========================================================================
-     ANIMATION VARIANTS
-     ========================================================================== */
+  /*
+  |--------------------------------------------------------------------------
+  | ANIMATION VARIANTS
+  |--------------------------------------------------------------------------
+  */
 
-  // Main section heading
   const headingVariants = {
     hidden: {
       opacity: 0,
@@ -131,7 +166,6 @@ const ContactSection = () => {
     },
   };
 
-  // Left side intro
   const introVariants = {
     hidden: {
       opacity: 0,
@@ -150,7 +184,6 @@ const ContactSection = () => {
     },
   };
 
-  // Right side information
   const infoVariants = {
     hidden: {
       opacity: 0,
@@ -169,7 +202,6 @@ const ContactSection = () => {
     },
   };
 
-  // Contact cards stagger
   const itemsContainerVariants = {
     hidden: {
       opacity: 1,
@@ -184,7 +216,6 @@ const ContactSection = () => {
     },
   };
 
-  // Individual contact card
   const itemVariants = {
     hidden: {
       opacity: 0,
@@ -205,7 +236,6 @@ const ContactSection = () => {
     },
   };
 
-  // Contact icons
   const iconVariants = {
     hidden: {
       opacity: 0,
@@ -225,7 +255,6 @@ const ContactSection = () => {
     },
   };
 
-  // Social section
   const socialVariants = {
     hidden: {
       opacity: 0,
@@ -244,13 +273,19 @@ const ContactSection = () => {
     },
   };
 
+  /*
+  |--------------------------------------------------------------------------
+  | RENDER
+  |--------------------------------------------------------------------------
+  */
+
   return (
     <section id="contact" className="contact section">
       <div className="container">
 
-        {/* ==================================================================
+        {/* ================================================================
             SECTION HEADING
-            ================================================================== */}
+            ================================================================ */}
 
         <motion.div
           variants={headingVariants}
@@ -268,15 +303,15 @@ const ContactSection = () => {
           />
         </motion.div>
 
-        {/* ==================================================================
+        {/* ================================================================
             CONTACT LAYOUT
-            ================================================================== */}
+            ================================================================ */}
 
         <div className="contact__layout">
 
-          {/* ================================================================
-              INTRO
-              ================================================================ */}
+          {/* ==============================================================
+              INTRODUCTION
+              ============================================================== */}
 
           <motion.div
             className="contact__intro"
@@ -289,17 +324,14 @@ const ContactSection = () => {
               margin: "0px 0px -70px 0px",
             }}
           >
-            <span className="contact__label">
-              {language === "fr"
-                ? "Parlons de vos besoins"
-                : "Let's discuss your needs"}
-            </span>
-
             {introTitle && <h3>{introTitle}</h3>}
 
-            {infoDescription && <p>{infoDescription}</p>}
+            {introDescription && (
+              <p>{introDescription}</p>
+            )}
 
             {/* Call button */}
+
             {company.phone_1 && (
               <motion.a
                 href={`tel:${company.phone_1}`}
@@ -324,7 +356,7 @@ const ContactSection = () => {
                   transition={{
                     duration: 0.2,
                   }}
-                ></motion.i>
+                />
 
                 <span>{callButton}</span>
 
@@ -337,14 +369,14 @@ const ContactSection = () => {
                   transition={{
                     duration: 0.2,
                   }}
-                ></motion.i>
+                />
               </motion.a>
             )}
           </motion.div>
 
-          {/* ================================================================
-              INFORMATION
-              ================================================================ */}
+          {/* ==============================================================
+              CONTACT INFORMATION
+              ============================================================== */}
 
           <motion.div
             className="contact__info"
@@ -359,6 +391,12 @@ const ContactSection = () => {
           >
             {infoTitle && <h3>{infoTitle}</h3>}
 
+            {infoDescription && (
+              <p className="contact__info-description">
+                {infoDescription}
+              </p>
+            )}
+
             <motion.div
               variants={itemsContainerVariants}
               initial="hidden"
@@ -370,9 +408,9 @@ const ContactSection = () => {
               }}
             >
 
-              {/* ============================================================
+              {/* ========================================================
                   PHONES
-                  ============================================================ */}
+                  ======================================================== */}
 
               {phones.length > 0 && (
                 <motion.div
@@ -400,7 +438,7 @@ const ContactSection = () => {
                       transition={{
                         duration: 0.2,
                       }}
-                    ></motion.i>
+                    />
                   </motion.div>
 
                   <div className="contact__item-content">
@@ -420,9 +458,9 @@ const ContactSection = () => {
                 </motion.div>
               )}
 
-              {/* ============================================================
+              {/* ========================================================
                   EMAIL
-                  ============================================================ */}
+                  ======================================================== */}
 
               {company.email && (
                 <motion.div
@@ -450,22 +488,24 @@ const ContactSection = () => {
                       transition={{
                         duration: 0.2,
                       }}
-                    ></motion.i>
+                    />
                   </motion.div>
 
                   <div className="contact__item-content">
                     <span>{emailLabel}</span>
 
-                    <a href={`mailto:${company.email}`}>
+                    <a
+                      href={`mailto:${company.email}`}
+                    >
                       {company.email}
                     </a>
                   </div>
                 </motion.div>
               )}
 
-              {/* ============================================================
+              {/* ========================================================
                   ADDRESS
-                  ============================================================ */}
+                  ======================================================== */}
 
               {address && (
                 <motion.div
@@ -493,7 +533,7 @@ const ContactSection = () => {
                       transition={{
                         duration: 0.2,
                       }}
-                    ></motion.i>
+                    />
                   </motion.div>
 
                   <div className="contact__item-content">
@@ -504,56 +544,56 @@ const ContactSection = () => {
                 </motion.div>
               )}
 
-              {/* ============================================================
+              {/* ========================================================
                   DELIVERY
-                  ============================================================ */}
+                  ======================================================== */}
 
-              {deliveryDescription && (
-                <motion.div
-                  className="contact__delivery"
-                  variants={itemVariants}
-                  whileHover={{
-                    y: -5,
-                  }}
-                  transition={{
-                    duration: 0.25,
-                    ease: "easeOut",
-                  }}
-                >
+              {deliveryAvailable &&
+                deliveryDescription && (
                   <motion.div
-                    className="contact__delivery-icon"
-                    variants={iconVariants}
+                    className="contact__delivery"
+                    variants={itemVariants}
+                    whileHover={{
+                      y: -5,
+                    }}
+                    transition={{
+                      duration: 0.25,
+                      ease: "easeOut",
+                    }}
                   >
-                    <motion.i
-                      className="bi bi-truck"
-                      aria-hidden="true"
-                      whileHover={{
-                        scale: 1.1,
-                        rotate: -4,
-                      }}
-                      transition={{
-                        duration: 0.2,
-                      }}
-                    ></motion.i>
+                    <motion.div
+                      className="contact__delivery-icon"
+                      variants={iconVariants}
+                    >
+                      <motion.i
+                        className="bi bi-truck"
+                        aria-hidden="true"
+                        whileHover={{
+                          scale: 1.1,
+                          rotate: -4,
+                        }}
+                        transition={{
+                          duration: 0.2,
+                        }}
+                      />
+                    </motion.div>
+
+                    <div>
+                      {deliveryTitle && (
+                        <h4>{deliveryTitle}</h4>
+                      )}
+
+                      <p>{deliveryDescription}</p>
+                    </div>
                   </motion.div>
-
-                  <div>
-                    {deliveryTitle && (
-                      <h4>{deliveryTitle}</h4>
-                    )}
-
-                    <p>{deliveryDescription}</p>
-                  </div>
-                </motion.div>
-              )}
-
+                )}
             </motion.div>
           </motion.div>
         </div>
 
-        {/* ==================================================================
+        {/* ================================================================
             SOCIAL LINKS
-            ================================================================== */}
+            ================================================================ */}
 
         {activeSocialLinks.length > 0 && (
           <motion.div
@@ -612,7 +652,7 @@ const ContactSection = () => {
                       transition={{
                         duration: 0.2,
                       }}
-                    ></motion.i>
+                    />
                   )}
                 </motion.a>
               ))}

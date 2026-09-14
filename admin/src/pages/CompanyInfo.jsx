@@ -14,10 +14,6 @@ const initialForm = {
   company_name: "",
   tagline_fr: "",
   tagline_en: "",
-  about_fr: "",
-  about_en: "",
-  mission_fr: "",
-  mission_en: "",
   address_fr: "",
   address_en: "",
   email: "",
@@ -65,7 +61,10 @@ const CompanyInfo = () => {
     setFormError,
   ] = useState("");
 
+  // =========================================================
   // Load company information
+  // =========================================================
+
   const loadCompany =
     useCallback(
       async () => {
@@ -100,22 +99,6 @@ const CompanyInfo = () => {
 
             tagline_en:
               company.tagline_en ??
-              "",
-
-            about_fr:
-              company.about_fr ??
-              "",
-
-            about_en:
-              company.about_en ??
-              "",
-
-            mission_fr:
-              company.mission_fr ??
-              "",
-
-            mission_en:
-              company.mission_en ??
               "",
 
             address_fr:
@@ -166,14 +149,20 @@ const CompanyInfo = () => {
       []
     );
 
-  // Load company information when the page opens
+  // =========================================================
+  // Load company information when page opens
+  // =========================================================
+
   useEffect(() => {
     loadCompany();
   }, [
     loadCompany,
   ]);
 
+  // =========================================================
   // Update form field
+  // =========================================================
+
   const handleChange = (
     event
   ) => {
@@ -193,7 +182,10 @@ const CompanyInfo = () => {
     setSuccess("");
   };
 
+  // =========================================================
   // Handle logo selection
+  // =========================================================
+
   const handleLogoChange =
     (file) => {
       setForm(
@@ -207,7 +199,10 @@ const CompanyInfo = () => {
       setSuccess("");
     };
 
+  // =========================================================
   // Save company information
+  // =========================================================
+
   const handleSubmit =
     async (
       event
@@ -248,26 +243,6 @@ const CompanyInfo = () => {
         formData.append(
           "tagline_en",
           form.tagline_en.trim()
-        );
-
-        formData.append(
-          "about_fr",
-          form.about_fr.trim()
-        );
-
-        formData.append(
-          "about_en",
-          form.about_en.trim()
-        );
-
-        formData.append(
-          "mission_fr",
-          form.mission_fr.trim()
-        );
-
-        formData.append(
-          "mission_en",
-          form.mission_en.trim()
         );
 
         formData.append(
@@ -350,7 +325,10 @@ const CompanyInfo = () => {
       }
     };
 
-  // Show loading state
+  // =========================================================
+  // Loading state
+  // =========================================================
+
   if (loading) {
     return (
       <div className="admin-page">
@@ -368,11 +346,14 @@ const CompanyInfo = () => {
 
   return (
     <div className="admin-page">
-      {/* Page header */}
+      {/* =====================================================
+          Page header
+      ====================================================== */}
+
       <div className="admin-page-header">
         <div>
           <span className="admin-page-eyebrow">
-            Settings
+            Company
           </span>
 
           <h1>
@@ -381,13 +362,17 @@ const CompanyInfo = () => {
 
           <p>
             Manage the company
+            identity and contact
             information displayed
             across your website.
           </p>
         </div>
       </div>
 
-      {/* Success message */}
+      {/* =====================================================
+          Success message
+      ====================================================== */}
+
       {success && (
         <div className="admin-alert admin-alert-success">
           <i className="bi bi-check-circle" />
@@ -408,7 +393,10 @@ const CompanyInfo = () => {
         </div>
       )}
 
-      {/* Error message */}
+      {/* =====================================================
+          Error message
+      ====================================================== */}
+
       {error && (
         <div className="admin-alert admin-alert-error">
           <i className="bi bi-exclamation-circle" />
@@ -429,7 +417,10 @@ const CompanyInfo = () => {
         </div>
       )}
 
-      {/* Company form */}
+      {/* =====================================================
+          Company form
+      ====================================================== */}
+
       <form
         className="admin-company-form"
         onSubmit={
@@ -446,7 +437,10 @@ const CompanyInfo = () => {
           </div>
         )}
 
-        {/* Company identity */}
+        {/* ===================================================
+            01 — Company Identity
+        ==================================================== */}
+
         <div className="admin-company-section">
           <div className="admin-company-section-header">
             <div>
@@ -468,6 +462,8 @@ const CompanyInfo = () => {
             </div>
           </div>
 
+          {/* Company logo */}
+
           <div className="admin-company-logo">
             <ImageUploader
               currentImage={
@@ -484,6 +480,8 @@ const CompanyInfo = () => {
           </div>
 
           <div className="admin-form-grid">
+            {/* Company name */}
+
             <div className="admin-form-group admin-form-group-full">
               <label htmlFor="company_name">
                 Company Name
@@ -507,6 +505,8 @@ const CompanyInfo = () => {
               />
             </div>
 
+            {/* French tagline */}
+
             <div className="admin-form-group">
               <label htmlFor="tagline_fr">
                 Tagline (French)
@@ -522,9 +522,11 @@ const CompanyInfo = () => {
                 onChange={
                   handleChange
                 }
-                placeholder="Votre partenaire automobile"
+                placeholder="Votre partenaire en produits automobiles"
               />
             </div>
+
+            {/* English tagline */}
 
             <div className="admin-form-group">
               <label htmlFor="tagline_en">
@@ -541,13 +543,16 @@ const CompanyInfo = () => {
                 onChange={
                   handleChange
                 }
-                placeholder="Your Automotive Partner"
+                placeholder="Your Automotive Products Partner"
               />
             </div>
           </div>
         </div>
 
-        {/* About information */}
+        {/* ===================================================
+            02 — Contact Information
+        ==================================================== */}
+
         <div className="admin-company-section">
           <div className="admin-company-section-header">
             <div>
@@ -557,145 +562,21 @@ const CompanyInfo = () => {
 
               <div>
                 <h2>
-                  About Company
-                </h2>
-
-                <p>
-                  Describe the company
-                  in both languages.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="admin-form-grid">
-            <div className="admin-form-group">
-              <label htmlFor="about_fr">
-                About (French)
-              </label>
-
-              <textarea
-                id="about_fr"
-                name="about_fr"
-                value={
-                  form.about_fr
-                }
-                onChange={
-                  handleChange
-                }
-                rows="6"
-                placeholder="Présentez votre entreprise..."
-              />
-            </div>
-
-            <div className="admin-form-group">
-              <label htmlFor="about_en">
-                About (English)
-              </label>
-
-              <textarea
-                id="about_en"
-                name="about_en"
-                value={
-                  form.about_en
-                }
-                onChange={
-                  handleChange
-                }
-                rows="6"
-                placeholder="Describe your company..."
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Mission */}
-        <div className="admin-company-section">
-          <div className="admin-company-section-header">
-            <div>
-              <span className="admin-company-section-number">
-                03
-              </span>
-
-              <div>
-                <h2>
-                  Mission
-                </h2>
-
-                <p>
-                  Manage the company
-                  mission in both
-                  languages.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="admin-form-grid">
-            <div className="admin-form-group">
-              <label htmlFor="mission_fr">
-                Mission (French)
-              </label>
-
-              <textarea
-                id="mission_fr"
-                name="mission_fr"
-                value={
-                  form.mission_fr
-                }
-                onChange={
-                  handleChange
-                }
-                rows="5"
-                placeholder="Notre mission..."
-              />
-            </div>
-
-            <div className="admin-form-group">
-              <label htmlFor="mission_en">
-                Mission (English)
-              </label>
-
-              <textarea
-                id="mission_en"
-                name="mission_en"
-                value={
-                  form.mission_en
-                }
-                onChange={
-                  handleChange
-                }
-                rows="5"
-                placeholder="Our mission..."
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Contact information */}
-        <div className="admin-company-section">
-          <div className="admin-company-section-header">
-            <div>
-              <span className="admin-company-section-number">
-                04
-              </span>
-
-              <div>
-                <h2>
                   Contact Information
                 </h2>
 
                 <p>
-                  Manage the contact
-                  details displayed
-                  throughout the
-                  website.
+                  Manage the company
+                  address, email and
+                  phone numbers.
                 </p>
               </div>
             </div>
           </div>
 
           <div className="admin-form-grid">
+            {/* French address */}
+
             <div className="admin-form-group">
               <label htmlFor="address_fr">
                 Address (French)
@@ -714,6 +595,8 @@ const CompanyInfo = () => {
                 placeholder="Adresse de l'entreprise..."
               />
             </div>
+
+            {/* English address */}
 
             <div className="admin-form-group">
               <label htmlFor="address_en">
@@ -734,6 +617,8 @@ const CompanyInfo = () => {
               />
             </div>
 
+            {/* Email */}
+
             <div className="admin-form-group">
               <label htmlFor="email">
                 Email
@@ -752,6 +637,8 @@ const CompanyInfo = () => {
                 placeholder="info@example.com"
               />
             </div>
+
+            {/* Phone 1 */}
 
             <div className="admin-form-group">
               <label htmlFor="phone_1">
@@ -772,6 +659,8 @@ const CompanyInfo = () => {
               />
             </div>
 
+            {/* Phone 2 */}
+
             <div className="admin-form-group">
               <label htmlFor="phone_2">
                 Phone 2
@@ -790,6 +679,8 @@ const CompanyInfo = () => {
                 placeholder="+225 XX XX XX XX XX"
               />
             </div>
+
+            {/* Phone 3 */}
 
             <div className="admin-form-group">
               <label htmlFor="phone_3">
@@ -812,7 +703,10 @@ const CompanyInfo = () => {
           </div>
         </div>
 
-        {/* Save changes */}
+        {/* ===================================================
+            Save changes
+        ==================================================== */}
+
         <div className="admin-company-form-footer">
           <div>
             <i className="bi bi-info-circle" />

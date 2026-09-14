@@ -14,20 +14,33 @@ const {
 const router =
   express.Router();
 
+// =========================================================
 // Configure Company logo upload
+// =========================================================
+
 const companyUpload =
   createImageUpload(
     "logo",
     "company-logo"
   );
 
+// =========================================================
 // Get Company information
+// GET /api/company
+// Public
+// =========================================================
+
 router.get(
   "/",
   getCompany
 );
 
+// =========================================================
 // Update Company information
+// PUT /api/company
+// Protected
+// =========================================================
+
 router.put(
   "/",
   authMiddleware,

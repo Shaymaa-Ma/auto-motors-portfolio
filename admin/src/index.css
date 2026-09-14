@@ -6698,3 +6698,150 @@ select:focus-visible {
   }
 }
 
+/* =========================================================
+   LOGIN SUCCESS
+========================================================= */
+
+.login-success {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+
+  margin-bottom: 20px;
+  padding: 12px 14px;
+
+  border: 1px solid rgba(25, 167, 255, 0.25);
+  border-radius: 10px;
+
+  background: rgba(25, 167, 255, 0.08);
+
+  color: #055da5;
+
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.login-success i {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+
+/* =========================================================
+   LOGIN LOADING
+========================================================= */
+
+.login-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  min-height: 80px;
+}
+
+
+/* =========================================================
+   REGISTER AREA
+========================================================= */
+
+.login-register-area {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+
+  gap: 6px;
+
+  margin-top: 20px;
+
+  color: #64748b;
+
+  font-size: 13px;
+  text-align: center;
+}
+
+.login-register-area button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+
+  padding: 0;
+
+  border: 0;
+  background: transparent;
+
+  color: #0878d1;
+
+  font: inherit;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.login-register-area button:hover {
+  color: #055da5;
+  transform: translateX(2px);
+}
+
+.login-register-area button i {
+  font-size: 12px;
+}
+
+
+/* =========================================================
+   BACK TO LOGIN
+========================================================= */
+
+.login-back-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+
+  width: 100%;
+
+  margin-top: 14px;
+  padding: 8px;
+
+  border: 0;
+  background: transparent;
+
+  color: #64748b;
+
+  font-size: 13px;
+  font-weight: 500;
+
+  cursor: pointer;
+
+  transition:
+    color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.login-back-button:hover {
+  color: #0878d1;
+  transform: translateX(-2px);
+}
+
+.login-back-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 480px) {
+  .login-register-area {
+    flex-direction: column;
+    gap: 5px;
+  }
+}
+
+

@@ -9,39 +9,56 @@ import { authApi } from "../api/endpoints";
 
 const AuthContext = createContext(null);
 
-export const AuthProvider = ({ children }) => {
-  const [admin, setAdmin] = useState(null);
-  const [loading, setLoading] = useState(true);
+export const AuthProvider = ({
+  children,
+}) => {
+  const [admin, setAdmin] =
+    useState(null);
 
-  // =========================================================
-  // CHECK EXISTING LOGIN
-  // =========================================================
+  const [loading, setLoading] =
+    useState(true);
 
-  const checkAuth = async () => {
-    try {
-      const response = await authApi.me();
+  const isAuthenticated =
+    Boolean(admin);
 
-      if (response.success) {
-        setAdmin(response.admin);
-      } else {
+  /* -------------------------------------------------------
+     Check existing session
+  ------------------------------------------------------- */
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const response =
+          await authApi.me();
+
+        if (response.success) {
+          setAdmin(response.admin);
+        } else {
+          setAdmin(null);
+        }
+      } catch (error) {
         setAdmin(null);
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      setAdmin(null);
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
 
-  // =========================================================
-  // LOGIN
-  // =========================================================
+    checkAuth();
+  }, []);
 
-  const login = async (email, password) => {
-    const response = await authApi.login(
-      email,
-      password
-    );
+  /* -------------------------------------------------------
+     Login
+  ------------------------------------------------------- */
+
+  const login = async (
+    email,
+    password
+  ) => {
+    const response =
+      await authApi.login(
+        email,
+        password
+      );
 
     if (response.success) {
       setAdmin(response.admin);
@@ -50,9 +67,9 @@ export const AuthProvider = ({ children }) => {
     return response;
   };
 
-  // =========================================================
-  // LOGOUT
-  // =========================================================
+  /* -------------------------------------------------------
+     Logout
+  ------------------------------------------------------- */
 
   const logout = async () => {
     try {
@@ -62,41 +79,21 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // =========================================================
-  // INITIAL AUTH CHECK
-  // =========================================================
-
-  useEffect(() => {
-    checkAuth();
-  }, []);
-
-  const value = {
-    admin,
-    loading,
-    isAuthenticated: !!admin,
-    login,
-    logout,
-  };
-
   return (
-    <AuthContext.Provider value={value}>
+    <AuthContext.Provider
+      value={{
+        admin,
+        isAuthenticated,
+        loading,
+        login,
+        logout,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
 };
 
-// =========================================================
-// useAuth HOOK
-// =========================================================
-
 export const useAuth = () => {
-  const context = useContext(AuthContext);
-
-  if (!context) {
-    throw new Error(
-      "useAuth must be used inside AuthProvider"
-    );
-  }
-
-  return context;
+  return useContext(AuthContext);
 };

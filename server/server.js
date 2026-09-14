@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const path = require("path");
+
 require("dotenv").config();
 
 const app = express();
@@ -26,7 +27,8 @@ const advantageRoutes = require("./routes/advantageRoutes");
 const faqRoutes = require("./routes/faqRoutes");
 const galleryRoutes = require("./routes/galleryRoutes");
 const socialRoutes = require("./routes/socialRoutes");
-const siteSettingsRoutes = require("./routes/siteSettingsRoutes");
+const contactRoutes = require("./routes/contactRoutes");
+
 
 // =========================================================
 // Middleware
@@ -59,7 +61,11 @@ app.use(
 );
 
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(
+  express.urlencoded({
+    extended: true,
+  })
+);
 
 // Parse cookies
 app.use(cookieParser());
@@ -70,7 +76,9 @@ app.use(cookieParser());
 
 app.use(
   "/uploads",
-  express.static(path.join(__dirname, "uploads"))
+  express.static(
+    path.join(__dirname, "uploads")
+  )
 );
 
 // =========================================================
@@ -78,22 +86,79 @@ app.use(
 // =========================================================
 
 // Authentication
-app.use("/api/auth", authRoutes);
+app.use(
+  "/api/auth",
+  authRoutes
+);
 
 // Public + protected content APIs
-app.use("/api/company", companyRoutes);
-app.use("/api/hero", heroRoutes);
-app.use("/api/about", aboutRoutes);
-app.use("/api/services", serviceRoutes);
-app.use("/api/categories", categoryRoutes);
-app.use("/api/products", productRoutes);
-app.use("/api/vehicles", vehicleRoutes);
-app.use("/api/advantages", advantageRoutes);
-app.use("/api/faqs", faqRoutes);
-app.use("/api/gallery", galleryRoutes);
-app.use("/api/social-links", socialRoutes);
-app.use("/api/site-settings", siteSettingsRoutes);
-app.use("/api/dashboard", dashboardRoutes);
+app.use(
+  "/api/company",
+  companyRoutes
+);
+
+app.use(
+  "/api/hero",
+  heroRoutes
+);
+
+app.use(
+  "/api/about",
+  aboutRoutes
+);
+
+app.use(
+  "/api/services",
+  serviceRoutes
+);
+
+app.use(
+  "/api/categories",
+  categoryRoutes
+);
+
+app.use(
+  "/api/products",
+  productRoutes
+);
+
+app.use(
+  "/api/vehicles",
+  vehicleRoutes
+);
+
+app.use(
+  "/api/advantages",
+  advantageRoutes
+);
+
+app.use(
+  "/api/faqs",
+  faqRoutes
+);
+
+app.use(
+  "/api/gallery",
+  galleryRoutes
+);
+
+app.use(
+  "/api/social-links",
+  socialRoutes
+);
+
+// Contact
+app.use(
+  "/api/contact",
+  contactRoutes
+);
+
+
+// Dashboard
+app.use(
+  "/api/dashboard",
+  dashboardRoutes
+);
 
 // =========================================================
 // Test route

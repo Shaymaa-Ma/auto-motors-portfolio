@@ -2,6 +2,8 @@ const express = require("express");
 
 const {
   login,
+  registrationStatus,
+  register,
   me,
   logout,
 } = require("../controllers/authController");
@@ -10,21 +12,30 @@ const authMiddleware = require("../middleware/authMiddleware");
 
 const router = express.Router();
 
-// =========================================================
-// Public
-// =========================================================
-
-// POST /api/auth/login
+/* Public authentication routes */
 router.post("/login", login);
 
-// =========================================================
-// Protected
-// =========================================================
+router.get(
+  "/registration-status",
+  registrationStatus
+);
 
-// GET /api/auth/me
-router.get("/me", authMiddleware, me);
+router.post(
+  "/register",
+  register
+);
 
-// POST /api/auth/logout
-router.post("/logout", authMiddleware, logout);
+/* Protected authentication routes */
+router.get(
+  "/me",
+  authMiddleware,
+  me
+);
+
+router.post(
+  "/logout",
+  authMiddleware,
+  logout
+);
 
 module.exports = router;

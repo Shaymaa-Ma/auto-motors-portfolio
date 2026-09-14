@@ -14,6 +14,35 @@ export const authApi = {
     return response.data;
   },
 
+  register: async (
+    name,
+    email,
+    password,
+    confirmPassword,
+    setupKey
+  ) => {
+    const response = await axiosClient.post(
+      "/auth/register",
+      {
+        name,
+        email,
+        password,
+        confirmPassword,
+        setupKey,
+      }
+    );
+
+    return response.data;
+  },
+
+  registrationStatus: async () => {
+    const response = await axiosClient.get(
+      "/auth/registration-status"
+    );
+
+    return response.data;
+  },
+
   me: async () => {
     const response = await axiosClient.get(
       "/auth/me"
@@ -155,7 +184,7 @@ export const servicesApi = {
 };
 
 
-
+//Products API
 export const productsApi = {
   get: async (params) => {
     const response = await axiosClient.get(
@@ -673,69 +702,39 @@ export const companyApi = {
 
 
 
-// Site settings API
-export const siteSettingsApi = {
-  // Get all site settings
+
+
+// =========================================================
+// CONTACT API
+// =========================================================
+
+export const contactApi = {
+
+  // Get Contact section content
   get: async () => {
     const response =
       await axiosClient.get(
-        "/site-settings"
+        "/contact"
       );
 
     return response.data;
   },
 
-  // Get one site setting
-  getOne: async (
-    key
-  ) => {
-    const response =
-      await axiosClient.get(
-        `/site-settings/${key}`
-      );
-
-    return response.data;
-  },
-
-  // Create a site setting
-  create: async (
-    data
-  ) => {
-    const response =
-      await axiosClient.post(
-        "/site-settings",
-        data
-      );
-
-    return response.data;
-  },
-
-  // Update a site setting
-  update: async (
-    key,
-    data
-  ) => {
+  // Update Contact section content
+  update: async (data) => {
     const response =
       await axiosClient.put(
-        `/site-settings/${key}`,
+        "/contact",
         data
       );
 
     return response.data;
   },
 
-  // Delete a site setting
-  remove: async (
-    key
-  ) => {
-    const response =
-      await axiosClient.delete(
-        `/site-settings/${key}`
-      );
-
-    return response.data;
-  },
 };
+
+
+
 
 
 

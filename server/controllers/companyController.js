@@ -7,7 +7,10 @@ const {
   sendError,
 } = require("../utils/response");
 
+// =========================================================
 // Get the existing Company information
+// =========================================================
+
 const getCompanyRecord = async () => {
   const [rows] = await db.query(
     "SELECT * FROM company_info ORDER BY id ASC LIMIT 1"
@@ -18,9 +21,12 @@ const getCompanyRecord = async () => {
     : null;
 };
 
+// =========================================================
 // Get Company information
 // GET /api/company
 // Public
+// =========================================================
+
 const getCompany = async (
   req,
   res
@@ -55,9 +61,12 @@ const getCompany = async (
   }
 };
 
+// =========================================================
 // Update Company information
 // PUT /api/company
 // Protected
+// =========================================================
+
 const updateCompany = async (
   req,
   res
@@ -81,10 +90,6 @@ const updateCompany = async (
       company_name,
       tagline_fr,
       tagline_en,
-      about_fr,
-      about_en,
-      mission_fr,
-      mission_en,
       address_fr,
       address_en,
       email,
@@ -130,10 +135,6 @@ const updateCompany = async (
           company_name = ?,
           tagline_fr = ?,
           tagline_en = ?,
-          about_fr = ?,
-          about_en = ?,
-          mission_fr = ?,
-          mission_en = ?,
           address_fr = ?,
           address_en = ?,
           email = ?,
@@ -152,18 +153,6 @@ const updateCompany = async (
 
         tagline_en ??
           company.tagline_en,
-
-        about_fr ??
-          company.about_fr,
-
-        about_en ??
-          company.about_en,
-
-        mission_fr ??
-          company.mission_fr,
-
-        mission_en ??
-          company.mission_en,
 
         address_fr ??
           company.address_fr,

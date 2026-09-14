@@ -145,9 +145,9 @@ export const getSocialLinks = () => {
 };
 
 // =========================================================
-// SITE SETTINGS
+// Contact
 // =========================================================
 
-export const getSiteSettings = () => {
-  return get("/site-settings");
+export const getContact = () => { 
+  return get("/contact"); 
 };

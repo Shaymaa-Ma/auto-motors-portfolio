@@ -1,3 +1,4 @@
+
 import {
   BrowserRouter,
   Navigate,
@@ -11,6 +12,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import AdminLayout from "./components/AdminLayout";
 
 import Login from "./pages/Login";
+import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 
 import About from "./pages/About";
@@ -24,18 +26,16 @@ import Products from "./pages/Products";
 import Vehicles from "./pages/Vehicles";
 import CompanyInfo from "./pages/CompanyInfo";
 import SocialLinks from "./pages/SocialLinks";
-import SiteSettings from "./pages/SiteSettings";
+import Contact from "./pages/Contact";
 
 const App = () => {
   return (
     <AuthProvider>
-
       <BrowserRouter>
-
         <Routes>
 
           {/* ===================================================
-              LOGIN
+              LOGIN & REGISTER
           =================================================== */}
 
           <Route
@@ -43,6 +43,10 @@ const App = () => {
             element={<Login />}
           />
 
+          <Route
+            path="/register"
+            element={<Register />}
+          />
 
           {/* ===================================================
               PROTECTED ADMIN AREA
@@ -113,14 +117,13 @@ const App = () => {
               />
 
               <Route
-                path="/settings"
-                element={<SiteSettings />}
+                path="/contact"
+                element={<Contact />}
               />
 
             </Route>
 
           </Route>
-
 
           {/* ===================================================
               DEFAULT
@@ -135,7 +138,6 @@ const App = () => {
               />
             }
           />
-
 
           {/* ===================================================
               UNKNOWN ROUTES
@@ -152,9 +154,7 @@ const App = () => {
           />
 
         </Routes>
-
       </BrowserRouter>
-
     </AuthProvider>
   );
 };
