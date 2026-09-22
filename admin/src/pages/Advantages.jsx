@@ -10,6 +10,7 @@ import {
 import DataTable from "../components/DataTable";
 import FormModal from "../components/FormModal";
 import ConfirmDialog from "../components/ConfirmDialog";
+import AdminPagination from "../components/AdminPagination";
 
 // Available Bootstrap icons for advantages
 const advantageIcons = [
@@ -101,7 +102,7 @@ const initialForm = {
   description_fr: "",
   description_en: "",
   icon: "bi-award",
-  display_order: 0,
+  display_order: 1,
   is_active: 1,
 };
 
@@ -111,6 +112,8 @@ const initialSectionForm = {
   section_subtitle_fr: "",
   section_subtitle_en: "",
 };
+
+const ITEMS_PER_PAGE = 10;
 
 const Advantages = () => {
   const [
@@ -183,26 +186,99 @@ const Advantages = () => {
     setSectionForm,
   ] = useState(initialSectionForm);
 
-  // Load all advantages for Admin
-  const loadAdvantages = async () => {
+  const [
+    currentPage,
+    setCurrentPage,
+  ] = useState(1);
+
+  const [
+    totalItems,
+    setTotalItems,
+  ] = useState(0);
+
+  const [
+    totalPages,
+    setTotalPages,
+  ] = useState(0);
+
+  // ============================================================
+  // Load current page of advantages
+  // ============================================================
+  const loadAdvantages = async (
+    page = currentPage
+  ) => {
     try {
       setLoading(true);
       setError("");
 
       const response =
-        await advantagesApi.getAll();
+        await advantagesApi.getAll(
+          page,
+          ITEMS_PER_PAGE
+        );
 
-      const advantageData =
+      const responseData =
         response?.data ??
         response ??
+        {};
+
+      const advantageData =
+        responseData?.items ??
         [];
 
       setAdvantages(
         advantageData
       );
 
-      // Load section content from the first advantage
+      setTotalItems(
+        Number(
+          responseData?.totalItems
+        ) || 0
+      );
+
+      setTotalPages(
+        Number(
+          responseData?.totalPages
+        ) || 0
+      );
+
+      /*
+       * Keep current page valid.
+       *
+       * If deletion causes the current page
+       * to disappear, move to the previous
+       * available page.
+       */
+      const returnedTotalPages =
+        Number(
+          responseData?.totalPages
+        ) || 0;
+
       if (
+        returnedTotalPages > 0 &&
+        page > returnedTotalPages
+      ) {
+        setCurrentPage(
+          returnedTotalPages
+        );
+      }
+
+      if (
+        returnedTotalPages === 0
+      ) {
+        setCurrentPage(1);
+      }
+
+      /*
+       * Load section content from the
+       * first available advantage.
+       *
+       * Since the backend returns the data
+       * sorted by display_order, the first
+       * item on page 1 is the first advantage.
+       */
+      if (
+        page === 1 &&
         advantageData.length > 0
       ) {
         const firstAdvantage =
@@ -225,11 +301,19 @@ const Advantages = () => {
             firstAdvantage.section_subtitle_en ??
             "",
         });
-      } else {
-        setSectionForm({
-          ...initialSectionForm,
-        });
       }
+
+      return {
+        items: advantageData,
+        totalItems:
+          Number(
+            responseData?.totalItems
+          ) || 0,
+        totalPages:
+          Number(
+            responseData?.totalPages
+          ) || 0,
+      };
     } catch (err) {
       console.error(
         "Load advantages error:",
@@ -238,19 +322,32 @@ const Advantages = () => {
 
       setError(
         err?.response?.data?.message ||
-          "Failed to load advantages."
+        "Failed to load advantages."
       );
+
+      return {
+        items: [],
+        totalItems: 0,
+        totalPages: 0,
+      };
     } finally {
       setLoading(false);
     }
   };
 
-  // Load advantages when the page opens
+  // ============================================================
+  // Initial load
+  // ============================================================
   useEffect(() => {
-    loadAdvantages();
-  }, []);
+    loadAdvantages(
+      currentPage
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage]);
 
+  // ============================================================
   // Handle advantage form field changes
+  // ============================================================
   const handleChange = (
     event
   ) => {
@@ -263,6 +360,7 @@ const Advantages = () => {
 
     setForm((current) => ({
       ...current,
+
       [name]:
         type === "checkbox"
           ? checked
@@ -274,7 +372,9 @@ const Advantages = () => {
     setError("");
   };
 
+  // ============================================================
   // Handle section content changes
+  // ============================================================
   const handleSectionChange = (
     event
   ) => {
@@ -292,21 +392,31 @@ const Advantages = () => {
     setError("");
   };
 
-  // Open the Add modal
+  // ============================================================
+  // Open Add modal
+  // ============================================================
   const handleAdd = () => {
     setEditingAdvantage(null);
 
     setForm({
       ...initialForm,
+
+      /*
+       * New advantage goes at the end.
+       * Backend reorder will place it at the
+       * requested position after creation.
+       */
       display_order:
-        advantages.length,
+        totalItems + 1,
     });
 
     setError("");
     setIsModalOpen(true);
   };
 
-  // Open the Edit modal
+  // ============================================================
+  // Open Edit modal
+  // ============================================================
   const handleEdit = (
     advantage
   ) => {
@@ -336,8 +446,9 @@ const Advantages = () => {
         "bi-award",
 
       display_order:
-        advantage.display_order ??
-        0,
+        Number(
+          advantage.display_order
+        ) || 1,
 
       is_active:
         Number(
@@ -351,7 +462,9 @@ const Advantages = () => {
     setIsModalOpen(true);
   };
 
-  // Close the Add/Edit modal
+  // ============================================================
+  // Close Add/Edit modal
+  // ============================================================
   const handleCloseModal = () => {
     if (saving) {
       return;
@@ -367,7 +480,9 @@ const Advantages = () => {
     setError("");
   };
 
+  // ============================================================
   // Create section FormData
+  // ============================================================
   const createSectionFormData = () => {
     const formData =
       new FormData();
@@ -395,7 +510,9 @@ const Advantages = () => {
     return formData;
   };
 
-  // Save the Advantages section content
+  // ============================================================
+  // Save Advantages section content
+  // ============================================================
   const handleSaveSection = async (
     event
   ) => {
@@ -405,9 +522,7 @@ const Advantages = () => {
     setSuccess("");
     setSectionMessage("");
 
-    if (
-      advantages.length === 0
-    ) {
+    if (totalItems === 0) {
       setError(
         "Add at least one advantage before editing the Advantages section content."
       );
@@ -417,8 +532,85 @@ const Advantages = () => {
     try {
       setSectionSaving(true);
 
+      /*
+       * Section content is stored on every advantage
+       * record in the existing database structure.
+       *
+       * Because admin pagination only loads the current
+       * page, we cannot update every record from the
+       * frontend anymore.
+       *
+       * Use the first advantage on page 1 and then
+       * retrieve the total dataset through individual
+       * admin records if needed.
+       *
+       * To preserve the existing behavior without changing
+       * the database structure, load all advantage IDs
+       * through pages first.
+       */
+
+      const allAdvantages = [];
+
+      const firstResponse =
+        await advantagesApi.getAll(
+          1,
+          ITEMS_PER_PAGE
+        );
+
+      const firstData =
+        firstResponse?.data ??
+        firstResponse ??
+        {};
+
+      const firstItems =
+        firstData?.items ??
+        [];
+
+      const firstTotalPages =
+        Number(
+          firstData?.totalPages
+        ) || 1;
+
+      allAdvantages.push(
+        ...firstItems
+      );
+
+      for (
+        let page = 2;
+        page <= firstTotalPages;
+        page++
+      ) {
+        const pageResponse =
+          await advantagesApi.getAll(
+            page,
+            ITEMS_PER_PAGE
+          );
+
+        const pageData =
+          pageResponse?.data ??
+          pageResponse ??
+          {};
+
+        const pageItems =
+          pageData?.items ??
+          [];
+
+        allAdvantages.push(
+          ...pageItems
+        );
+      }
+
+      if (
+        allAdvantages.length === 0
+      ) {
+        setError(
+          "Add at least one advantage before editing the Advantages section content."
+        );
+        return;
+      }
+
       await Promise.all(
-        advantages.map(
+        allAdvantages.map(
           (advantage) =>
             advantagesApi.update(
               advantage.id,
@@ -427,7 +619,9 @@ const Advantages = () => {
         )
       );
 
-      await loadAdvantages();
+      await loadAdvantages(
+        currentPage
+      );
 
       setSectionMessage(
         "Advantages section content saved successfully."
@@ -440,37 +634,62 @@ const Advantages = () => {
 
       setError(
         err?.response?.data?.message ||
-          "Failed to save Advantages section content."
+        "Failed to save Advantages section content."
       );
     } finally {
       setSectionSaving(false);
     }
   };
 
-  // Save the advantage
+  // ============================================================
+  // Save advantage
+  // ============================================================
   const handleSubmit = async (
     event
   ) => {
     event.preventDefault();
 
+    setError("");
+    setSuccess("");
+
+    if (!form.title_fr.trim()) {
+      setError(
+        "French title is required."
+      );
+      return;
+    }
+
+    if (!form.title_en.trim()) {
+      setError(
+        "English title is required."
+      );
+      return;
+    }
+
     try {
       setSaving(true);
-      setError("");
-      setSuccess("");
 
-      if (!form.title_fr.trim()) {
-        setError(
-          "French title is required."
+      /*
+       * The order requested by the user.
+       *
+       * For a new item, maximum order is totalItems + 1.
+       * For an existing item, maximum order is totalItems.
+       */
+      const requestedOrder =
+        Math.min(
+          Math.max(
+            Number(
+              form.display_order
+            ) || 1,
+            1
+          ),
+          editingAdvantage
+            ? Math.max(
+              totalItems,
+              1
+            )
+            : totalItems + 1
         );
-        return;
-      }
-
-      if (!form.title_en.trim()) {
-        setError(
-          "English title is required."
-        );
-        return;
-      }
 
       const data = {
         title_fr:
@@ -488,10 +707,18 @@ const Advantages = () => {
         icon:
           form.icon,
 
+        /*
+         * IMPORTANT:
+         *
+         * Normal update keeps the existing order.
+         * Reordering is handled separately below.
+         */
         display_order:
-          Number(
-            form.display_order
-          ) || 0,
+          editingAdvantage
+            ? Number(
+              editingAdvantage.display_order
+            ) || 1
+            : totalItems + 1,
 
         is_active:
           Number(
@@ -499,26 +726,112 @@ const Advantages = () => {
           ),
       };
 
+      let savedAdvantageId =
+        null;
+
+      // --------------------------------------------------------
+      // Update
+      // --------------------------------------------------------
       if (editingAdvantage) {
+        savedAdvantageId =
+          editingAdvantage.id;
+
         await advantagesApi.update(
           editingAdvantage.id,
           data
         );
 
+        /*
+         * Reorder only if the requested position
+         * is different from the existing position.
+         */
+        if (
+          requestedOrder !==
+          Number(
+            editingAdvantage.display_order
+          )
+        ) {
+          await advantagesApi.reorder(
+            editingAdvantage.id,
+            requestedOrder
+          );
+        }
+
         setSuccess(
           "Advantage updated successfully."
         );
-      } else {
-        await advantagesApi.create(
-          data
-        );
+      }
+
+      // --------------------------------------------------------
+      // Create
+      // --------------------------------------------------------
+      else {
+        const response =
+          await advantagesApi.create(
+            data
+          );
+
+        savedAdvantageId =
+          response?.data?.id ??
+          response?.data?.data?.id ??
+          response?.data?.insertId ??
+          null;
+
+        /*
+         * If the API response does not contain
+         * the inserted ID, find it after reload.
+         */
+        if (!savedAdvantageId) {
+          const refreshed =
+            await advantagesApi.getAll(
+              1,
+              ITEMS_PER_PAGE
+            );
+
+          const refreshedData =
+            refreshed?.data ??
+            refreshed ??
+            {};
+
+          const createdItem =
+            (
+              refreshedData?.items ||
+              []
+            ).find(
+              (advantage) =>
+                advantage.title_fr ===
+                data.title_fr &&
+                advantage.title_en ===
+                data.title_en
+            );
+
+          savedAdvantageId =
+            createdItem?.id ??
+            null;
+        }
+
+        /*
+         * New item was created at the end.
+         * Move it to the requested position.
+         */
+        if (savedAdvantageId) {
+          await advantagesApi.reorder(
+            savedAdvantageId,
+            requestedOrder
+          );
+        }
 
         setSuccess(
           "Advantage created successfully."
         );
       }
 
-      await loadAdvantages();
+      /*
+       * Reload current page after saving.
+       */
+      await loadAdvantages(
+        currentPage
+      );
 
       setIsModalOpen(false);
       setEditingAdvantage(null);
@@ -534,57 +847,62 @@ const Advantages = () => {
 
       setError(
         err?.response?.data?.message ||
-          "Failed to save advantage."
+        "Failed to save advantage."
       );
     } finally {
       setSaving(false);
     }
   };
 
+  // ============================================================
   // Toggle advantage status
-  const handleToggleStatus =
-    async (
-      advantage
-    ) => {
-      try {
-        setError("");
-        setSuccess("");
+  // ============================================================
+  const handleToggleStatus = async (
+    advantage
+  ) => {
+    try {
+      setError("");
+      setSuccess("");
 
-        await advantagesApi.update(
-          advantage.id,
-          {
-            is_active:
-              Number(
-                advantage.is_active
-              ) === 1
-                ? 0
-                : 1,
-          }
-        );
+      await advantagesApi.update(
+        advantage.id,
+        {
+          is_active:
+            Number(
+              advantage.is_active
+            ) === 1
+              ? 0
+              : 1,
+        }
+      );
 
-        setSuccess(
-          Number(
-            advantage.is_active
-          ) === 1
-            ? "Advantage deactivated successfully."
-            : "Advantage activated successfully."
-        );
+      setSuccess(
+        Number(
+          advantage.is_active
+        ) === 1
+          ? "Advantage deactivated successfully."
+          : "Advantage activated successfully."
+      );
 
-        await loadAdvantages();
-      } catch (err) {
-        console.error(
-          "Toggle advantage status error:",
-          err
-        );
+      await loadAdvantages(
+        currentPage
+      );
+    } catch (err) {
+      console.error(
+        "Toggle advantage status error:",
+        err
+      );
 
-        setError(
-          err?.response?.data?.message ||
-            "Failed to update advantage status."
-        );
-      }
-    };
+      setError(
+        err?.response?.data?.message ||
+        "Failed to update advantage status."
+      );
+    }
+  };
 
-  // Open the delete confirmation dialog
+  // ============================================================
+  // Open delete confirmation
+  // ============================================================
   const handleDeleteClick = (
     advantage
   ) => {
@@ -595,17 +913,22 @@ const Advantages = () => {
     setDeleteDialogOpen(true);
   };
 
-  // Close the delete confirmation dialog
-  const handleCloseDeleteDialog = () => {
-    if (deleting) {
-      return;
-    }
+  // ============================================================
+  // Close delete confirmation
+  // ============================================================
+  const handleCloseDeleteDialog =
+    () => {
+      if (deleting) {
+        return;
+      }
 
-    setDeleteDialogOpen(false);
-    setDeletingAdvantage(null);
-  };
+      setDeleteDialogOpen(false);
+      setDeletingAdvantage(null);
+    };
 
-  // Delete the selected advantage
+  // ============================================================
+  // Delete advantage
+  // ============================================================
   const handleDelete = async () => {
     if (!deletingAdvantage) {
       return;
@@ -620,14 +943,53 @@ const Advantages = () => {
         deletingAdvantage.id
       );
 
-      setSuccess(
-        "Advantage deleted successfully."
-      );
+      /*
+       * Normalize orders after deletion.
+       *
+       * This ensures:
+       * 1, 2, 3, 4...
+       * instead of:
+       * 1, 2, 4, 5...
+       */
+      await advantagesApi.normalizeOrders();
+
+      /*
+       * Determine which page should be shown
+       * after deletion.
+       */
+      let nextPage =
+        currentPage;
+
+      if (
+        currentPage > 1 &&
+        advantages.length === 1
+      ) {
+        nextPage =
+          currentPage - 1;
+      }
 
       setDeleteDialogOpen(false);
       setDeletingAdvantage(null);
 
-      await loadAdvantages();
+      /*
+       * If page changed, useEffect will load it.
+       * Otherwise reload the current page directly.
+       */
+      if (
+        nextPage !== currentPage
+      ) {
+        setCurrentPage(
+          nextPage
+        );
+      } else {
+        await loadAdvantages(
+          currentPage
+        );
+      }
+
+      setSuccess(
+        "Advantage deleted successfully."
+      );
     } catch (err) {
       console.error(
         "Delete advantage error:",
@@ -636,14 +998,16 @@ const Advantages = () => {
 
       setError(
         err?.response?.data?.message ||
-          "Failed to delete advantage."
+        "Failed to delete advantage."
       );
     } finally {
       setDeleting(false);
     }
   };
 
-  // Get the readable icon label
+  // ============================================================
+  // Get readable icon label
+  // ============================================================
   const getIconLabel = (
     icon
   ) => {
@@ -660,11 +1024,14 @@ const Advantages = () => {
     );
   };
 
+  // ============================================================
   // Table columns
+  // ============================================================
   const columns = [
     {
       key: "display_order",
       label: "Order",
+
       render: (
         value
       ) => (
@@ -677,15 +1044,15 @@ const Advantages = () => {
     {
       key: "icon",
       label: "Icon",
+
       render: (
         value
       ) => (
         <div className="admin-icon-preview">
           <i
-            className={`bi ${
-              value ||
+            className={`bi ${value ||
               "bi-award"
-            }`}
+              }`}
           />
         </div>
       ),
@@ -694,6 +1061,7 @@ const Advantages = () => {
     {
       key: "title_en",
       label: "Advantage",
+
       render: (
         value,
         advantage
@@ -715,6 +1083,7 @@ const Advantages = () => {
     {
       key: "description_en",
       label: "Description",
+
       render: (
         value,
         advantage
@@ -730,17 +1099,17 @@ const Advantages = () => {
     {
       key: "is_active",
       label: "Status",
+
       render: (
         value,
         advantage
       ) => (
         <button
           type="button"
-          className={`admin-status-button ${
-            Number(value) === 1
+          className={`admin-status-button ${Number(value) === 1
               ? "active"
               : "inactive"
-          }`}
+            }`}
           onClick={() =>
             handleToggleStatus(
               advantage
@@ -860,7 +1229,7 @@ const Advantages = () => {
             className="admin-primary-button"
             disabled={
               sectionSaving ||
-              advantages.length === 0
+              totalItems === 0
             }
           >
             {sectionSaving ? (
@@ -895,7 +1264,7 @@ const Advantages = () => {
               }
               placeholder="Nos avantages"
               disabled={
-                advantages.length === 0 ||
+                totalItems === 0 ||
                 sectionSaving
               }
             />
@@ -918,7 +1287,7 @@ const Advantages = () => {
               }
               placeholder="Our Advantages"
               disabled={
-                advantages.length === 0 ||
+                totalItems === 0 ||
                 sectionSaving
               }
             />
@@ -941,7 +1310,7 @@ const Advantages = () => {
               rows="3"
               placeholder="Pourquoi choisir AUTO MOTORS SARL..."
               disabled={
-                advantages.length === 0 ||
+                totalItems === 0 ||
                 sectionSaving
               }
             />
@@ -964,7 +1333,7 @@ const Advantages = () => {
               rows="3"
               placeholder="Why choose AUTO MOTORS SARL..."
               disabled={
-                advantages.length === 0 ||
+                totalItems === 0 ||
                 sectionSaving
               }
             />
@@ -992,6 +1361,18 @@ const Advantages = () => {
         onDelete={handleDeleteClick}
         editLabel="Edit"
         deleteLabel="Delete"
+      />
+
+      {/* Backend Pagination */}
+      <AdminPagination
+        currentPage={currentPage}
+        totalItems={totalItems}
+        itemsPerPage={
+          ITEMS_PER_PAGE
+        }
+        onPageChange={
+          setCurrentPage
+        }
       />
 
       {/* Add/Edit advantage modal */}
@@ -1170,9 +1551,8 @@ const Advantages = () => {
               <div className="admin-selected-icon">
                 <div className="admin-selected-icon-symbol">
                   <i
-                    className={`bi ${
-                      form.icon
-                    }`}
+                    className={`bi ${form.icon
+                      }`}
                   />
                 </div>
 
@@ -1199,7 +1579,15 @@ const Advantages = () => {
                 id="display_order"
                 name="display_order"
                 type="number"
-                min="0"
+                min="1"
+                max={
+                  editingAdvantage
+                    ? Math.max(
+                      totalItems,
+                      1
+                    )
+                    : totalItems + 1
+                }
                 value={
                   form.display_order
                 }
@@ -1207,6 +1595,13 @@ const Advantages = () => {
                   handleChange
                 }
               />
+
+              <small className="admin-form-help">
+                Use 1 for the first item,
+                2 for the second item, and
+                so on. Existing items will
+                automatically shift.
+              </small>
             </div>
 
             <div className="admin-form-group admin-form-group-full">
@@ -1241,9 +1636,7 @@ const Advantages = () => {
 
       {/* Delete confirmation */}
       <ConfirmDialog
-        isOpen={
-          deleteDialogOpen
-        }
+        isOpen={deleteDialogOpen}
         title="Delete Advantage"
         message={
           deletingAdvantage
@@ -1252,12 +1645,8 @@ const Advantages = () => {
         }
         confirmText="Delete Advantage"
         cancelText="Cancel"
-        onConfirm={
-          handleDelete
-        }
-        onClose={
-          handleCloseDeleteDialog
-        }
+        onConfirm={handleDelete}
+        onCancel={handleCloseDeleteDialog}
         loading={deleting}
         danger
       />

@@ -7,6 +7,8 @@ const {
   createService,
   updateService,
   deleteService,
+  reorderService,
+  normalizeServiceOrders,
 } = require("../controllers/serviceController");
 
 const authMiddleware = require("../middleware/authMiddleware");
@@ -14,25 +16,57 @@ const authMiddleware = require("../middleware/authMiddleware");
 const router =
   express.Router();
 
-// Get active services for the client
+/* =========================================================
+   PUBLIC
+========================================================= */
+
+// Get active services for client
 router.get(
   "/",
   getServices
 );
 
-// Get all services for Admin
+/* =========================================================
+   ADMIN
+========================================================= */
+
+// Get paginated services for Admin
 router.get(
   "/admin",
   authMiddleware,
   getAdminServices
 );
 
-// Get one service for Admin
+/* =========================================================
+   ADMIN ORDERING
+   IMPORTANT: before "/:id"
+========================================================= */
+
+router.post(
+  "/normalize-orders",
+  authMiddleware,
+  normalizeServiceOrders
+);
+
+router.put(
+  "/:id/order",
+  authMiddleware,
+  reorderService
+);
+
+/* =========================================================
+   ADMIN SINGLE SERVICE
+========================================================= */
+
 router.get(
   "/:id",
   authMiddleware,
   getService
 );
+
+/* =========================================================
+   ADMIN CRUD
+========================================================= */
 
 // Create a service
 router.post(

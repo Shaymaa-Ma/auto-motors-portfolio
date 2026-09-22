@@ -124,9 +124,7 @@ const ImageUploader = ({
             JPG, JPEG, PNG or WEBP
           </p>
 
-          <span>
-            Maximum file size: 5 MB
-          </span>
+         
         </div>
 
         <button

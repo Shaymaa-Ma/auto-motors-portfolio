@@ -5,14 +5,14 @@ import {
     useState,
 } from "react";
 
-import {
-    vehiclesApi,
-} from "../api/endpoints";
+import { vehiclesApi } from "../api/endpoints";
 
 import DataTable from "../components/DataTable";
 import FormModal from "../components/FormModal";
 import ConfirmDialog from "../components/ConfirmDialog";
 import ImageUploader from "../components/ImageUploader";
+
+import AdminPagination from "../components/AdminPagination";
 
 const initialForm = {
     type_fr: "",
@@ -23,7 +23,7 @@ const initialForm = {
     description_en: "",
     icon: "bi-truck",
     image: null,
-    display_order: 0,
+    display_order: 1,
     is_active: 1,
 };
 
@@ -33,6 +33,11 @@ const initialSectionForm = {
     section_subtitle_fr: "",
     section_subtitle_en: "",
 };
+
+// Maximum allowed image size: 1 MB
+const MAX_IMAGE_SIZE = 1 * 1024 * 1024;
+
+const ITEMS_PER_PAGE = 10;
 
 const vehicleIcons = [
     {
@@ -85,10 +90,8 @@ const vehicleIcons = [
     },
 ];
 
-// Build a vehicle image URL
-const getImageUrl = (
-    image
-) => {
+// Build vehicle image URL
+const getImageUrl = (image) => {
     if (!image) {
         return "";
     }
@@ -111,160 +114,201 @@ const getImageUrl = (
 };
 
 const Vehicles = () => {
-    const [
-        vehicles,
-        setVehicles,
-    ] = useState([]);
+    // =========================================
+    // DATA
+    // =========================================
 
-    const [
-        loading,
-        setLoading,
-    ] = useState(true);
+    const [vehicles, setVehicles] = useState([]);
 
-    const [
-        saving,
-        setSaving,
-    ] = useState(false);
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
+    const [deleting, setDeleting] = useState(false);
+    const [sectionSaving, setSectionSaving] =
+        useState(false);
 
-    const [
-        deleting,
-        setDeleting,
-    ] = useState(false);
+    // =========================================
+    // MESSAGES
+    // =========================================
 
-    const [
-        sectionSaving,
-        setSectionSaving,
-    ] = useState(false);
+    const [error, setError] = useState("");
+    const [success, setSuccess] = useState("");
+    const [formError, setFormError] = useState("");
 
-    const [
-        error,
-        setError,
-    ] = useState("");
+    // =========================================
+    // EDIT MODAL
+    // =========================================
 
-    const [
-        success,
-        setSuccess,
-    ] = useState("");
+    const [isModalOpen, setIsModalOpen] =
+        useState(false);
 
-    const [
-        formError,
-        setFormError,
-    ] = useState("");
+    const [editingVehicle, setEditingVehicle] =
+        useState(null);
 
-    const [
-        isModalOpen,
-        setIsModalOpen,
-    ] = useState(false);
-
-    const [
-        deleteDialogOpen,
-        setDeleteDialogOpen,
-    ] = useState(false);
-
-    const [
-        editingVehicle,
-        setEditingVehicle,
-    ] = useState(null);
-
-    const [
-        deletingVehicle,
-        setDeletingVehicle,
-    ] = useState(null);
-
-    const [
-        form,
-        setForm,
-    ] = useState(
+    const [form, setForm] = useState(
         initialForm
     );
 
-    const [
-        sectionForm,
-        setSectionForm,
-    ] = useState(
-        initialSectionForm
+    // =========================================
+    // DELETE
+    // =========================================
+
+    const [deleteDialogOpen, setDeleteDialogOpen] =
+        useState(false);
+
+    const [deletingVehicle, setDeletingVehicle] =
+        useState(null);
+
+    // =========================================
+    // SECTION
+    // =========================================
+
+    const [sectionForm, setSectionForm] =
+        useState(initialSectionForm);
+
+    // =========================================
+    // PAGINATION
+    // =========================================
+
+    const [currentPage, setCurrentPage] =
+        useState(1);
+
+    const [totalItems, setTotalItems] =
+        useState(0);
+
+    const [totalPages, setTotalPages] =
+        useState(1);
+
+    // =========================================
+    // LOAD VEHICLES
+    // =========================================
+
+    const loadVehicles = useCallback(
+        async (page = 1) => {
+            try {
+                setLoading(true);
+                setError("");
+
+                const response =
+                    await vehiclesApi.getAll(
+                        page,
+                        ITEMS_PER_PAGE
+                    );
+
+                const responseData =
+                    response?.data ??
+                    response ??
+                    {};
+
+                const vehicleList =
+                    Array.isArray(
+                        responseData?.items
+                    )
+                        ? responseData.items
+                        : [];
+
+                setVehicles(vehicleList);
+
+                setCurrentPage(
+                    Number(
+                        responseData?.page ??
+                            page
+                    )
+                );
+
+                setTotalItems(
+                    Number(
+                        responseData?.totalItems ??
+                            0
+                    )
+                );
+
+                setTotalPages(
+                    Math.max(
+                        1,
+                        Number(
+                            responseData?.totalPages ??
+                                1
+                        )
+                    )
+                );
+
+                // ---------------------------------
+                // Section content
+                // ---------------------------------
+
+                if (vehicleList.length > 0) {
+                    const firstVehicle =
+                        vehicleList[0];
+
+                    setSectionForm({
+                        section_title_fr:
+                            firstVehicle.section_title_fr ??
+                            "",
+
+                        section_title_en:
+                            firstVehicle.section_title_en ??
+                            "",
+
+                        section_subtitle_fr:
+                            firstVehicle.section_subtitle_fr ??
+                            "",
+
+                        section_subtitle_en:
+                            firstVehicle.section_subtitle_en ??
+                            "",
+                    });
+                }
+            } catch (err) {
+                console.error(
+                    "Load vehicles error:",
+                    err
+                );
+
+                console.error(
+                    "Server response:",
+                    err?.response?.data
+                );
+
+                setError(
+                    err?.response?.data?.message ||
+                        "Failed to load vehicles."
+                );
+            } finally {
+                setLoading(false);
+            }
+        },
+        []
     );
 
-    // Load all vehicles for Admin
-    const loadVehicles =
-        useCallback(
-            async () => {
-                try {
-                    setLoading(true);
-                    setError("");
+    // =========================================
+    // INITIAL LOAD
+    // =========================================
 
-                    const response =
-                        await vehiclesApi.getAll();
-
-                    const vehicleData =
-                        response?.data ??
-                        response ??
-                        [];
-
-                    const vehicleList =
-                        Array.isArray(
-                            vehicleData
-                        )
-                            ? vehicleData
-                            : [];
-
-                    setVehicles(
-                        vehicleList
-                    );
-
-                    // Load section content from the first vehicle
-                    if (
-                        vehicleList.length > 0
-                    ) {
-                        const firstVehicle =
-                            vehicleList[0];
-
-                        setSectionForm({
-                            section_title_fr:
-                                firstVehicle.section_title_fr ??
-                                "",
-
-                            section_title_en:
-                                firstVehicle.section_title_en ??
-                                "",
-
-                            section_subtitle_fr:
-                                firstVehicle.section_subtitle_fr ??
-                                "",
-
-                            section_subtitle_en:
-                                firstVehicle.section_subtitle_en ??
-                                "",
-                        });
-                    }
-                } catch (err) {
-                    console.error(
-                        "Load vehicles error:",
-                        err
-                    );
-
-                    setError(
-                        err?.response?.data?.message ||
-                        "Failed to load vehicles."
-                    );
-                } finally {
-                    setLoading(false);
-                }
-            },
-            []
-        );
-
-    // Load vehicles when the page opens
     useEffect(() => {
-        loadVehicles();
-    }, [
-        loadVehicles,
-    ]);
+        loadVehicles(1);
+    }, [loadVehicles]);
 
-    // Update vehicle form field
-    const handleChange = (
-        event
-    ) => {
+    // =========================================
+    // PAGE CHANGE
+    // =========================================
+
+    const handlePageChange = (page) => {
+        if (
+            page < 1 ||
+            page > totalPages ||
+            page === currentPage
+        ) {
+            return;
+        }
+
+        loadVehicles(page);
+    };
+
+    // =========================================
+    // VEHICLE FORM CHANGE
+    // =========================================
+
+    const handleChange = (event) => {
         const {
             name,
             value,
@@ -272,87 +316,103 @@ const Vehicles = () => {
             checked,
         } = event.target;
 
-        setForm(
-            (current) => ({
-                ...current,
-                [name]:
-                    type === "checkbox"
-                        ? checked
-                            ? 1
-                            : 0
-                        : value,
-            })
-        );
+        setForm((current) => ({
+            ...current,
+            [name]:
+                type === "checkbox"
+                    ? checked
+                        ? 1
+                        : 0
+                    : value,
+        }));
 
         setFormError("");
     };
 
-    // Update section field
-    const handleSectionChange =
-        (event) => {
-            const {
-                name,
-                value,
-            } = event.target;
+    // =========================================
+    // SECTION FORM CHANGE
+    // =========================================
 
-            setSectionForm(
-                (current) => ({
-                    ...current,
-                    [name]: value,
-                })
+    const handleSectionChange = (event) => {
+        const {
+            name,
+            value,
+        } = event.target;
+
+        setSectionForm((current) => ({
+            ...current,
+            [name]: value,
+        }));
+    };
+
+    // =========================================
+    // IMAGE CHANGE
+    // =========================================
+
+    const handleImageChange = (file) => {
+        const selectedFile =
+            file?.target?.files?.[0] ||
+            file;
+
+        setFormError("");
+
+        if (!selectedFile) {
+            setForm((current) => ({
+                ...current,
+                image: null,
+            }));
+
+            return;
+        }
+
+        if (
+            selectedFile.size >
+            MAX_IMAGE_SIZE
+        ) {
+            setFormError(
+                "Vehicle image size must not exceed 1 MB."
             );
-        };
 
-    // Handle vehicle image selection
-    const handleImageChange =
-        (file) => {
-            // ImageUploader may provide either
-            // the File directly or the input event.
-            const selectedFile =
-                file?.target?.files?.[0] ||
-                file;
+            return;
+        }
 
-            setForm(
-                (current) => ({
-                    ...current,
+        setForm((current) => ({
+            ...current,
 
-                    // Store only a real File object.
-                    // This guarantees FormData receives
-                    // an actual uploaded image.
-                    image:
-                        selectedFile instanceof File
-                            ? selectedFile
-                            : null,
-                })
+            image:
+                selectedFile instanceof File
+                    ? selectedFile
+                    : null,
+        }));
+    };
+
+    // =========================================
+    // EDIT VEHICLE
+    // =========================================
+
+    const handleEdit = (vehicle) => {
+        if (!vehicle?.id) {
+            setError(
+                "Vehicle ID is missing."
             );
 
-            setFormError("");
-        };
+            return;
+        }
 
-    // Open Edit Vehicle modal
-    const handleEdit = (
-        vehicle
-    ) => {
-        setEditingVehicle(
-            vehicle
-        );
+        setEditingVehicle(vehicle);
 
         setForm({
             type_fr:
-                vehicle.type_fr ??
-                "",
+                vehicle.type_fr ?? "",
 
             type_en:
-                vehicle.type_en ??
-                "",
+                vehicle.type_en ?? "",
 
             name_fr:
-                vehicle.name_fr ??
-                "",
+                vehicle.name_fr ?? "",
 
             name_en:
-                vehicle.name_en ??
-                "",
+                vehicle.name_en ?? "",
 
             description_fr:
                 vehicle.description_fr ??
@@ -366,15 +426,14 @@ const Vehicles = () => {
                 vehicle.icon ||
                 "bi-truck",
 
-            // Important:
-            // Existing image is NOT placed in form.image.
-            // It is displayed through currentImage below.
-            // form.image is only for a NEW uploaded file.
+            // Existing image is handled by
+            // ImageUploader currentImage.
             image: null,
 
             display_order:
-                vehicle.display_order ??
-                0,
+                Number(
+                    vehicle.display_order
+                ) || 1,
 
             is_active:
                 Number(
@@ -391,208 +450,240 @@ const Vehicles = () => {
         setIsModalOpen(true);
     };
 
-    // Close Edit modal
-    const handleCloseModal =
-        () => {
-            if (saving) {
-                return;
+    // =========================================
+    // CLOSE EDIT MODAL
+    // =========================================
+
+    const handleCloseModal = () => {
+        if (saving) {
+            return;
+        }
+
+        setIsModalOpen(false);
+        setEditingVehicle(null);
+
+        setForm({
+            ...initialForm,
+            image: null,
+        });
+
+        setFormError("");
+    };
+
+    // =========================================
+    // SAVE VEHICLE
+    // =========================================
+
+    const handleSubmit = async (event) => {
+        event.preventDefault();
+
+        setFormError("");
+        setError("");
+        setSuccess("");
+
+        // --------------------------------------
+        // Validation
+        // --------------------------------------
+
+        if (!form.type_fr.trim()) {
+            setFormError(
+                "French vehicle type is required."
+            );
+
+            return;
+        }
+
+        if (!form.type_en.trim()) {
+            setFormError(
+                "English vehicle type is required."
+            );
+
+            return;
+        }
+
+        if (!form.name_fr.trim()) {
+            setFormError(
+                "French vehicle name is required."
+            );
+
+            return;
+        }
+
+        if (!form.name_en.trim()) {
+            setFormError(
+                "English vehicle name is required."
+            );
+
+            return;
+        }
+
+        if (!editingVehicle) {
+            setFormError(
+                "No vehicle selected for editing."
+            );
+
+            return;
+        }
+
+        try {
+            setSaving(true);
+
+            const oldOrder =
+                Number(
+                    editingVehicle.display_order
+                ) || 1;
+
+            const requestedOrder =
+                Number(
+                    form.display_order
+                ) || oldOrder;
+
+            // =================================
+            // BUILD FORM DATA
+            // =================================
+
+            const formData =
+                new FormData();
+
+            formData.append(
+                "type_fr",
+                form.type_fr.trim()
+            );
+
+            formData.append(
+                "type_en",
+                form.type_en.trim()
+            );
+
+            formData.append(
+                "name_fr",
+                form.name_fr.trim()
+            );
+
+            formData.append(
+                "name_en",
+                form.name_en.trim()
+            );
+
+            formData.append(
+                "description_fr",
+                form.description_fr.trim()
+            );
+
+            formData.append(
+                "description_en",
+                form.description_en.trim()
+            );
+
+            formData.append(
+                "icon",
+                form.icon ||
+                    "bi-truck"
+            );
+
+            /*
+             * Keep the existing order during
+             * the normal update.
+             *
+             * The dedicated reorder endpoint
+             * handles position changes.
+             */
+            formData.append(
+                "display_order",
+                String(oldOrder)
+            );
+
+            formData.append(
+                "is_active",
+                Number(form.is_active) ===
+                    1
+                    ? "1"
+                    : "0"
+            );
+
+            // ---------------------------------
+            // New image
+            // ---------------------------------
+
+            if (
+                form.image instanceof File
+            ) {
+                formData.append(
+                    "image",
+                    form.image
+                );
             }
 
-            setIsModalOpen(false);
-            setEditingVehicle(
-                null
+            // =================================
+            // UPDATE VEHICLE
+            // =================================
+
+            await vehiclesApi.update(
+                editingVehicle.id,
+                formData
             );
+
+            // =================================
+            // REORDER
+            // =================================
+
+            if (
+                requestedOrder !==
+                    oldOrder &&
+                requestedOrder > 0
+            ) {
+                await vehiclesApi.reorder(
+                    editingVehicle.id,
+                    requestedOrder
+                );
+            }
+
+            setSuccess(
+                "Vehicle updated successfully."
+            );
+
+            setIsModalOpen(false);
+            setEditingVehicle(null);
 
             setForm({
                 ...initialForm,
                 image: null,
             });
 
-            setFormError("");
-        };
+            await loadVehicles(
+                currentPage
+            );
+        } catch (err) {
+            console.error(
+                "Save vehicle error:",
+                err
+            );
 
-    // Save vehicle
-    const handleSubmit =
-        async (
-            event
-        ) => {
-            event.preventDefault();
+            console.error(
+                "Server response:",
+                err?.response?.data
+            );
 
-            setFormError("");
-            setError("");
-            setSuccess("");
-
-            if (!form.type_fr.trim()) {
-                setFormError(
-                    "French vehicle type is required."
-                );
-
-                return;
-            }
-
-            if (!form.type_en.trim()) {
-                setFormError(
-                    "English vehicle type is required."
-                );
-
-                return;
-            }
-
-            if (!form.name_fr.trim()) {
-                setFormError(
-                    "French vehicle name is required."
-                );
-
-                return;
-            }
-
-            if (!form.name_en.trim()) {
-                setFormError(
-                    "English vehicle name is required."
-                );
-
-                return;
-            }
-
-            /*
-             * Since vehicles can only be edited,
-             * an editing vehicle must exist.
-             */
-            if (!editingVehicle) {
-                setFormError(
-                    "No vehicle selected for editing."
-                );
-
-                return;
-            }
-
-            try {
-                setSaving(true);
-
-                const formData =
-                    new FormData();
-
-                formData.append(
-                    "type_fr",
-                    form.type_fr.trim()
-                );
-
-                formData.append(
-                    "type_en",
-                    form.type_en.trim()
-                );
-
-                formData.append(
-                    "name_fr",
-                    form.name_fr.trim()
-                );
-
-                formData.append(
-                    "name_en",
-                    form.name_en.trim()
-                );
-
-                formData.append(
-                    "description_fr",
-                    form.description_fr.trim()
-                );
-
-                formData.append(
-                    "description_en",
-                    form.description_en.trim()
-                );
-
-                formData.append(
-                    "icon",
-                    form.icon ||
-                    "bi-truck"
-                );
-
-                formData.append(
-                    "display_order",
-                    Number(
-                        form.display_order
-                    ) || 0
-                );
-
-                formData.append(
-                    "is_active",
-                    Number(
-                        form.is_active
-                    ) === 1
-                        ? 1
-                        : 0
-                );
-
-                // ----------------------------------------------------------
-                // IMAGE UPLOAD
-                // ----------------------------------------------------------
-                //
-                // Edit:
-                //   no new File -> backend keeps old image
-                //   new File -> backend replaces old image
-                //
-                if (
-                    form.image instanceof File
-                ) {
-                    formData.append(
-                        "image",
-                        form.image
-                    );
-                }
-
-                await vehiclesApi.update(
-                    editingVehicle.id,
-                    formData
-                );
-
-                setSuccess(
-                    "Vehicle updated successfully."
-                );
-
-                setIsModalOpen(false);
-                setEditingVehicle(
-                    null
-                );
-
-                setForm({
-                    ...initialForm,
-                    image: null,
-                });
-
-                await loadVehicles();
-            } catch (err) {
-                console.error(
-                    "Save vehicle error:",
-                    err
-                );
-
-                setFormError(
-                    err?.response?.data?.message ||
+            setFormError(
+                err?.response?.data?.message ||
+                    err?.message ||
                     "Failed to save vehicle."
-                );
-            } finally {
-                setSaving(false);
-            }
-        };
+            );
+        } finally {
+            setSaving(false);
+        }
+    };
 
-    // Save section content
+    // =========================================
+    // SAVE SECTION
+    // =========================================
+
     const handleSaveSection =
         async () => {
             try {
                 setSectionSaving(true);
                 setError("");
                 setSuccess("");
-
-                if (
-                    vehicles.length === 0
-                ) {
-                    setError(
-                        "There are no vehicles available to save the section content."
-                    );
-
-                    return;
-                }
 
                 const sectionData = {
                     section_title_fr:
@@ -608,41 +699,43 @@ const Vehicles = () => {
                         sectionForm.section_subtitle_en.trim(),
                 };
 
-                await Promise.all(
-                    vehicles.map(
-                        (vehicle) =>
-                            vehiclesApi.update(
-                                vehicle.id,
-                                sectionData
-                            )
-                    )
+                await vehiclesApi.updateSection(
+                    sectionData
                 );
 
                 setSuccess(
                     "Vehicles section content saved successfully."
                 );
 
-                await loadVehicles();
+                await loadVehicles(
+                    currentPage
+                );
             } catch (err) {
                 console.error(
                     "Save vehicle section error:",
                     err
                 );
 
+                console.error(
+                    "Server response:",
+                    err?.response?.data
+                );
+
                 setError(
                     err?.response?.data?.message ||
-                    "Failed to save section content."
+                        "Failed to save section content."
                 );
             } finally {
                 setSectionSaving(false);
             }
         };
 
-    // Toggle vehicle status
+    // =========================================
+    // TOGGLE STATUS
+    // =========================================
+
     const handleToggleStatus =
-        async (
-            vehicle
-        ) => {
+        async (vehicle) => {
             try {
                 setError("");
                 setSuccess("");
@@ -659,7 +752,7 @@ const Vehicles = () => {
 
                 formData.append(
                     "is_active",
-                    nextStatus
+                    String(nextStatus)
                 );
 
                 await vehiclesApi.update(
@@ -673,7 +766,9 @@ const Vehicles = () => {
                         : "Vehicle deactivated successfully."
                 );
 
-                await loadVehicles();
+                await loadVehicles(
+                    currentPage
+                );
             } catch (err) {
                 console.error(
                     "Toggle vehicle status error:",
@@ -682,88 +777,99 @@ const Vehicles = () => {
 
                 setError(
                     err?.response?.data?.message ||
-                    "Failed to update vehicle status."
+                        "Failed to update vehicle status."
                 );
             }
         };
 
-    // Open delete confirmation
-    const handleDeleteClick =
-        (
-            vehicle
-        ) => {
-            setDeletingVehicle(
-                vehicle
+    // =========================================
+    // DELETE
+    // =========================================
+
+    const handleDeleteClick = (
+        vehicle
+    ) => {
+        if (!vehicle?.id) {
+            setError(
+                "Vehicle ID is missing."
             );
 
-            setDeleteDialogOpen(
-                true
-            );
-        };
+            return;
+        }
 
-    // Close delete confirmation
+        setDeletingVehicle(vehicle);
+        setDeleteDialogOpen(true);
+    };
+
     const handleCloseDeleteDialog =
         () => {
             if (deleting) {
                 return;
             }
 
-            setDeleteDialogOpen(
-                false
-            );
-
-            setDeletingVehicle(
-                null
-            );
+            setDeleteDialogOpen(false);
+            setDeletingVehicle(null);
         };
 
-    // Delete the selected vehicle
-    const handleDelete =
-        async () => {
-            if (
-                !deletingVehicle
-            ) {
-                return;
-            }
+    const handleDelete = async () => {
+        if (!deletingVehicle?.id) {
+            return;
+        }
 
-            try {
-                setDeleting(true);
-                setError("");
-                setSuccess("");
+        try {
+            setDeleting(true);
+            setError("");
+            setSuccess("");
 
-                await vehiclesApi.remove(
-                    deletingVehicle.id
-                );
+            await vehiclesApi.remove(
+                deletingVehicle.id
+            );
 
-                setSuccess(
-                    "Vehicle deleted successfully."
-                );
+            setDeleteDialogOpen(false);
+            setDeletingVehicle(null);
 
-                setDeleteDialogOpen(
-                    false
-                );
+            setSuccess(
+                "Vehicle deleted successfully."
+            );
 
-                setDeletingVehicle(
-                    null
-                );
+            /*
+             * If the deleted vehicle was the
+             * only item on the current page,
+             * move back one page.
+             */
+            const pageToLoad =
+                vehicles.length === 1 &&
+                currentPage > 1
+                    ? currentPage - 1
+                    : currentPage;
 
-                await loadVehicles();
-            } catch (err) {
-                console.error(
-                    "Delete vehicle error:",
-                    err
-                );
+            await loadVehicles(
+                pageToLoad
+            );
+        } catch (err) {
+            console.error(
+                "Delete vehicle error:",
+                err
+            );
 
-                setError(
-                    err?.response?.data?.message ||
+            console.error(
+                "Server response:",
+                err?.response?.data
+            );
+
+            setError(
+                err?.response?.data?.message ||
                     "Failed to delete vehicle."
-                );
-            } finally {
-                setDeleting(false);
-            }
-        };
+            );
+        } finally {
+            setDeleting(false);
+        }
+    };
 
-    // Vehicle table columns
+    // =========================================
+    // TABLE COLUMNS
+    // =========================================
+
     const columns = useMemo(
         () => [
             {
@@ -773,27 +879,34 @@ const Vehicles = () => {
                 render: (
                     value,
                     vehicle
-                ) => (
-                    <div className="admin-vehicle-table-image">
-                        {value ? (
-                            <img
-                                src={getImageUrl(
-                                    value
-                                )}
-                                alt={
-                                    vehicle.name_en ||
-                                    "Vehicle"
-                                }
-                                loading="lazy"
-                                decoding="async"
-                            />
-                        ) : (
-                            <div className="admin-vehicle-table-image-empty">
-                                <i className="bi bi-image" />
-                            </div>
-                        )}
-                    </div>
-                ),
+                ) => {
+                    const imageUrl =
+                        getImageUrl(
+                            value
+                        );
+
+                    return (
+                        <div className="admin-vehicle-table-image">
+                            {imageUrl ? (
+                                <img
+                                    src={
+                                        imageUrl
+                                    }
+                                    alt={
+                                        vehicle?.name_en ||
+                                        "Vehicle"
+                                    }
+                                    loading="lazy"
+                                    decoding="async"
+                                />
+                            ) : (
+                                <div className="admin-vehicle-table-image-empty">
+                                    <i className="bi bi-truck" />
+                                </div>
+                            )}
+                        </div>
+                    );
+                },
             },
 
             {
@@ -811,7 +924,7 @@ const Vehicles = () => {
                         </strong>
 
                         <span>
-                            {vehicle.name_en ||
+                            {vehicle?.name_en ||
                                 "—"}
                         </span>
                     </div>
@@ -828,11 +941,12 @@ const Vehicles = () => {
                 ) => (
                     <div className="admin-vehicle-type-cell">
                         <strong>
-                            {value || "—"}
+                            {value ||
+                                "—"}
                         </strong>
 
                         <span>
-                            {vehicle.type_en ||
+                            {vehicle?.type_en ||
                                 "—"}
                         </span>
                     </div>
@@ -865,7 +979,8 @@ const Vehicles = () => {
                     value
                 ) => (
                     <span className="admin-order-number">
-                        {value ?? 0}
+                        {value ??
+                            "—"}
                     </span>
                 ),
             },
@@ -881,7 +996,8 @@ const Vehicles = () => {
                     <button
                         type="button"
                         className={`admin-status-button ${
-                            Number(value) === 1
+                            Number(value) ===
+                            1
                                 ? "active"
                                 : "inactive"
                         }`}
@@ -910,9 +1026,17 @@ const Vehicles = () => {
         []
     );
 
+    // =========================================
+    // RENDER
+    // =========================================
+
     return (
         <div className="admin-page">
-            {/* Page header */}
+
+            {/* =====================================
+                PAGE HEADER
+            ====================================== */}
+
             <div className="admin-page-header">
                 <div>
                     <span className="admin-page-eyebrow">
@@ -931,7 +1055,10 @@ const Vehicles = () => {
                 </div>
             </div>
 
-            {/* Success message */}
+            {/* =====================================
+                SUCCESS MESSAGE
+            ====================================== */}
+
             {success && (
                 <div className="admin-alert admin-alert-success">
                     <i className="bi bi-check-circle" />
@@ -952,7 +1079,10 @@ const Vehicles = () => {
                 </div>
             )}
 
-            {/* Error message */}
+            {/* =====================================
+                ERROR MESSAGE
+            ====================================== */}
+
             {error && (
                 <div className="admin-alert admin-alert-error">
                     <i className="bi bi-exclamation-circle" />
@@ -973,7 +1103,10 @@ const Vehicles = () => {
                 </div>
             )}
 
-            {/* Vehicles section content */}
+            {/* =====================================
+                SECTION CONTENT
+            ====================================== */}
+
             <div className="admin-section-settings">
                 <div className="admin-section-settings-header">
                     <div>
@@ -1010,6 +1143,9 @@ const Vehicles = () => {
                 </div>
 
                 <div className="admin-form-grid">
+
+                    {/* French title */}
+
                     <div className="admin-form-group">
                         <label htmlFor="section_title_fr">
                             Section Title
@@ -1029,6 +1165,8 @@ const Vehicles = () => {
                             placeholder="Nos véhicules"
                         />
                     </div>
+
+                    {/* English title */}
 
                     <div className="admin-form-group">
                         <label htmlFor="section_title_en">
@@ -1050,6 +1188,8 @@ const Vehicles = () => {
                         />
                     </div>
 
+                    {/* French subtitle */}
+
                     <div className="admin-form-group">
                         <label htmlFor="section_subtitle_fr">
                             Section Subtitle
@@ -1069,6 +1209,8 @@ const Vehicles = () => {
                             placeholder="Découvrez notre gamme de véhicules..."
                         />
                     </div>
+
+                    {/* English subtitle */}
 
                     <div className="admin-form-group">
                         <label htmlFor="section_subtitle_en">
@@ -1092,8 +1234,12 @@ const Vehicles = () => {
                 </div>
             </div>
 
-            {/* Vehicles table */}
+            {/* =====================================
+                VEHICLES TABLE
+            ====================================== */}
+
             <div className="admin-vehicles-section">
+
                 <div className="admin-vehicles-section-header">
                     <div>
                         <h2>
@@ -1103,12 +1249,12 @@ const Vehicles = () => {
                         <p>
                             {loading
                                 ? "Loading vehicles..."
-                                : `${vehicles.length} ${
-                                    vehicles.length ===
-                                    1
-                                        ? "vehicle"
-                                        : "vehicles"
-                                } in the catalog`}
+                                : `${totalItems} ${
+                                      totalItems ===
+                                      1
+                                          ? "vehicle"
+                                          : "vehicles"
+                                  } in the catalog`}
                         </p>
                     </div>
                 </div>
@@ -1118,20 +1264,55 @@ const Vehicles = () => {
                     data={vehicles}
                     loading={loading}
                     emptyMessage="No vehicles have been added yet."
-                    onEdit={handleEdit}
+                    onEdit={
+                        handleEdit
+                    }
                     onDelete={
                         handleDeleteClick
                     }
                     editLabel="Edit"
                     deleteLabel="Delete"
                 />
+
+                {/* =================================
+                    PAGINATION
+                ================================== */}
+
+                {totalPages > 1 && (
+                    <div className="px-3 px-md-4 py-3 border-top">
+                        <AdminPagination
+                            currentPage={
+                                currentPage
+                            }
+                            totalPages={
+                                totalPages
+                            }
+                            totalItems={
+                                totalItems
+                            }
+                            itemsPerPage={
+                                ITEMS_PER_PAGE
+                            }
+                            onPageChange={
+                                handlePageChange
+                            }
+                        />
+                    </div>
+                )}
             </div>
 
-            {/* Edit vehicle modal */}
+            {/* =====================================
+                EDIT VEHICLE MODAL
+            ====================================== */}
+
             <FormModal
-                isOpen={isModalOpen}
+                isOpen={
+                    isModalOpen
+                }
                 title="Edit Vehicle"
-                onSubmit={handleSubmit}
+                onSubmit={
+                    handleSubmit
+                }
                 onClose={
                     handleCloseModal
                 }
@@ -1140,6 +1321,8 @@ const Vehicles = () => {
                 loading={saving}
                 size="large"
             >
+                {/* Form error */}
+
                 {formError && (
                     <div className="admin-form-error-box">
                         <i className="bi bi-exclamation-circle" />
@@ -1150,7 +1333,10 @@ const Vehicles = () => {
                     </div>
                 )}
 
-                {/* Vehicle image */}
+                {/* =================================
+                    IMAGE
+                ================================== */}
+
                 <div className="admin-form-section">
                     <div className="admin-form-section-header">
                         <h3>
@@ -1162,6 +1348,36 @@ const Vehicles = () => {
                             will be displayed for
                             this vehicle.
                         </p>
+                    </div>
+
+                    <div className="hero-image-notes">
+                        <div className="hero-image-note">
+                            <div className="hero-image-note-icon">
+                                IMAGE
+                            </div>
+
+                            <div className="hero-image-note-content">
+                                <strong>
+                                    Recommended size:
+                                    1365 × 768 px
+                                </strong>
+
+                                <span>
+                                    Aspect ratio: 16:9 ·
+                                    Orientation:
+                                    Landscape
+                                </span>
+
+                                <small>
+                                    Use a high-quality
+                                    vehicle image that
+                                    clearly presents
+                                    the vehicle.
+                                    Maximum file size:
+                                    1 MB.
+                                </small>
+                            </div>
+                        </div>
                     </div>
 
                     <ImageUploader
@@ -1178,7 +1394,10 @@ const Vehicles = () => {
                     />
                 </div>
 
-                {/* Vehicle information */}
+                {/* =================================
+                    VEHICLE INFORMATION
+                ================================== */}
+
                 <div className="admin-form-section">
                     <div className="admin-form-section-header">
                         <h3>
@@ -1193,6 +1412,9 @@ const Vehicles = () => {
                     </div>
 
                     <div className="admin-form-grid">
+
+                        {/* Type FR */}
+
                         <div className="admin-form-group">
                             <label htmlFor="type_fr">
                                 Vehicle Type
@@ -1216,6 +1438,8 @@ const Vehicles = () => {
                                 required
                             />
                         </div>
+
+                        {/* Type EN */}
 
                         <div className="admin-form-group">
                             <label htmlFor="type_en">
@@ -1241,6 +1465,8 @@ const Vehicles = () => {
                             />
                         </div>
 
+                        {/* Name FR */}
+
                         <div className="admin-form-group">
                             <label htmlFor="name_fr">
                                 Vehicle Name
@@ -1264,6 +1490,8 @@ const Vehicles = () => {
                                 required
                             />
                         </div>
+
+                        {/* Name EN */}
 
                         <div className="admin-form-group">
                             <label htmlFor="name_en">
@@ -1289,6 +1517,8 @@ const Vehicles = () => {
                             />
                         </div>
 
+                        {/* Description FR */}
+
                         <div className="admin-form-group admin-form-group-full">
                             <label htmlFor="description_fr">
                                 Description
@@ -1308,6 +1538,8 @@ const Vehicles = () => {
                                 placeholder="Description du véhicule..."
                             />
                         </div>
+
+                        {/* Description EN */}
 
                         <div className="admin-form-group admin-form-group-full">
                             <label htmlFor="description_en">
@@ -1331,7 +1563,10 @@ const Vehicles = () => {
                     </div>
                 </div>
 
-                {/* Vehicle display settings */}
+                {/* =================================
+                    DISPLAY SETTINGS
+                ================================== */}
+
                 <div className="admin-form-section">
                     <div className="admin-form-section-header">
                         <h3>
@@ -1346,6 +1581,9 @@ const Vehicles = () => {
                     </div>
 
                     <div className="admin-form-grid">
+
+                        {/* Icon */}
+
                         <div className="admin-form-group">
                             <label htmlFor="icon">
                                 Vehicle Icon
@@ -1362,7 +1600,9 @@ const Vehicles = () => {
                                 }
                             >
                                 {vehicleIcons.map(
-                                    (item) => (
+                                    (
+                                        item
+                                    ) => (
                                         <option
                                             key={
                                                 item.value
@@ -1371,7 +1611,9 @@ const Vehicles = () => {
                                                 item.value
                                             }
                                         >
-                                            {item.label}
+                                            {
+                                                item.label
+                                            }
                                         </option>
                                     )
                                 )}
@@ -1384,6 +1626,8 @@ const Vehicles = () => {
                             </small>
                         </div>
 
+                        {/* Display order */}
+
                         <div className="admin-form-group">
                             <label htmlFor="display_order">
                                 Display Order
@@ -1393,7 +1637,7 @@ const Vehicles = () => {
                                 id="display_order"
                                 name="display_order"
                                 type="number"
-                                min="0"
+                                min="1"
                                 value={
                                     form.display_order
                                 }
@@ -1401,7 +1645,15 @@ const Vehicles = () => {
                                     handleChange
                                 }
                             />
+
+                            <small className="admin-form-help">
+                                Changing the order
+                                automatically shifts
+                                the other vehicles.
+                            </small>
                         </div>
+
+                        {/* Active */}
 
                         <div className="admin-form-group admin-form-group-full">
                             <label className="admin-checkbox-label">
@@ -1411,7 +1663,8 @@ const Vehicles = () => {
                                     checked={
                                         Number(
                                             form.is_active
-                                        ) === 1
+                                        ) ===
+                                        1
                                     }
                                     onChange={
                                         handleChange
@@ -1425,15 +1678,18 @@ const Vehicles = () => {
 
                             <small className="admin-form-help">
                                 Inactive vehicles
-                                will not appear on the
-                                public website.
+                                will not appear on
+                                the public website.
                             </small>
                         </div>
                     </div>
                 </div>
             </FormModal>
 
-            {/* Delete confirmation */}
+            {/* =====================================
+                DELETE CONFIRMATION
+            ====================================== */}
+
             <ConfirmDialog
                 isOpen={
                     deleteDialogOpen

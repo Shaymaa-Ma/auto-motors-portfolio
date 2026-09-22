@@ -5,6 +5,10 @@ const {
   sendError,
 } = require("../utils/response");
 
+// =========================================================
+// PUBLIC
+// =========================================================
+
 // Get all active FAQs
 // GET /api/faqs
 // Public
@@ -96,8 +100,12 @@ const getFaqById =
     }
   };
 
-// Get all FAQs for Admin
-// GET /api/faqs/admin
+// =========================================================
+// ADMIN - PAGINATION
+// =========================================================
+
+// Get paginated FAQs for Admin
+// GET /api/faqs/admin?page=1&limit=10
 // Protected
 const getAdminFaqs =
   async (
@@ -105,6 +113,59 @@ const getAdminFaqs =
     res
   ) => {
     try {
+      // -----------------------------------------------------
+      // Pagination parameters
+      // -----------------------------------------------------
+
+      const page = Math.max(
+        parseInt(
+          req.query.page,
+          10
+        ) || 1,
+        1
+      );
+
+      const limit = Math.min(
+        Math.max(
+          parseInt(
+            req.query.limit,
+            10
+          ) || 10,
+          1
+        ),
+        100
+      );
+
+      const offset =
+        (page - 1) * limit;
+
+      // -----------------------------------------------------
+      // Total FAQ count
+      // -----------------------------------------------------
+
+      const [
+        countRows,
+      ] = await db.query(
+        `
+          SELECT COUNT(*) AS totalItems
+          FROM faqs
+        `
+      );
+
+      const totalItems =
+        Number(
+          countRows[0]?.totalItems
+        ) || 0;
+
+      const totalPages =
+        Math.ceil(
+          totalItems / limit
+        );
+
+      // -----------------------------------------------------
+      // Get current page
+      // -----------------------------------------------------
+
       const [rows] =
         await db.query(
           `
@@ -113,12 +174,25 @@ const getAdminFaqs =
             ORDER BY
               display_order ASC,
               id ASC
-          `
+            LIMIT ?
+            OFFSET ?
+          `,
+          [
+            limit,
+            offset,
+          ]
         );
 
       return sendSuccess(
         res,
-        rows,
+        {
+          items: rows,
+          page,
+          limit,
+          offset,
+          totalItems,
+          totalPages,
+        },
         "FAQs retrieved successfully"
       );
     } catch (error) {
@@ -186,6 +260,266 @@ const getAdminFaqById =
     }
   };
 
+// =========================================================
+// ADMIN - REORDER
+// =========================================================
+
+// Reorder FAQ
+// PUT /api/faqs/:id/order
+// Protected
+const reorderFaq =
+  async (
+    req,
+    res
+  ) => {
+    try {
+      const {
+        id,
+      } = req.params;
+
+      const requestedOrder =
+        Number(
+          req.body.display_order
+        );
+
+      // -----------------------------------------------------
+      // Validate order
+      // -----------------------------------------------------
+
+      if (
+        !Number.isFinite(
+          requestedOrder
+        )
+      ) {
+        return sendError(
+          res,
+          "A valid display order is required.",
+          400
+        );
+      }
+
+      // -----------------------------------------------------
+      // Get all FAQ IDs ordered by current position
+      // -----------------------------------------------------
+
+      const [items] =
+        await db.query(
+          `
+            SELECT
+              id,
+              display_order
+            FROM faqs
+            ORDER BY
+              display_order ASC,
+              id ASC
+          `
+        );
+
+      if (
+        items.length === 0
+      ) {
+        return sendError(
+          res,
+          "No FAQs found.",
+          404
+        );
+      }
+
+      const currentIndex =
+        items.findIndex(
+          (item) =>
+            Number(item.id) ===
+            Number(id)
+        );
+
+      if (
+        currentIndex === -1
+      ) {
+        return sendError(
+          res,
+          "FAQ not found",
+          404
+        );
+      }
+
+      // -----------------------------------------------------
+      // Clamp requested order
+      // -----------------------------------------------------
+
+      const targetOrder =
+        Math.min(
+          Math.max(
+            Math.round(
+              requestedOrder
+            ),
+            1
+          ),
+          items.length
+        );
+
+      // -----------------------------------------------------
+      // Move item in memory
+      // -----------------------------------------------------
+
+      const [
+        movedItem,
+      ] = items.splice(
+        currentIndex,
+        1
+      );
+
+      items.splice(
+        targetOrder - 1,
+        0,
+        movedItem
+      );
+
+      // -----------------------------------------------------
+      // Temporary orders
+      //
+      // Prevent duplicate-order conflicts while
+      // rewriting the final sequence.
+      // -----------------------------------------------------
+
+      const temporaryOffset =
+        items.length + 1000;
+
+      await db.query(
+        `
+          UPDATE faqs
+          SET display_order = ?
+          WHERE id = ?
+        `,
+        [
+          temporaryOffset,
+          movedItem.id,
+        ]
+      );
+
+      // -----------------------------------------------------
+      // Rewrite final 1-based order
+      // -----------------------------------------------------
+
+      for (
+        let index = 0;
+        index < items.length;
+        index++
+      ) {
+        await db.query(
+          `
+            UPDATE faqs
+            SET display_order = ?
+            WHERE id = ?
+          `,
+          [
+            index + 1,
+            items[index].id,
+          ]
+        );
+      }
+
+      // -----------------------------------------------------
+      // Return updated FAQ
+      // -----------------------------------------------------
+
+      const [
+        updatedRows,
+      ] = await db.query(
+        `
+          SELECT *
+          FROM faqs
+          WHERE id = ?
+          LIMIT 1
+        `,
+        [id]
+      );
+
+      return sendSuccess(
+        res,
+        updatedRows[0],
+        "FAQ reordered successfully"
+      );
+    } catch (error) {
+      console.error(
+        "Reorder FAQ error:",
+        error
+      );
+
+      return sendError(
+        res,
+        "Failed to reorder FAQ"
+      );
+    }
+  };
+
+// =========================================================
+// ADMIN - NORMALIZE ORDERS
+// =========================================================
+
+// Normalize all FAQ orders
+// POST /api/faqs/normalize-orders
+// Protected
+const normalizeFaqOrders =
+  async (
+    req,
+    res
+  ) => {
+    try {
+      const [items] =
+        await db.query(
+          `
+            SELECT id
+            FROM faqs
+            ORDER BY
+              display_order ASC,
+              id ASC
+          `
+        );
+
+      // -----------------------------------------------------
+      // Rewrite orders from 1 to N
+      // -----------------------------------------------------
+
+      for (
+        let index = 0;
+        index < items.length;
+        index++
+      ) {
+        await db.query(
+          `
+            UPDATE faqs
+            SET display_order = ?
+            WHERE id = ?
+          `,
+          [
+            index + 1,
+            items[index].id,
+          ]
+        );
+      }
+
+      return sendSuccess(
+        res,
+        null,
+        "FAQ orders normalized successfully"
+      );
+    } catch (error) {
+      console.error(
+        "Normalize FAQ orders error:",
+        error
+      );
+
+      return sendError(
+        res,
+        "Failed to normalize FAQ orders"
+      );
+    }
+  };
+
+// =========================================================
+// CREATE
+// =========================================================
+
 // Create an FAQ
 // POST /api/faqs
 // Protected
@@ -208,7 +542,10 @@ const createFaq =
         is_active,
       } = req.body;
 
+      // -----------------------------------------------------
       // Validate required fields
+      // -----------------------------------------------------
+
       if (
         !question_fr ||
         !question_en ||
@@ -222,7 +559,10 @@ const createFaq =
         );
       }
 
-      // Create the FAQ
+      // -----------------------------------------------------
+      // Create FAQ
+      // -----------------------------------------------------
+
       const [result] =
         await db.query(
           `
@@ -277,7 +617,10 @@ const createFaq =
           ]
         );
 
-      // Get the newly created FAQ
+      // -----------------------------------------------------
+      // Get newly created FAQ
+      // -----------------------------------------------------
+
       const [rows] =
         await db.query(
           `
@@ -308,6 +651,10 @@ const createFaq =
     }
   };
 
+// =========================================================
+// UPDATE
+// =========================================================
+
 // Update an FAQ
 // PUT /api/faqs/:id
 // Protected
@@ -321,17 +668,21 @@ const updateFaq =
         id,
       } = req.params;
 
-      // Get the existing FAQ
-      const [existingRows] =
-        await db.query(
-          `
-            SELECT *
-            FROM faqs
-            WHERE id = ?
-            LIMIT 1
-          `,
-          [id]
-        );
+      // -----------------------------------------------------
+      // Get existing FAQ
+      // -----------------------------------------------------
+
+      const [
+        existingRows,
+      ] = await db.query(
+        `
+          SELECT *
+          FROM faqs
+          WHERE id = ?
+          LIMIT 1
+        `,
+        [id]
+      );
 
       if (
         existingRows.length === 0
@@ -359,7 +710,10 @@ const updateFaq =
         is_active,
       } = req.body;
 
-      // Update FAQ information
+      // -----------------------------------------------------
+      // Update FAQ
+      // -----------------------------------------------------
+
       await db.query(
         `
           UPDATE faqs
@@ -419,7 +773,10 @@ const updateFaq =
         ]
       );
 
-      // Get the updated FAQ
+      // -----------------------------------------------------
+      // Get updated FAQ
+      // -----------------------------------------------------
+
       const [rows] =
         await db.query(
           `
@@ -449,6 +806,10 @@ const updateFaq =
     }
   };
 
+// =========================================================
+// DELETE
+// =========================================================
+
 // Delete an FAQ
 // DELETE /api/faqs/:id
 // Protected
@@ -462,17 +823,21 @@ const deleteFaq =
         id,
       } = req.params;
 
+      // -----------------------------------------------------
       // Check if FAQ exists
-      const [existingRows] =
-        await db.query(
-          `
-            SELECT id
-            FROM faqs
-            WHERE id = ?
-            LIMIT 1
-          `,
-          [id]
-        );
+      // -----------------------------------------------------
+
+      const [
+        existingRows,
+      ] = await db.query(
+        `
+          SELECT id
+          FROM faqs
+          WHERE id = ?
+          LIMIT 1
+        `,
+        [id]
+      );
 
       if (
         existingRows.length === 0
@@ -484,7 +849,10 @@ const deleteFaq =
         );
       }
 
-      // Delete the FAQ
+      // -----------------------------------------------------
+      // Delete FAQ
+      // -----------------------------------------------------
+
       await db.query(
         `
           DELETE FROM faqs
@@ -516,6 +884,8 @@ module.exports = {
   getFaqById,
   getAdminFaqs,
   getAdminFaqById,
+  reorderFaq,
+  normalizeFaqOrders,
   createFaq,
   updateFaq,
   deleteFaq,

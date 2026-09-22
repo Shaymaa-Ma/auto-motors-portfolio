@@ -1,8 +1,17 @@
-import { useCallback, useEffect, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+
 import { categoriesApi } from "../api/endpoints";
 
 import DataTable from "../components/DataTable";
 import FormModal from "../components/FormModal";
+import AdminPagination from "../components/AdminPagination";
+
+const ITEMS_PER_PAGE = 10;
 
 const initialForm = {
   name_fr: "",
@@ -21,18 +30,32 @@ const initialSectionForm = {
 };
 
 const Categories = () => {
-  const [categories, setCategories] = useState([]);
+  const [categories, setCategories] =
+    useState([]);
 
-  const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] =
+    useState(1);
 
-  const [saving, setSaving] = useState(false);
+  const [totalItems, setTotalItems] =
+    useState(0);
+
+  const [totalPages, setTotalPages] =
+    useState(0);
+
+  const [loading, setLoading] =
+    useState(true);
+
+  const [saving, setSaving] =
+    useState(false);
 
   const [sectionSaving, setSectionSaving] =
     useState(false);
 
-  const [error, setError] = useState("");
+  const [error, setError] =
+    useState("");
 
-  const [success, setSuccess] = useState("");
+  const [success, setSuccess] =
+    useState("");
 
   const [sectionMessage, setSectionMessage] =
     useState("");
@@ -43,50 +66,100 @@ const Categories = () => {
   const [editingCategory, setEditingCategory] =
     useState(null);
 
-  const [form, setForm] = useState(initialForm);
+  const [form, setForm] =
+    useState(initialForm);
 
   const [sectionForm, setSectionForm] =
     useState(initialSectionForm);
 
-  const [formError, setFormError] = useState("");
+  const [formError, setFormError] =
+    useState("");
 
-  // Load all categories for Admin
+  // =========================================================
+  // Load Categories - Current Page
+  // =========================================================
+
   const loadCategories = useCallback(
-    async () => {
+    async (
+      page = 1
+    ) => {
       try {
         setLoading(true);
         setError("");
 
         const response =
-          await categoriesApi.getAll();
+          await categoriesApi.getAll({
+            page,
+            limit: ITEMS_PER_PAGE,
+          });
+
+        const responseData =
+          response?.data ?? {};
 
         const categoryData =
-          response?.data ??
-          response ??
-          [];
+          responseData?.data ?? [];
 
-        setCategories(categoryData);
+        const pagination =
+          responseData?.pagination ??
+          {};
 
-        // Load section content from the first category
-        if (categoryData.length > 0) {
+        const normalizedData =
+          Array.isArray(
+            categoryData
+          )
+            ? categoryData
+            : [];
+
+        setCategories(
+          normalizedData
+        );
+
+        setTotalItems(
+          Number(
+            pagination.totalItems
+          ) || 0
+        );
+
+        setTotalPages(
+          Number(
+            pagination.totalPages
+          ) || 0
+        );
+
+        /*
+         * Keep the existing section-content
+         * behavior.
+         *
+         * Section content is stored with the
+         * categories, so use the first returned
+         * category as the source of the values.
+         */
+        if (
+          normalizedData.length > 0
+        ) {
           const firstCategory =
-            categoryData[0];
+            normalizedData[0];
 
           setSectionForm({
             section_title_fr:
               firstCategory.section_title_fr ??
               "",
+
             section_title_en:
               firstCategory.section_title_en ??
               "",
+
             section_subtitle_fr:
               firstCategory.section_subtitle_fr ??
               "",
+
             section_subtitle_en:
               firstCategory.section_subtitle_en ??
               "",
           });
-        } else {
+        } else if (
+          page === 1
+        ) {
           setSectionForm({
             ...initialSectionForm,
           });
@@ -98,7 +171,7 @@ const Categories = () => {
         );
 
         setError(
-          err.response?.data?.message ||
+          err?.response?.data?.message ||
             "Failed to load categories."
         );
       } finally {
@@ -108,12 +181,51 @@ const Categories = () => {
     []
   );
 
-  useEffect(() => {
-    loadCategories();
-  }, [loadCategories]);
+  // =========================================================
+  // Initial / Page Load
+  // =========================================================
 
-  // Update category form field
-  const handleChange = (event) => {
+  useEffect(() => {
+    loadCategories(
+      currentPage
+    );
+  }, [
+    currentPage,
+    loadCategories,
+  ]);
+
+  // =========================================================
+  // Keep Current Page Valid
+  // =========================================================
+
+  useEffect(() => {
+    if (
+      totalPages > 0 &&
+      currentPage > totalPages
+    ) {
+      setCurrentPage(
+        totalPages
+      );
+    }
+
+    if (
+      totalPages === 0 &&
+      currentPage !== 1
+    ) {
+      setCurrentPage(1);
+    }
+  }, [
+    currentPage,
+    totalPages,
+  ]);
+
+  // =========================================================
+  // Update Category Form
+  // =========================================================
+
+  const handleChange = (
+    event
+  ) => {
     const {
       name,
       value,
@@ -121,20 +233,27 @@ const Categories = () => {
       checked,
     } = event.target;
 
-    setForm((current) => ({
-      ...current,
-      [name]:
-        type === "checkbox"
-          ? checked
-            ? 1
-            : 0
-          : value,
-    }));
+    setForm(
+      (current) => ({
+        ...current,
+
+        [name]:
+          type ===
+          "checkbox"
+            ? checked
+              ? 1
+              : 0
+            : value,
+      })
+    );
 
     setFormError("");
   };
 
-  // Update section form field
+  // =========================================================
+  // Update Section Form
+  // =========================================================
+
   const handleSectionChange = (
     event
   ) => {
@@ -143,51 +262,87 @@ const Categories = () => {
       value,
     } = event.target;
 
-    setSectionForm((current) => ({
-      ...current,
-      [name]: value,
-    }));
+    setSectionForm(
+      (current) => ({
+        ...current,
+        [name]: value,
+      })
+    );
 
     setSectionMessage("");
     setError("");
   };
 
-  // Open the Add Category modal
+  // =========================================================
+  // Add Category
+  // =========================================================
+
   const handleAdd = () => {
     setEditingCategory(null);
 
     setForm({
       ...initialForm,
+
+      display_order:
+        totalItems + 1,
     });
 
     setFormError("");
+    setError("");
+    setSuccess("");
+
     setIsModalOpen(true);
   };
 
-  // Open the Edit Category modal
-  const handleEdit = (category) => {
-    setEditingCategory(category);
+  // =========================================================
+  // Edit Category
+  // =========================================================
+
+  const handleEdit = (
+    category
+  ) => {
+    setEditingCategory(
+      category
+    );
 
     setForm({
       name_fr:
-        category.name_fr ?? "",
+        category.name_fr ??
+        "",
+
       name_en:
-        category.name_en ?? "",
+        category.name_en ??
+        "",
+
       description_fr:
-        category.description_fr ?? "",
+        category.description_fr ??
+        "",
+
       description_en:
-        category.description_en ?? "",
+        category.description_en ??
+        "",
+
       display_order:
-        category.display_order ?? 0,
+        category.display_order ??
+        0,
+
       is_active:
-        Number(category.is_active),
+        Number(
+          category.is_active
+        ),
     });
 
     setFormError("");
+    setError("");
+    setSuccess("");
+
     setIsModalOpen(true);
   };
 
-  // Close the category form
+  // =========================================================
+  // Close Category Modal
+  // =========================================================
+
   const handleCloseModal = () => {
     if (saving) {
       return;
@@ -198,49 +353,68 @@ const Categories = () => {
     setFormError("");
   };
 
-  // Create category data
-  const createCategoryData = () => {
-    return {
-      name_fr:
-        form.name_fr.trim(),
+  // =========================================================
+  // Create Category Data
+  // =========================================================
 
-      name_en:
-        form.name_en.trim(),
+  const createCategoryData =
+    () => {
+      return {
+        name_fr:
+          form.name_fr.trim(),
 
-      description_fr:
-        form.description_fr.trim(),
+        name_en:
+          form.name_en.trim(),
 
-      description_en:
-        form.description_en.trim(),
+        description_fr:
+          form.description_fr.trim(),
 
-      display_order:
-        Number(form.display_order),
+        description_en:
+          form.description_en.trim(),
 
-      is_active:
-        Number(form.is_active),
+        display_order:
+          Number(
+            form.display_order
+          ) ||
+          totalItems + 1,
+
+        is_active:
+          Number(
+            form.is_active
+          ),
+      };
     };
-  };
 
-  // Save the category
+  // =========================================================
+  // Save Category
+  // =========================================================
+
   const handleSubmit = async (
     event
   ) => {
     event.preventDefault();
 
     setFormError("");
+    setError("");
     setSuccess("");
 
-    if (!form.name_fr.trim()) {
+    if (
+      !form.name_fr.trim()
+    ) {
       setFormError(
         "French category name is required."
       );
+
       return;
     }
 
-    if (!form.name_en.trim()) {
+    if (
+      !form.name_en.trim()
+    ) {
       setFormError(
         "English category name is required."
       );
+
       return;
     }
 
@@ -251,10 +425,42 @@ const Categories = () => {
         createCategoryData();
 
       if (editingCategory) {
+        /*
+         * Keep the original display order
+         * during the normal category update.
+         *
+         * Backend reorder handles the actual
+         * order change.
+         */
+        const oldOrder =
+          Number(
+            editingCategory.display_order
+          ) || 0;
+
+        const requestedOrder =
+          Number(
+            categoryData.display_order
+          ) || 0;
+
         await categoriesApi.update(
           editingCategory.id,
-          categoryData
+          {
+            ...categoryData,
+
+            display_order:
+              oldOrder,
+          }
         );
+
+        if (
+          oldOrder !==
+          requestedOrder
+        ) {
+          await categoriesApi.reorder(
+            editingCategory.id,
+            requestedOrder
+          );
+        }
 
         setSuccess(
           "Category updated successfully."
@@ -276,7 +482,9 @@ const Categories = () => {
         ...initialForm,
       });
 
-      await loadCategories();
+      await loadCategories(
+        currentPage
+      );
     } catch (err) {
       console.error(
         "Save category error:",
@@ -284,7 +492,7 @@ const Categories = () => {
       );
 
       setFormError(
-        err.response?.data?.message ||
+        err?.response?.data?.message ||
           "Failed to save category."
       );
     } finally {
@@ -292,78 +500,102 @@ const Categories = () => {
     }
   };
 
-  // Create section data
-  const createSectionData = () => {
-    return {
-      section_title_fr:
-        sectionForm.section_title_fr.trim(),
+  // =========================================================
+  // Create Section Data
+  // =========================================================
 
-      section_title_en:
-        sectionForm.section_title_en.trim(),
+  const createSectionData =
+    () => {
+      return {
+        section_title_fr:
+          sectionForm.section_title_fr.trim(),
 
-      section_subtitle_fr:
-        sectionForm.section_subtitle_fr.trim(),
+        section_title_en:
+          sectionForm.section_title_en.trim(),
 
-      section_subtitle_en:
-        sectionForm.section_subtitle_en.trim(),
+        section_subtitle_fr:
+          sectionForm.section_subtitle_fr.trim(),
+
+        section_subtitle_en:
+          sectionForm.section_subtitle_en.trim(),
+      };
     };
-  };
 
-  // Save Categories section content
-  const handleSaveSection = async (
-    event
-  ) => {
-    event.preventDefault();
+  // =========================================================
+  // Save Categories Section Content
+  // =========================================================
 
-    setError("");
-    setSuccess("");
-    setSectionMessage("");
+  const handleSaveSection =
+    async (
+      event
+    ) => {
+      event.preventDefault();
 
-    if (categories.length === 0) {
-      setError(
-        "Add at least one category before editing the Categories section content."
-      );
-      return;
-    }
+      setError("");
+      setSuccess("");
+      setSectionMessage("");
 
-    try {
-      setSectionSaving(true);
+      if (
+        totalItems === 0
+      ) {
+        setError(
+          "Add at least one category before editing the Categories section content."
+        );
 
-      const sectionData =
-        createSectionData();
+        return;
+      }
 
-      await Promise.all(
-        categories.map((category) =>
-          categoriesApi.update(
-            category.id,
-            sectionData
+      try {
+        setSectionSaving(true);
+
+        const sectionData =
+          createSectionData();
+
+        /*
+         * Keep the original behavior:
+         * update the categories currently
+         * loaded on the page.
+         */
+        await Promise.all(
+          categories.map(
+            (category) =>
+              categoriesApi.update(
+                category.id,
+                sectionData
+              )
           )
-        )
-      );
+        );
 
-      await loadCategories();
+        await loadCategories(
+          currentPage
+        );
 
-      setSectionMessage(
-        "Categories section content saved successfully."
-      );
-    } catch (err) {
-      console.error(
-        "Save categories section error:",
-        err
-      );
+        setSectionMessage(
+          "Categories section content saved successfully."
+        );
+      } catch (err) {
+        console.error(
+          "Save categories section error:",
+          err
+        );
 
-      setError(
-        err.response?.data?.message ||
-          "Failed to save Categories section content."
-      );
-    } finally {
-      setSectionSaving(false);
-    }
-  };
+        setError(
+          err?.response?.data?.message ||
+            "Failed to save Categories section content."
+        );
+      } finally {
+        setSectionSaving(false);
+      }
+    };
 
-  // Toggle category status
+  // =========================================================
+  // Toggle Category Status
+  // =========================================================
+
   const handleToggleStatus =
-    async (category) => {
+    async (
+      category
+    ) => {
       try {
         setError("");
         setSuccess("");
@@ -388,7 +620,9 @@ const Categories = () => {
             : "Category activated successfully."
         );
 
-        await loadCategories();
+        await loadCategories(
+          currentPage
+        );
       } catch (err) {
         console.error(
           "Toggle category status error:",
@@ -396,86 +630,101 @@ const Categories = () => {
         );
 
         setError(
-          err.response?.data?.message ||
+          err?.response?.data?.message ||
             "Failed to update category status."
         );
       }
     };
 
-  // Define table columns
-  const columns = [
-    {
-      key: "name_fr",
-      label: "Category",
-      render: (
-        value,
-        row
-      ) => (
-        <div className="admin-category-name-cell">
-          <strong>
-            {value}
-          </strong>
+  // =========================================================
+  // Table Columns
+  // =========================================================
 
-          <span>
-            {row.name_en}
+  const columns = useMemo(
+    () => [
+      {
+        key: "name_fr",
+        label: "Category",
+
+        render: (
+          value,
+          row
+        ) => (
+          <div className="admin-category-name-cell">
+            <strong>
+              {value}
+            </strong>
+
+            <span>
+              {row.name_en}
+            </span>
+          </div>
+        ),
+      },
+
+      {
+        key: "description_fr",
+        label: "Description",
+
+        render: (
+          value
+        ) => (
+          <span className="admin-table-description">
+            {value || "—"}
           </span>
-        </div>
-      ),
-    },
+        ),
+      },
 
-    {
-      key: "description_fr",
-      label: "Description",
-      render: (
-        value
-      ) => (
-        <span className="admin-table-description">
-          {value || "—"}
-        </span>
-      ),
-    },
+      {
+        key: "display_order",
+        label: "Order",
 
-    {
-      key: "display_order",
-      label: "Order",
-      className:
-        "admin-table-order",
-    },
+        className:
+          "admin-table-order",
+      },
 
-    {
-      key: "is_active",
-      label: "Status",
-      render: (
-        value,
-        row
-      ) => (
-        <button
-          type="button"
-          className={`admin-status-button ${
-            Number(value) === 1
-              ? "active"
-              : "inactive"
-          }`}
-          onClick={() =>
-            handleToggleStatus(
-              row
-            )
-          }
-        >
-          <span className="admin-status-dot" />
+      {
+        key: "is_active",
+        label: "Status",
 
-          {Number(value) ===
-          1
-            ? "Active"
-            : "Inactive"}
-        </button>
-      ),
-    },
-  ];
+        render: (
+          value,
+          row
+        ) => (
+          <button
+            type="button"
+            className={`admin-status-button ${
+              Number(value) === 1
+                ? "active"
+                : "inactive"
+            }`}
+            onClick={() =>
+              handleToggleStatus(
+                row
+              )
+            }
+          >
+            <span className="admin-status-dot" />
+
+            {Number(value) ===
+            1
+              ? "Active"
+              : "Inactive"}
+          </button>
+        ),
+      },
+    ],
+    []
+  );
+
+  // =========================================================
+  // Render
+  // =========================================================
 
   return (
     <div className="admin-page">
       {/* Page header */}
+
       <div className="admin-page-header">
         <div>
           <span className="admin-page-eyebrow">
@@ -503,6 +752,7 @@ const Categories = () => {
       </div>
 
       {/* Success message */}
+
       {success && (
         <div className="admin-alert admin-alert-success">
           <i className="bi bi-check-circle" />
@@ -524,6 +774,7 @@ const Categories = () => {
       )}
 
       {/* Error message */}
+
       {error && (
         <div className="admin-alert admin-alert-error">
           <i className="bi bi-exclamation-circle" />
@@ -545,6 +796,7 @@ const Categories = () => {
       )}
 
       {/* Categories section content */}
+
       <section className="admin-section-settings">
         <div className="admin-section-settings-header">
           <div>
@@ -567,7 +819,7 @@ const Categories = () => {
             }
             disabled={
               sectionSaving ||
-              categories.length === 0
+              totalItems === 0
             }
           >
             {sectionSaving ? (
@@ -612,8 +864,7 @@ const Categories = () => {
               }
               placeholder="Nos catégories"
               disabled={
-                categories.length ===
-                  0 ||
+                totalItems === 0 ||
                 sectionSaving
               }
             />
@@ -636,8 +887,7 @@ const Categories = () => {
               }
               placeholder="Our Categories"
               disabled={
-                categories.length ===
-                  0 ||
+                totalItems === 0 ||
                 sectionSaving
               }
             />
@@ -660,8 +910,7 @@ const Categories = () => {
               placeholder="Sous-titre de la section"
               rows="3"
               disabled={
-                categories.length ===
-                  0 ||
+                totalItems === 0 ||
                 sectionSaving
               }
             />
@@ -684,8 +933,7 @@ const Categories = () => {
               placeholder="Section subtitle"
               rows="3"
               disabled={
-                categories.length ===
-                  0 ||
+                totalItems === 0 ||
                 sectionSaving
               }
             />
@@ -694,6 +942,7 @@ const Categories = () => {
       </section>
 
       {/* Categories table */}
+
       <DataTable
         columns={columns}
         data={categories}
@@ -703,7 +952,21 @@ const Categories = () => {
         editLabel="Edit"
       />
 
+      {/* Pagination */}
+
+      <AdminPagination
+        currentPage={currentPage}
+        totalItems={totalItems}
+        itemsPerPage={
+          ITEMS_PER_PAGE
+        }
+        onPageChange={
+          setCurrentPage
+        }
+      />
+
       {/* Add/Edit category modal */}
+
       <FormModal
         isOpen={isModalOpen}
         title={
@@ -736,6 +999,7 @@ const Categories = () => {
         )}
 
         {/* Category information */}
+
         <div className="admin-form-section">
           <div className="admin-form-section-header">
             <h3>
@@ -828,6 +1092,7 @@ const Categories = () => {
         </div>
 
         {/* Display settings */}
+
         <div className="admin-form-section">
           <div className="admin-form-section-header">
             <h3>
@@ -850,7 +1115,7 @@ const Categories = () => {
                 id="display_order"
                 name="display_order"
                 type="number"
-                min="0"
+                min="1"
                 value={
                   form.display_order
                 }

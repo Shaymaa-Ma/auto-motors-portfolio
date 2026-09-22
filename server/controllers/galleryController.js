@@ -89,9 +89,11 @@ const getGalleryItemById = async (
 };
 
 // =========================================================
-// GET ALL GALLERY ITEMS FOR ADMIN
-// GET /api/gallery/admin
+// GET GALLERY ITEMS FOR ADMIN
+// GET /api/gallery/admin?page=1&limit=10
 // Protected
+//
+// Backend pagination
 // =========================================================
 
 const getAdminGallery = async (
@@ -99,15 +101,78 @@ const getAdminGallery = async (
   res
 ) => {
   try {
-    const [rows] = await db.query(
-      `SELECT *
-       FROM gallery
-       ORDER BY display_order ASC, id ASC`
-    );
+    let page =
+      Number(req.query.page) || 1;
+
+    let limit =
+      Number(req.query.limit) || 10;
+
+    page =
+      Math.max(
+        1,
+        Math.floor(page)
+      );
+
+    limit =
+      Math.min(
+        100,
+        Math.max(
+          1,
+          Math.floor(limit)
+        )
+      );
+
+    const offset =
+      (page - 1) * limit;
+
+    // -------------------------------------------------------
+    // Total items
+    // -------------------------------------------------------
+
+    const [countRows] =
+      await db.query(
+        `SELECT COUNT(*) AS totalItems
+         FROM gallery`
+      );
+
+    const totalItems =
+      Number(
+        countRows[0]?.totalItems
+      ) || 0;
+
+    const totalPages =
+      totalItems > 0
+        ? Math.ceil(
+            totalItems / limit
+          )
+        : 0;
+
+    // -------------------------------------------------------
+    // Current page
+    // -------------------------------------------------------
+
+    const [rows] =
+      await db.query(
+        `SELECT *
+         FROM gallery
+         ORDER BY display_order ASC, id ASC
+         LIMIT ? OFFSET ?`,
+        [
+          limit,
+          offset,
+        ]
+      );
 
     return sendSuccess(
       res,
-      rows,
+      {
+        items: rows,
+        page,
+        limit,
+        offset,
+        totalItems,
+        totalPages,
+      },
       "Admin gallery retrieved successfully"
     );
   } catch (error) {
@@ -132,17 +197,21 @@ const getAdminGallery = async (
 const getAdminGalleryItemById =
   async (req, res) => {
     try {
-      const { id } = req.params;
+      const { id } =
+        req.params;
 
-      const [rows] = await db.query(
-        `SELECT *
-         FROM gallery
-         WHERE id = ?
-         LIMIT 1`,
-        [id]
-      );
+      const [rows] =
+        await db.query(
+          `SELECT *
+           FROM gallery
+           WHERE id = ?
+           LIMIT 1`,
+          [id]
+        );
 
-      if (rows.length === 0) {
+      if (
+        rows.length === 0
+      ) {
         return sendError(
           res,
           "Gallery item not found",
@@ -163,7 +232,7 @@ const getAdminGalleryItemById =
 
       return sendError(
         res,
-        "Failed to retrieve gallery item"
+        "Failed to retrieve admin gallery item"
       );
     }
   };
@@ -189,7 +258,7 @@ const createGalleryItem = async (
     } = req.body;
 
     // -------------------------------------------------------
-    // Image is required when creating
+    // Image is required
     // -------------------------------------------------------
 
     if (!req.file) {
@@ -217,21 +286,19 @@ const createGalleryItem = async (
 
     // -------------------------------------------------------
     // Get existing section content
-    //
-    // New gallery items should inherit the current
-    // Gallery section title/subtitle.
     // -------------------------------------------------------
 
-    const [sectionRows] = await db.query(
-      `SELECT
-         section_title_fr,
-         section_title_en,
-         section_subtitle_fr,
-         section_subtitle_en
-       FROM gallery
-       ORDER BY id ASC
-       LIMIT 1`
-    );
+    const [sectionRows] =
+      await db.query(
+        `SELECT
+           section_title_fr,
+           section_title_en,
+           section_subtitle_fr,
+           section_subtitle_en
+         FROM gallery
+         ORDER BY id ASC
+         LIMIT 1`
+      );
 
     const section =
       sectionRows[0] || {};
@@ -240,49 +307,59 @@ const createGalleryItem = async (
     // Insert gallery item
     // -------------------------------------------------------
 
-    const [result] = await db.query(
-      `INSERT INTO gallery (
-        section_title_fr,
-        section_title_en,
-        section_subtitle_fr,
-        section_subtitle_en,
-        title_fr,
-        title_en,
-        description_fr,
-        description_en,
-        image,
-        display_order,
-        is_active
-      )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        section.section_title_fr || null,
-        section.section_title_en || null,
-        section.section_subtitle_fr || null,
-        section.section_subtitle_en || null,
+    const [result] =
+      await db.query(
+        `INSERT INTO gallery (
+          section_title_fr,
+          section_title_en,
+          section_subtitle_fr,
+          section_subtitle_en,
+          title_fr,
+          title_en,
+          description_fr,
+          description_en,
+          image,
+          display_order,
+          is_active
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          section.section_title_fr ||
+            null,
 
-        title_fr || null,
-        title_en || null,
-        description_fr || null,
-        description_en || null,
+          section.section_title_en ||
+            null,
 
-        imagePath,
-        order,
-        active,
-      ]
-    );
+          section.section_subtitle_fr ||
+            null,
+
+          section.section_subtitle_en ||
+            null,
+
+          title_fr || null,
+          title_en || null,
+
+          description_fr || null,
+          description_en || null,
+
+          imagePath,
+          order,
+          active,
+        ]
+      );
 
     // -------------------------------------------------------
     // Get created item
     // -------------------------------------------------------
 
-    const [rows] = await db.query(
-      `SELECT *
-       FROM gallery
-       WHERE id = ?
-       LIMIT 1`,
-      [result.insertId]
-    );
+    const [rows] =
+      await db.query(
+        `SELECT *
+         FROM gallery
+         WHERE id = ?
+         LIMIT 1`,
+        [result.insertId]
+      );
 
     return sendSuccess(
       res,
@@ -338,7 +415,7 @@ const createGalleryItem = async (
 // Protected
 //
 // Section content is stored on every gallery record.
-// This endpoint updates all records with ONE SQL query.
+// This endpoint updates ALL records with ONE SQL query.
 // =========================================================
 
 const updateGallerySection = async (
@@ -354,16 +431,19 @@ const updateGallerySection = async (
     } = req.body;
 
     // -------------------------------------------------------
-    // Make sure at least one gallery record exists
+    // Make sure at least one gallery item exists
     // -------------------------------------------------------
 
-    const [existingRows] = await db.query(
-      `SELECT id
-       FROM gallery
-       LIMIT 1`
-    );
+    const [existingRows] =
+      await db.query(
+        `SELECT id
+         FROM gallery
+         LIMIT 1`
+      );
 
-    if (existingRows.length === 0) {
+    if (
+      existingRows.length === 0
+    ) {
       return sendError(
         res,
         "Add at least one gallery item before editing the Gallery section content.",
@@ -372,7 +452,7 @@ const updateGallerySection = async (
     }
 
     // -------------------------------------------------------
-    // Update section content on ALL gallery records
+    // Update section content on ALL records
     // -------------------------------------------------------
 
     await db.query(
@@ -383,27 +463,35 @@ const updateGallerySection = async (
          section_subtitle_fr = ?,
          section_subtitle_en = ?`,
       [
-        section_title_fr?.trim() || null,
-        section_title_en?.trim() || null,
-        section_subtitle_fr?.trim() || null,
-        section_subtitle_en?.trim() || null,
+        section_title_fr?.trim() ||
+          null,
+
+        section_title_en?.trim() ||
+          null,
+
+        section_subtitle_fr?.trim() ||
+          null,
+
+        section_subtitle_en?.trim() ||
+          null,
       ]
     );
 
     // -------------------------------------------------------
-    // Get saved section content
+    // Return saved section content
     // -------------------------------------------------------
 
-    const [rows] = await db.query(
-      `SELECT
-         section_title_fr,
-         section_title_en,
-         section_subtitle_fr,
-         section_subtitle_en
-       FROM gallery
-       ORDER BY id ASC
-       LIMIT 1`
-    );
+    const [rows] =
+      await db.query(
+        `SELECT
+           section_title_fr,
+           section_title_en,
+           section_subtitle_fr,
+           section_subtitle_en
+         FROM gallery
+         ORDER BY id ASC
+         LIMIT 1`
+      );
 
     return sendSuccess(
       res,
@@ -434,7 +522,8 @@ const updateGalleryItem = async (
   res
 ) => {
   try {
-    const { id } = req.params;
+    const { id } =
+      req.params;
 
     const {
       title_fr,
@@ -449,16 +538,19 @@ const updateGalleryItem = async (
     // Find existing item
     // -------------------------------------------------------
 
-    const [existingRows] = await db.query(
-      `SELECT *
-       FROM gallery
-       WHERE id = ?
-       LIMIT 1`,
-      [id]
-    );
+    const [existingRows] =
+      await db.query(
+        `SELECT *
+         FROM gallery
+         WHERE id = ?
+         LIMIT 1`,
+        [id]
+      );
 
-    if (existingRows.length === 0) {
-      // Remove newly uploaded image because item does not exist
+    if (
+      existingRows.length === 0
+    ) {
+      // Remove newly uploaded image
       if (req.file) {
         const uploadedImagePath =
           path.join(
@@ -496,7 +588,7 @@ const updateGalleryItem = async (
       existingRows[0];
 
     // -------------------------------------------------------
-    // Keep existing image unless a new image is uploaded
+    // Keep existing image unless new image uploaded
     // -------------------------------------------------------
 
     let imagePath =
@@ -509,13 +601,17 @@ const updateGalleryItem = async (
 
     // -------------------------------------------------------
     // Display order
+    //
+    // Normal editing keeps the current order.
+    // Reordering is handled by /order.
     // -------------------------------------------------------
 
     const order =
       display_order !== undefined &&
       display_order !== ""
         ? Number(display_order)
-        : existingItem.display_order || 0;
+        : existingItem.display_order ||
+          0;
 
     // -------------------------------------------------------
     // Active status
@@ -525,18 +621,13 @@ const updateGalleryItem = async (
       is_active !== undefined &&
       is_active !== ""
         ? Number(is_active)
-        : existingItem.is_active ?? 1;
+        : existingItem.is_active ??
+          1;
 
     // -------------------------------------------------------
-    // IMPORTANT:
+    // Update normal item fields
     //
-    // Do NOT modify section content here.
-    //
-    // Section content has its own endpoint:
-    // PUT /api/gallery/section
-    //
-    // This prevents editing one gallery item from
-    // accidentally changing the section content.
+    // Section content is NOT modified here.
     // -------------------------------------------------------
 
     await db.query(
@@ -575,7 +666,7 @@ const updateGalleryItem = async (
     );
 
     // -------------------------------------------------------
-    // Delete old image only after successful DB update
+    // Delete old image after successful update
     // -------------------------------------------------------
 
     if (
@@ -617,13 +708,14 @@ const updateGalleryItem = async (
     // Return updated item
     // -------------------------------------------------------
 
-    const [updatedRows] = await db.query(
-      `SELECT *
-       FROM gallery
-       WHERE id = ?
-       LIMIT 1`,
-      [id]
-    );
+    const [updatedRows] =
+      await db.query(
+        `SELECT *
+         FROM gallery
+         WHERE id = ?
+         LIMIT 1`,
+        [id]
+      );
 
     return sendSuccess(
       res,
@@ -674,6 +766,250 @@ const updateGalleryItem = async (
 };
 
 // =========================================================
+// REORDER GALLERY ITEM
+// PUT /api/gallery/:id/order
+// Protected
+//
+// Body:
+// {
+//   "display_order": 3
+// }
+// =========================================================
+
+const reorderGalleryItem = async (
+  req,
+  res
+) => {
+  try {
+    const { id } =
+      req.params;
+
+    const requestedOrder =
+      Number(
+        req.body.display_order
+      );
+
+    if (
+      !Number.isFinite(
+        requestedOrder
+      )
+    ) {
+      return sendError(
+        res,
+        "A valid display order is required.",
+        400
+      );
+    }
+
+    // -------------------------------------------------------
+    // Get all items in current order
+    // -------------------------------------------------------
+
+    const [items] =
+      await db.query(
+        `SELECT
+           id,
+           display_order
+         FROM gallery
+         ORDER BY display_order ASC, id ASC`
+      );
+
+    if (
+      items.length === 0
+    ) {
+      return sendError(
+        res,
+        "No gallery items found.",
+        404
+      );
+    }
+
+    const currentIndex =
+      items.findIndex(
+        (item) =>
+          Number(item.id) ===
+          Number(id)
+      );
+
+    if (
+      currentIndex === -1
+    ) {
+      return sendError(
+        res,
+        "Gallery item not found",
+        404
+      );
+    }
+
+    // -------------------------------------------------------
+    // Clamp requested order
+    // -------------------------------------------------------
+
+    const targetIndex =
+      Math.min(
+        Math.max(
+          Math.floor(
+            requestedOrder
+          ) - 1,
+          0
+        ),
+        items.length - 1
+      );
+
+    // -------------------------------------------------------
+    // Move item
+    // -------------------------------------------------------
+
+    const reorderedItems =
+      [...items];
+
+    const [
+      movedItem,
+    ] =
+      reorderedItems.splice(
+        currentIndex,
+        1
+      );
+
+    reorderedItems.splice(
+      targetIndex,
+      0,
+      movedItem
+    );
+
+    // -------------------------------------------------------
+    // Temporary order values
+    //
+    // Prevent transient duplicate ordering while
+    // the final order is being written.
+    // -------------------------------------------------------
+
+    const temporaryOffset =
+      items.length + 1000;
+
+    for (
+      let index = 0;
+      index <
+      reorderedItems.length;
+      index++
+    ) {
+      await db.query(
+        `UPDATE gallery
+         SET display_order = ?
+         WHERE id = ?`,
+        [
+          temporaryOffset +
+            index +
+            1,
+
+          reorderedItems[index].id,
+        ]
+      );
+    }
+
+    // -------------------------------------------------------
+    // Final normalized order
+    // -------------------------------------------------------
+
+    for (
+      let index = 0;
+      index <
+      reorderedItems.length;
+      index++
+    ) {
+      await db.query(
+        `UPDATE gallery
+         SET display_order = ?
+         WHERE id = ?`,
+        [
+          index + 1,
+          reorderedItems[index].id,
+        ]
+      );
+    }
+
+    // -------------------------------------------------------
+    // Return reordered gallery
+    // -------------------------------------------------------
+
+    const [rows] =
+      await db.query(
+        `SELECT *
+         FROM gallery
+         ORDER BY display_order ASC, id ASC`
+      );
+
+    return sendSuccess(
+      res,
+      rows,
+      "Gallery reordered successfully"
+    );
+  } catch (error) {
+    console.error(
+      "Reorder gallery error:",
+      error
+    );
+
+    return sendError(
+      res,
+      "Failed to reorder gallery"
+    );
+  }
+};
+
+// =========================================================
+// NORMALIZE GALLERY ORDERS
+// POST /api/gallery/normalize-orders
+// Protected
+// =========================================================
+
+const normalizeGalleryOrders = async (
+  req,
+  res
+) => {
+  try {
+    const [items] =
+      await db.query(
+        `SELECT id
+         FROM gallery
+         ORDER BY display_order ASC, id ASC`
+      );
+
+    for (
+      let index = 0;
+      index < items.length;
+      index++
+    ) {
+      await db.query(
+        `UPDATE gallery
+         SET display_order = ?
+         WHERE id = ?`,
+        [
+          index + 1,
+          items[index].id,
+        ]
+      );
+    }
+
+    return sendSuccess(
+      res,
+      null,
+      "Gallery orders normalized successfully"
+    );
+  } catch (error) {
+    console.error(
+      "Normalize gallery orders error:",
+      error
+    );
+
+    return sendError(
+      res,
+      "Failed to normalize gallery orders"
+    );
+  }
+};
+
+// =========================================================
 // DELETE GALLERY ITEM
 // DELETE /api/gallery/:id
 // Protected
@@ -684,21 +1020,25 @@ const deleteGalleryItem = async (
   res
 ) => {
   try {
-    const { id } = req.params;
+    const { id } =
+      req.params;
 
     // -------------------------------------------------------
     // Find existing gallery item
     // -------------------------------------------------------
 
-    const [rows] = await db.query(
-      `SELECT image
-       FROM gallery
-       WHERE id = ?
-       LIMIT 1`,
-      [id]
-    );
+    const [rows] =
+      await db.query(
+        `SELECT image
+         FROM gallery
+         WHERE id = ?
+         LIMIT 1`,
+        [id]
+      );
 
-    if (rows.length === 0) {
+    if (
+      rows.length === 0
+    ) {
       return sendError(
         res,
         "Gallery item not found",
@@ -784,5 +1124,7 @@ module.exports = {
   createGalleryItem,
   updateGallerySection,
   updateGalleryItem,
+  reorderGalleryItem,
+  normalizeGalleryOrders,
   deleteGalleryItem,
 };

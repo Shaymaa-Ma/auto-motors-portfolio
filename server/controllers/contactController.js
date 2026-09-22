@@ -284,6 +284,7 @@ const updateContact = async (req, res) => {
         LIMIT 1
       `,
       [contactId]
+
     );
 
     return sendSuccess(

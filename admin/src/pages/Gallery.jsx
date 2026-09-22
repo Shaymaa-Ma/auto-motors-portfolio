@@ -1,11 +1,11 @@
 import {
-  useCallback,
   useEffect,
   useState,
 } from "react";
 
 import { galleryApi } from "../api/endpoints";
 
+import AdminPagination from "../components/AdminPagination";
 import DataTable from "../components/DataTable";
 import FormModal from "../components/FormModal";
 import ImageUploader from "../components/ImageUploader";
@@ -21,7 +21,7 @@ const initialForm = {
   description_fr: "",
   description_en: "",
   image: null,
-  display_order: 0,
+  display_order: 1,
   is_active: 1,
 };
 
@@ -32,133 +32,251 @@ const initialSectionForm = {
   section_subtitle_en: "",
 };
 
-const Gallery = () => {
+// =========================================================
+// PAGINATION
+// =========================================================
 
+const ITEMS_PER_PAGE = 10;
+
+// Maximum allowed image size: 1 MB.
+const MAX_IMAGE_SIZE =
+  1 * 1024 * 1024;
+
+const Gallery = () => {
   // =======================================================
   // STATE
   // =======================================================
 
-  const [gallery, setGallery] =
-    useState([]);
+  const [
+    gallery,
+    setGallery,
+  ] = useState([]);
 
-  const [loading, setLoading] =
-    useState(true);
+  const [
+    loading,
+    setLoading,
+  ] = useState(true);
 
-  const [saving, setSaving] =
-    useState(false);
+  const [
+    saving,
+    setSaving,
+  ] = useState(false);
 
-  const [sectionSaving, setSectionSaving] =
-    useState(false);
+  const [
+    sectionSaving,
+    setSectionSaving,
+  ] = useState(false);
 
-  const [deleting, setDeleting] =
-    useState(false);
+  const [
+    deleting,
+    setDeleting,
+  ] = useState(false);
 
-  const [error, setError] =
-    useState("");
+  const [
+    error,
+    setError,
+  ] = useState("");
 
-  const [success, setSuccess] =
-    useState("");
+  const [
+    success,
+    setSuccess,
+  ] = useState("");
 
-  const [sectionMessage, setSectionMessage] =
-    useState("");
+  const [
+    sectionMessage,
+    setSectionMessage,
+  ] = useState("");
 
-  const [isModalOpen, setIsModalOpen] =
-    useState(false);
+  const [
+    isModalOpen,
+    setIsModalOpen,
+  ] = useState(false);
 
-  const [deleteDialogOpen, setDeleteDialogOpen] =
-    useState(false);
+  const [
+    deleteDialogOpen,
+    setDeleteDialogOpen,
+  ] = useState(false);
 
-  const [editingItem, setEditingItem] =
-    useState(null);
+  const [
+    editingItem,
+    setEditingItem,
+  ] = useState(null);
 
-  const [deletingItem, setDeletingItem] =
-    useState(null);
+  const [
+    deletingItem,
+    setDeletingItem,
+  ] = useState(null);
 
-  const [form, setForm] =
-    useState(initialForm);
+  const [
+    form,
+    setForm,
+  ] = useState(initialForm);
 
-  const [sectionForm, setSectionForm] =
-    useState(initialSectionForm);
-
-  const [formError, setFormError] =
-    useState("");
-
-  // =======================================================
-  // LOAD GALLERY
-  // =======================================================
-
-  const loadGallery = useCallback(
-    async () => {
-      try {
-        setLoading(true);
-        setError("");
-
-        const response =
-          await galleryApi.getAll();
-
-        const galleryData =
-          Array.isArray(response?.data)
-            ? response.data
-            : Array.isArray(response)
-            ? response
-            : [];
-
-        setGallery(
-          galleryData
-        );
-
-        // -------------------------------------------------
-        // Load section content from first gallery record
-        // -------------------------------------------------
-
-        if (
-          galleryData.length > 0
-        ) {
-          const firstItem =
-            galleryData[0];
-
-          setSectionForm({
-            section_title_fr:
-              firstItem.section_title_fr ??
-              "",
-
-            section_title_en:
-              firstItem.section_title_en ??
-              "",
-
-            section_subtitle_fr:
-              firstItem.section_subtitle_fr ??
-              "",
-
-            section_subtitle_en:
-              firstItem.section_subtitle_en ??
-              "",
-          });
-        } else {
-          setSectionForm({
-            ...initialSectionForm,
-          });
-        }
-      } catch (err) {
-        console.error(
-          "Load gallery error:",
-          err
-        );
-
-        setError(
-          err?.response?.data?.message ||
-            "Failed to load gallery."
-        );
-      } finally {
-        setLoading(false);
-      }
-    },
-    []
+  const [
+    sectionForm,
+    setSectionForm,
+  ] = useState(
+    initialSectionForm
   );
 
+  const [
+    formError,
+    setFormError,
+  ] = useState("");
+
+  const [
+    currentPage,
+    setCurrentPage,
+  ] = useState(1);
+
+  const [
+    totalItems,
+    setTotalItems,
+  ] = useState(0);
+
+  const [
+    totalPages,
+    setTotalPages,
+  ] = useState(0);
+
+  // =======================================================
+  // LOAD CURRENT PAGE
+  // =======================================================
+
+  const loadGallery = async (
+    page = currentPage
+  ) => {
+    try {
+      setLoading(true);
+      setError("");
+
+      const response =
+        await galleryApi.getAll(
+          page,
+          ITEMS_PER_PAGE
+        );
+
+      const responseData =
+        response?.data ??
+        response ??
+        {};
+
+      const galleryData =
+        responseData?.items ??
+        [];
+
+      setGallery(
+        galleryData
+      );
+
+      const returnedTotalItems =
+        Number(
+          responseData?.totalItems
+        ) || 0;
+
+      const returnedTotalPages =
+        Number(
+          responseData?.totalPages
+        ) || 0;
+
+      setTotalItems(
+        returnedTotalItems
+      );
+
+      setTotalPages(
+        returnedTotalPages
+      );
+
+      // -----------------------------------------------------
+      // Keep current page valid
+      // -----------------------------------------------------
+
+      if (
+        returnedTotalPages > 0 &&
+        page > returnedTotalPages
+      ) {
+        setCurrentPage(
+          returnedTotalPages
+        );
+      }
+
+      if (
+        returnedTotalPages === 0
+      ) {
+        setCurrentPage(1);
+      }
+
+      // -----------------------------------------------------
+      // Load section content from first page
+      // -----------------------------------------------------
+
+      if (
+        page === 1 &&
+        galleryData.length > 0
+      ) {
+        const firstItem =
+          galleryData[0];
+
+        setSectionForm({
+          section_title_fr:
+            firstItem.section_title_fr ??
+            "",
+
+          section_title_en:
+            firstItem.section_title_en ??
+            "",
+
+          section_subtitle_fr:
+            firstItem.section_subtitle_fr ??
+            "",
+
+          section_subtitle_en:
+            firstItem.section_subtitle_en ??
+            "",
+        });
+      }
+
+      return {
+        items: galleryData,
+
+        totalItems:
+          returnedTotalItems,
+
+        totalPages:
+          returnedTotalPages,
+      };
+    } catch (err) {
+      console.error(
+        "Load gallery error:",
+        err
+      );
+
+      setError(
+        err?.response?.data?.message ||
+          "Failed to load gallery."
+      );
+
+      return {
+        items: [],
+        totalItems: 0,
+        totalPages: 0,
+      };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // =======================================================
+  // INITIAL LOAD / PAGE CHANGE
+  // =======================================================
+
   useEffect(() => {
-    loadGallery();
-  }, [loadGallery]);
+    loadGallery(
+      currentPage
+    );
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage]);
 
   // =======================================================
   // GENERAL FORM CHANGE
@@ -174,18 +292,16 @@ const Gallery = () => {
       checked,
     } = event.target;
 
-    setForm(
-      (current) => ({
-        ...current,
+    setForm((current) => ({
+      ...current,
 
-        [name]:
-          type === "checkbox"
-            ? checked
-              ? 1
-              : 0
-            : value,
-      })
-    );
+      [name]:
+        type === "checkbox"
+          ? checked
+            ? 1
+            : 0
+          : value,
+    }));
 
     setFormError("");
   };
@@ -223,8 +339,9 @@ const Gallery = () => {
 
     setForm({
       ...initialForm,
+
       display_order:
-        gallery.length + 1,
+        totalItems + 1,
     });
 
     setFormError("");
@@ -254,28 +371,38 @@ const Gallery = () => {
       return;
     }
 
-    setEditingItem(item);
+    setEditingItem(
+      item
+    );
 
     setForm({
       title_fr:
-        item.title_fr ?? "",
+        item.title_fr ??
+        "",
 
       title_en:
-        item.title_en ?? "",
+        item.title_en ??
+        "",
 
       description_fr:
-        item.description_fr ?? "",
+        item.description_fr ??
+        "",
 
       description_en:
-        item.description_en ?? "",
+        item.description_en ??
+        "",
 
       image: null,
 
       display_order:
-        item.display_order ?? 0,
+        Number(
+          item.display_order
+        ) || 1,
 
       is_active:
-        Number(item.is_active) === 1
+        Number(
+          item.is_active
+        ) === 1
           ? 1
           : 0,
     });
@@ -294,123 +421,148 @@ const Gallery = () => {
   const handleImageChange = (
     file
   ) => {
+    setFormError("");
+
+    if (!file) {
+      setForm(
+        (current) => ({
+          ...current,
+          image: null,
+        })
+      );
+
+      return;
+    }
+
+    if (
+      file.size >
+      MAX_IMAGE_SIZE
+    ) {
+      setFormError(
+        "Gallery image size must not exceed 1 MB."
+      );
+
+      setForm(
+        (current) => ({
+          ...current,
+          image: null,
+        })
+      );
+
+      return;
+    }
+
     setForm(
       (current) => ({
         ...current,
-        image: file || null,
+        image: file,
       })
     );
-
-    setFormError("");
   };
 
   // =======================================================
   // CLOSE FORM MODAL
   // =======================================================
 
-  const handleCloseModal = () => {
-    if (saving) {
-      return;
-    }
+  const handleCloseModal =
+    () => {
+      if (saving) {
+        return;
+      }
 
-    setIsModalOpen(false);
-    setEditingItem(null);
+      setIsModalOpen(false);
+      setEditingItem(null);
 
-    setForm({
-      ...initialForm,
-    });
+      setForm({
+        ...initialForm,
+      });
 
-    setFormError("");
-  };
+      setFormError("");
+    };
 
   // =======================================================
   // SAVE GALLERY SECTION
   // =======================================================
 
-  const handleSaveSection = async (
-    event
-  ) => {
-    event.preventDefault();
+  const handleSaveSection =
+    async (event) => {
+      event.preventDefault();
 
-    if (sectionSaving) {
-      return;
-    }
+      if (sectionSaving) {
+        return;
+      }
 
-    setError("");
-    setSuccess("");
-    setSectionMessage("");
+      setError("");
+      setSuccess("");
+      setSectionMessage("");
 
-    if (
-      gallery.length === 0
-    ) {
-      setError(
-        "Add at least one gallery item before editing the Gallery section content."
-      );
+      if (
+        totalItems === 0
+      ) {
+        setError(
+          "Add at least one gallery item before editing the Gallery section content."
+        );
 
-      return;
-    }
+        return;
+      }
 
-    try {
-      setSectionSaving(true);
+      try {
+        setSectionSaving(
+          true
+        );
 
-      // ---------------------------------------------------
-      // Create FormData
-      // ---------------------------------------------------
+        const formData =
+          new FormData();
 
-      const formData =
-        new FormData();
+        formData.append(
+          "section_title_fr",
+          sectionForm.section_title_fr.trim()
+        );
 
-      formData.append(
-        "section_title_fr",
-        sectionForm.section_title_fr.trim()
-      );
+        formData.append(
+          "section_title_en",
+          sectionForm.section_title_en.trim()
+        );
 
-      formData.append(
-        "section_title_en",
-        sectionForm.section_title_en.trim()
-      );
+        formData.append(
+          "section_subtitle_fr",
+          sectionForm.section_subtitle_fr.trim()
+        );
 
-      formData.append(
-        "section_subtitle_fr",
-        sectionForm.section_subtitle_fr.trim()
-      );
+        formData.append(
+          "section_subtitle_en",
+          sectionForm.section_subtitle_en.trim()
+        );
 
-      formData.append(
-        "section_subtitle_en",
-        sectionForm.section_subtitle_en.trim()
-      );
+        // Backend updates ALL gallery records
+        // with one SQL query.
+        await galleryApi.updateSection(
+          formData
+        );
 
-      // ---------------------------------------------------
-      // ONE request only
-      // ---------------------------------------------------
+        await loadGallery(
+          currentPage
+        );
 
-      await galleryApi.updateSection(
-        formData
-      );
+        setSectionMessage(
+          "Gallery section content saved successfully."
+        );
+      } catch (err) {
+        console.error(
+          "Save gallery section error:",
+          err
+        );
 
-      // ---------------------------------------------------
-      // Reload from database
-      // ---------------------------------------------------
-
-      await loadGallery();
-
-      setSectionMessage(
-        "Gallery section content saved successfully."
-      );
-    } catch (err) {
-      console.error(
-        "Save gallery section error:",
-        err
-      );
-
-      setError(
-        err?.response?.data?.message ||
-          "Failed to save Gallery section content."
-      );
-    } finally {
-      setSectionSaving(false);
-    }
-  };
+        setError(
+          err?.response?.data?.message ||
+            "Failed to save Gallery section content."
+        );
+      } finally {
+        setSectionSaving(
+          false
+        );
+      }
+    };
 
   // =======================================================
   // SAVE GALLERY ITEM
@@ -458,7 +610,7 @@ const Gallery = () => {
     }
 
     // -----------------------------------------------------
-    // Image required only when creating
+    // Image required on create
     // -----------------------------------------------------
 
     if (
@@ -490,6 +642,22 @@ const Gallery = () => {
     try {
       setSaving(true);
 
+      const requestedOrder =
+        Math.min(
+          Math.max(
+            Number(
+              form.display_order
+            ) || 1,
+            1
+          ),
+          editingItem
+            ? Math.max(
+                totalItems,
+                1
+              )
+            : totalItems + 1
+        );
+
       const formData =
         new FormData();
 
@@ -513,12 +681,18 @@ const Gallery = () => {
         form.description_en.trim()
       );
 
+      /*
+       * Normal update keeps the current order.
+       * Reordering is handled separately.
+       */
       formData.append(
         "display_order",
         String(
-          Number(
-            form.display_order
-          ) || 0
+          editingItem
+            ? Number(
+                editingItem.display_order
+              ) || 1
+            : totalItems + 1
         )
       );
 
@@ -533,53 +707,87 @@ const Gallery = () => {
         )
       );
 
-      // ---------------------------------------------------
-      // Add image only if selected
-      // ---------------------------------------------------
-
-      if (
-        form.image
-      ) {
+      if (form.image) {
         formData.append(
           "image",
           form.image
         );
       }
 
-      // ---------------------------------------------------
-      // UPDATE
-      // ---------------------------------------------------
+      let savedItemId =
+        null;
 
-      if (
-        editingItem
-      ) {
+      // =====================================================
+      // UPDATE
+      // =====================================================
+
+      if (editingItem) {
+        savedItemId =
+          editingItem.id;
+
         await galleryApi.update(
           editingItem.id,
           formData
         );
+
+        const oldOrder =
+          Number(
+            editingItem.display_order
+          ) || 1;
+
+        if (
+          oldOrder !==
+          requestedOrder
+        ) {
+          await galleryApi.reorder(
+            editingItem.id,
+            requestedOrder
+          );
+        }
 
         setSuccess(
           "Gallery item updated successfully."
         );
       }
 
-      // ---------------------------------------------------
+      // =====================================================
       // CREATE
-      // ---------------------------------------------------
+      // =====================================================
 
       else {
-        await galleryApi.create(
-          formData
-        );
+        const response =
+          await galleryApi.create(
+            formData
+          );
+
+        savedItemId =
+          response?.data?.id ??
+          response?.data?.data?.id ??
+          response?.data?.insertId ??
+          null;
+
+        /*
+         * The create endpoint returns the
+         * created row, so the ID should normally
+         * already be available.
+         */
+        if (
+          savedItemId
+        ) {
+          await galleryApi.reorder(
+            savedItemId,
+            requestedOrder
+          );
+        }
 
         setSuccess(
           "Gallery item created successfully."
         );
       }
 
-      // ---------------------------------------------------
+      // -----------------------------------------------------
       // Close modal
-      // ---------------------------------------------------
+      // -----------------------------------------------------
 
       setIsModalOpen(false);
       setEditingItem(null);
@@ -590,11 +798,13 @@ const Gallery = () => {
 
       setFormError("");
 
-      // ---------------------------------------------------
-      // Reload
-      // ---------------------------------------------------
+      // -----------------------------------------------------
+      // Reload current page
+      // -----------------------------------------------------
 
-      await loadGallery();
+      await loadGallery(
+        currentPage
+      );
     } catch (err) {
       console.error(
         "Save gallery item error:",
@@ -614,153 +824,208 @@ const Gallery = () => {
   // TOGGLE STATUS
   // =======================================================
 
-  const handleToggleStatus = async (
-    item
-  ) => {
-    if (!item?.id) {
-      setError(
-        "Unable to update gallery status because the item ID is missing."
-      );
+  const handleToggleStatus =
+    async (item) => {
+      if (!item?.id) {
+        setError(
+          "Unable to update gallery status because the item ID is missing."
+        );
 
-      return;
-    }
+        return;
+      }
 
-    try {
-      setError("");
-      setSuccess("");
+      try {
+        setError("");
+        setSuccess("");
 
-      const formData =
-        new FormData();
+        const formData =
+          new FormData();
 
-      const nextStatus =
-        Number(
-          item.is_active
-        ) === 1
-          ? 0
-          : 1;
+        const nextStatus =
+          Number(
+            item.is_active
+          ) === 1
+            ? 0
+            : 1;
 
-      formData.append(
-        "is_active",
-        String(
-          nextStatus
-        )
-      );
+        formData.append(
+          "is_active",
+          String(nextStatus)
+        );
 
-      await galleryApi.update(
-        item.id,
-        formData
-      );
+        await galleryApi.update(
+          item.id,
+          formData
+        );
 
-      setSuccess(
-        nextStatus === 1
-          ? "Gallery item activated successfully."
-          : "Gallery item deactivated successfully."
-      );
+        setSuccess(
+          nextStatus === 1
+            ? "Gallery item activated successfully."
+            : "Gallery item deactivated successfully."
+        );
 
-      await loadGallery();
-    } catch (err) {
-      console.error(
-        "Toggle gallery status error:",
-        err
-      );
+        await loadGallery(
+          currentPage
+        );
+      } catch (err) {
+        console.error(
+          "Toggle gallery status error:",
+          err
+        );
 
-      setError(
-        err?.response?.data?.message ||
-          "Failed to update gallery status."
-      );
-    }
-  };
+        setError(
+          err?.response?.data?.message ||
+            "Failed to update gallery status."
+        );
+      }
+    };
 
   // =======================================================
   // OPEN DELETE DIALOG
   // =======================================================
 
-  const handleDeleteClick = (
-    item
-  ) => {
-    if (!item?.id) {
-      setError(
-        "Unable to delete this gallery item because its ID is missing."
+  const handleDeleteClick =
+    (item) => {
+      if (!item?.id) {
+        setError(
+          "Unable to delete this gallery item because its ID is missing."
+        );
+
+        return;
+      }
+
+      setDeletingItem(
+        item
       );
 
-      return;
-    }
+      setDeleteDialogOpen(
+        true
+      );
 
-    setDeletingItem(item);
-    setDeleteDialogOpen(true);
-
-    setError("");
-    setSuccess("");
-  };
+      setError("");
+      setSuccess("");
+    };
 
   // =======================================================
   // CLOSE DELETE DIALOG
   // =======================================================
 
-  const handleCloseDeleteDialog = () => {
-    if (deleting) {
-      return;
-    }
+  const handleCloseDeleteDialog =
+    () => {
+      if (deleting) {
+        return;
+      }
 
-    setDeleteDialogOpen(false);
-    setDeletingItem(null);
-  };
+      setDeleteDialogOpen(
+        false
+      );
+
+      setDeletingItem(
+        null
+      );
+    };
 
   // =======================================================
   // DELETE GALLERY ITEM
   // =======================================================
 
-  const handleDelete = async () => {
-    if (deleting) {
-      return;
-    }
+  const handleDelete =
+    async () => {
+      if (deleting) {
+        return;
+      }
 
-    if (!deletingItem?.id) {
-      setDeleteDialogOpen(false);
-      setDeletingItem(null);
+      if (
+        !deletingItem?.id
+      ) {
+        setDeleteDialogOpen(
+          false
+        );
 
-      setError(
-        "Unable to delete the gallery item because its ID is missing."
-      );
+        setDeletingItem(
+          null
+        );
 
-      return;
-    }
+        setError(
+          "Unable to delete the gallery item because its ID is missing."
+        );
 
-    try {
-      setDeleting(true);
+        return;
+      }
 
-      setError("");
-      setSuccess("");
+      try {
+        setDeleting(true);
 
-      const itemId =
-        deletingItem.id;
+        setError("");
+        setSuccess("");
 
-      await galleryApi.remove(
-        itemId
-      );
+        await galleryApi.remove(
+          deletingItem.id
+        );
 
-      setSuccess(
-        "Gallery item deleted successfully."
-      );
+        // ---------------------------------------------------
+        // Normalize orders on backend
+        // ---------------------------------------------------
 
-      setDeleteDialogOpen(false);
-      setDeletingItem(null);
+        await galleryApi.normalizeOrders();
 
-      await loadGallery();
-    } catch (err) {
-      console.error(
-        "Delete gallery item error:",
-        err
-      );
+        // ---------------------------------------------------
+        // Determine next page
+        // ---------------------------------------------------
 
-      setError(
-        err?.response?.data?.message ||
-          "Failed to delete gallery item."
-      );
-    } finally {
-      setDeleting(false);
-    }
-  };
+        let nextPage =
+          currentPage;
+
+        if (
+          currentPage > 1 &&
+          gallery.length === 1
+        ) {
+          nextPage =
+            currentPage - 1;
+        }
+
+        setDeleteDialogOpen(
+          false
+        );
+
+        setDeletingItem(
+          null
+        );
+
+        // ---------------------------------------------------
+        // Reload
+        // ---------------------------------------------------
+
+        if (
+          nextPage !==
+          currentPage
+        ) {
+          setCurrentPage(
+            nextPage
+          );
+        } else {
+          await loadGallery(
+            currentPage
+          );
+        }
+
+        setSuccess(
+          "Gallery item deleted successfully."
+        );
+      } catch (err) {
+        console.error(
+          "Delete gallery item error:",
+          err
+        );
+
+        setError(
+          err?.response?.data?.message ||
+            "Failed to delete gallery item."
+        );
+      } finally {
+        setDeleting(false);
+      }
+    };
 
   // =======================================================
   // IMAGE URL
@@ -785,7 +1050,8 @@ const Gallery = () => {
     }
 
     const uploadsUrl =
-      process.env.REACT_APP_UPLOADS_URL ||
+      process.env
+        .REACT_APP_UPLOADS_URL ||
       "http://localhost:5000/uploads";
 
     return `${uploadsUrl}/${image.replace(
@@ -803,13 +1069,13 @@ const Gallery = () => {
       key: "image",
       label: "Image",
 
-      render: (
-        value
-      ) => (
+      render: (value) => (
         <div className="admin-gallery-table-image">
           {value ? (
             <img
-              src={getImageUrl(value)}
+              src={getImageUrl(
+                value
+              )}
               alt="Gallery"
             />
           ) : (
@@ -850,9 +1116,7 @@ const Gallery = () => {
       key: "description_fr",
       label: "Description",
 
-      render: (
-        value
-      ) => (
+      render: (value) => (
         <span className="admin-table-description">
           {value ||
             "—"}
@@ -863,16 +1127,14 @@ const Gallery = () => {
     {
       key: "display_order",
       label: "Order",
+
       className:
         "admin-table-order",
 
-      render: (
-        value
-      ) => (
+      render: (value) => (
         <span>
-          {Number(
-            value
-          ) || 0}
+          {Number(value) ||
+            0}
         </span>
       ),
     },
@@ -888,9 +1150,7 @@ const Gallery = () => {
         <button
           type="button"
           className={`admin-status-button ${
-            Number(
-              value
-            ) === 1
+            Number(value) === 1
               ? "active"
               : "inactive"
           }`}
@@ -902,9 +1162,7 @@ const Gallery = () => {
         >
           <span className="admin-status-dot" />
 
-          {Number(
-            value
-          ) === 1
+          {Number(value) === 1
             ? "Active"
             : "Inactive"}
         </button>
@@ -934,9 +1192,9 @@ const Gallery = () => {
           </h1>
 
           <p>
-            Manage the gallery section and
-            the images displayed on your
-            website.
+            Manage the gallery section
+            and the images displayed on
+            your website.
           </p>
         </div>
 
@@ -946,9 +1204,7 @@ const Gallery = () => {
           onClick={
             handleAdd
           }
-          disabled={
-            loading
-          }
+          disabled={loading}
         >
           <i
             className="bi bi-plus-lg"
@@ -1041,7 +1297,7 @@ const Gallery = () => {
             className="admin-primary-button"
             disabled={
               sectionSaving ||
-              gallery.length === 0
+              totalItems === 0
             }
           >
             {sectionSaving ? (
@@ -1065,8 +1321,6 @@ const Gallery = () => {
 
         <div className="admin-form-grid">
 
-          {/* French title */}
-
           <div className="admin-form-group">
             <label htmlFor="gallery_section_title_fr">
               Section Title (French)
@@ -1084,13 +1338,11 @@ const Gallery = () => {
               }
               placeholder="Notre galerie"
               disabled={
-                gallery.length === 0 ||
+                totalItems === 0 ||
                 sectionSaving
               }
             />
           </div>
-
-          {/* English title */}
 
           <div className="admin-form-group">
             <label htmlFor="gallery_section_title_en">
@@ -1109,13 +1361,11 @@ const Gallery = () => {
               }
               placeholder="Our Gallery"
               disabled={
-                gallery.length === 0 ||
+                totalItems === 0 ||
                 sectionSaving
               }
             />
           </div>
-
-          {/* French subtitle */}
 
           <div className="admin-form-group admin-form-group-full">
             <label htmlFor="gallery_section_subtitle_fr">
@@ -1134,13 +1384,11 @@ const Gallery = () => {
               placeholder="Découvrez notre entreprise, nos produits et notre activité..."
               rows="3"
               disabled={
-                gallery.length === 0 ||
+                totalItems === 0 ||
                 sectionSaving
               }
             />
           </div>
-
-          {/* English subtitle */}
 
           <div className="admin-form-group admin-form-group-full">
             <label htmlFor="gallery_section_subtitle_en">
@@ -1159,7 +1407,7 @@ const Gallery = () => {
               placeholder="Discover our company, products and activities..."
               rows="3"
               disabled={
-                gallery.length === 0 ||
+                totalItems === 0 ||
                 sectionSaving
               }
             />
@@ -1201,6 +1449,25 @@ const Gallery = () => {
       />
 
       {/* ===================================================
+          BACKEND PAGINATION
+          =================================================== */}
+
+      <AdminPagination
+        currentPage={
+          currentPage
+        }
+        totalItems={
+          totalItems
+        }
+        itemsPerPage={
+          ITEMS_PER_PAGE
+        }
+        onPageChange={
+          setCurrentPage
+        }
+      />
+
+      {/* ===================================================
           ADD / EDIT MODAL
           =================================================== */}
 
@@ -1225,13 +1492,9 @@ const Gallery = () => {
             : "Add Gallery"
         }
         cancelText="Cancel"
-        loading={
-          saving
-        }
+        loading={saving}
         size="large"
       >
-
-        {/* Form error */}
 
         {formError && (
           <div className="admin-form-error-box">
@@ -1258,9 +1521,32 @@ const Gallery = () => {
             </h3>
 
             <p>
-              Upload the image that will be
-              displayed in the gallery.
+              Upload the image that will
+              be displayed in the gallery.
             </p>
+          </div>
+
+          <div className="hero-image-notes">
+            <div className="hero-image-note">
+              <div className="hero-image-note-icon">
+                IMAGE
+              </div>
+
+              <div className="hero-image-note-content">
+                <strong>
+                  Recommended size: 1365 × 768 px
+                </strong>
+
+                <span>
+                  Aspect ratio: 16:9 ·
+                  Orientation: Landscape
+                </span>
+
+                <small>
+                  Maximum file size: 1 MB.
+                </small>
+              </div>
+            </div>
           </div>
 
           <ImageUploader
@@ -1290,14 +1576,12 @@ const Gallery = () => {
             </h3>
 
             <p>
-              Enter the gallery item content
-              in both languages.
+              Enter the gallery item
+              content in both languages.
             </p>
           </div>
 
           <div className="admin-form-grid">
-
-            {/* French title */}
 
             <div className="admin-form-group">
               <label htmlFor="title_fr">
@@ -1315,13 +1599,9 @@ const Gallery = () => {
                   handleChange
                 }
                 placeholder="Titre de l'image"
-                disabled={
-                  saving
-                }
+                disabled={saving}
               />
             </div>
-
-            {/* English title */}
 
             <div className="admin-form-group">
               <label htmlFor="title_en">
@@ -1339,13 +1619,9 @@ const Gallery = () => {
                   handleChange
                 }
                 placeholder="Image title"
-                disabled={
-                  saving
-                }
+                disabled={saving}
               />
             </div>
-
-            {/* French description */}
 
             <div className="admin-form-group">
               <label htmlFor="description_fr">
@@ -1363,13 +1639,9 @@ const Gallery = () => {
                 }
                 placeholder="Description de l'image"
                 rows="4"
-                disabled={
-                  saving
-                }
+                disabled={saving}
               />
             </div>
-
-            {/* English description */}
 
             <div className="admin-form-group">
               <label htmlFor="description_en">
@@ -1387,9 +1659,7 @@ const Gallery = () => {
                 }
                 placeholder="Image description"
                 rows="4"
-                disabled={
-                  saving
-                }
+                disabled={saving}
               />
             </div>
 
@@ -1408,14 +1678,13 @@ const Gallery = () => {
             </h3>
 
             <p>
-              Control the order and visibility
-              of this gallery item.
+              Control the order and
+              visibility of this gallery
+              item.
             </p>
           </div>
 
           <div className="admin-form-grid">
-
-            {/* Display order */}
 
             <div className="admin-form-group">
               <label htmlFor="display_order">
@@ -1426,20 +1695,24 @@ const Gallery = () => {
                 id="display_order"
                 name="display_order"
                 type="number"
-                min="0"
+                min="1"
+                max={
+                  editingItem
+                    ? Math.max(
+                        totalItems,
+                        1
+                      )
+                    : totalItems + 1
+                }
                 value={
                   form.display_order
                 }
                 onChange={
                   handleChange
                 }
-                disabled={
-                  saving
-                }
+                disabled={saving}
               />
             </div>
-
-            {/* Active status */}
 
             <div className="admin-form-group admin-form-group-full">
 
@@ -1456,9 +1729,7 @@ const Gallery = () => {
                   onChange={
                     handleChange
                   }
-                  disabled={
-                    saving
-                  }
+                  disabled={saving}
                 />
 
                 <span>
@@ -1468,8 +1739,9 @@ const Gallery = () => {
               </label>
 
               <small className="admin-form-help">
-                Inactive gallery items will not
-                appear on the public website.
+                Inactive gallery items will
+                not appear on the public
+                website.
               </small>
 
             </div>
@@ -1502,7 +1774,7 @@ const Gallery = () => {
         onConfirm={
           handleDelete
         }
-        onClose={
+        onCancel={
           handleCloseDeleteDialog
         }
         loading={

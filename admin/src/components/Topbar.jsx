@@ -1,4 +1,8 @@
-import { useLocation, useNavigate } from "react-router-dom";
+import {
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
+
 import { useAuth } from "../context/AuthContext";
 
 const Topbar = ({ onMenuClick }) => {
@@ -10,25 +14,50 @@ const Topbar = ({ onMenuClick }) => {
     logout,
   } = useAuth();
 
+  // =========================================================
+  // Page titles
+  // =========================================================
+
   const pageTitles = {
     "/dashboard": "Dashboard",
+
+    // Website
     "/home": "Home",
     "/about": "About",
     "/services": "Services",
     "/advantages": "Advantages",
     "/gallery": "Gallery",
     "/faqs": "FAQ",
+
+    // Catalog
     "/categories": "Categories",
     "/products": "Products",
     "/vehicles": "Vehicles",
+
+    // Settings
     "/company": "Company Info",
+    "/contact": "Contact",
     "/social-links": "Social Links",
-    "/settings": "Site Settings",
+
+    // Administration
+    "/profile": "Profile",
   };
 
   const title =
     pageTitles[location.pathname] ||
     "Administration";
+
+  // =========================================================
+  // Open administrator profile
+  // =========================================================
+
+  const handleProfileClick = () => {
+    navigate("/profile");
+  };
+
+  // =========================================================
+  // Logout
+  // =========================================================
 
   const handleLogout = async () => {
     try {
@@ -44,19 +73,27 @@ const Topbar = ({ onMenuClick }) => {
     <header className="admin-topbar">
 
       {/* =====================================================
-          LEFT
+          LEFT SIDE
       ===================================================== */}
 
       <div className="topbar-left">
+
+        {/* Mobile burger button */}
 
         <button
           type="button"
           className="topbar-menu-button"
           onClick={onMenuClick}
           aria-label="Open navigation"
+          aria-controls="admin-sidebar"
         >
-          <i className="bi bi-list"></i>
+          <i
+            className="bi bi-list"
+            aria-hidden="true"
+          ></i>
         </button>
+
+        {/* Page title */}
 
         <div className="topbar-title">
 
@@ -72,23 +109,38 @@ const Topbar = ({ onMenuClick }) => {
 
       </div>
 
-
       {/* =====================================================
-          RIGHT
+          RIGHT SIDE
       ===================================================== */}
 
       <div className="topbar-right">
 
-        <div className="topbar-admin">
+        {/* ===================================================
+            ADMIN PROFILE
+        =================================================== */}
+
+        <button
+          type="button"
+          className="topbar-admin"
+          onClick={handleProfileClick}
+          title="View profile"
+          aria-label="View administrator profile"
+        >
 
           <div className="topbar-admin-avatar">
-            <i className="bi bi-person-fill"></i>
+
+            <i
+              className="bi bi-person-fill"
+              aria-hidden="true"
+            ></i>
+
           </div>
 
           <div className="topbar-admin-info">
 
             <strong>
-              {admin?.name || "Administrator"}
+              {admin?.name ||
+                "Administrator"}
             </strong>
 
             <span>
@@ -97,21 +149,41 @@ const Topbar = ({ onMenuClick }) => {
 
           </div>
 
-        </div>
+          <i
+            className="bi bi-chevron-down topbar-profile-arrow"
+            aria-hidden="true"
+          ></i>
 
-        <div className="topbar-divider"></div>
+        </button>
+
+        {/* Divider */}
+
+        <div
+          className="topbar-divider"
+          aria-hidden="true"
+        ></div>
+
+        {/* ===================================================
+            LOGOUT
+        =================================================== */}
 
         <button
           type="button"
           className="topbar-logout"
           onClick={handleLogout}
           title="Logout"
+          aria-label="Logout"
         >
-          <i className="bi bi-box-arrow-right"></i>
+
+          <i
+            className="bi bi-box-arrow-right"
+            aria-hidden="true"
+          ></i>
 
           <span>
             Logout
           </span>
+
         </button>
 
       </div>

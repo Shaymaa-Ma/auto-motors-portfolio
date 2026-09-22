@@ -14,6 +14,7 @@ const PORT = process.env.PORT || 5000;
 // =========================================================
 
 const authRoutes = require("./routes/authRoutes");
+const userRoutes = require("./routes/userRoutes");
 
 const dashboardRoutes = require("./routes/dashboardRoutes");
 const companyRoutes = require("./routes/companyRoutes");
@@ -84,11 +85,33 @@ app.use(
 // =========================================================
 // API Routes
 // =========================================================
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin) {
+        return callback(null, true);
+      }
 
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      console.log("Blocked CORS origin:", origin); // temporary
+      return callback(new Error("Origin not allowed by CORS"));
+    },
+    credentials: true,
+  })
+);
 // Authentication
 app.use(
   "/api/auth",
   authRoutes
+);
+
+// User / Administrator Management
+app.use(
+  "/api/users",
+  userRoutes
 );
 
 // Public + protected content APIs

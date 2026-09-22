@@ -15,6 +15,8 @@ import FormModal from "../components/FormModal";
 import ConfirmDialog from "../components/ConfirmDialog";
 import ImageUploader from "../components/ImageUploader";
 
+import AdminPagination from "../components/AdminPagination";
+
 const initialForm = {
   category_id: "",
   name_fr: "",
@@ -27,6 +29,9 @@ const initialForm = {
   display_order: 0,
   is_active: 1,
 };
+
+// Maximum product image size: 1 MB
+const MAX_IMAGE_SIZE = 1 * 1024 * 1024;
 
 // Build a product image URL
 const getImageUrl = (image) => {
@@ -78,25 +83,74 @@ const Products = () => {
 
   const [form, setForm] = useState(initialForm);
 
-  // Load all products for Admin
+  // ---------------------------------------------------------
+  // SERVER-SIDE PAGINATION
+  // ---------------------------------------------------------
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+
+  const itemsPerPage = 10;
+
+  // ---------------------------------------------------------
+  // LOAD PRODUCTS
+  // ---------------------------------------------------------
   const loadProducts = useCallback(
-    async () => {
+    async (page = 1) => {
       try {
         setLoading(true);
         setError("");
 
         const response =
-          await productsApi.getAll();
+          await productsApi.getAll({
+            page,
+            limit: itemsPerPage,
+          });
+
+        /*
+         * Expected backend response:
+         *
+         * {
+         *   success: true,
+         *   data: {
+         *     data: [...],
+         *     pagination: {
+         *       currentPage,
+         *       itemsPerPage,
+         *       totalItems,
+         *       totalPages,
+         *       hasPreviousPage,
+         *       hasNextPage
+         *     }
+         *   }
+         * }
+         */
+
+        const responseData =
+          response?.data ?? {};
 
         const productData =
-          response?.data ??
-          response ??
-          [];
+          responseData?.data ?? [];
+
+        const pagination =
+          responseData?.pagination ?? {};
 
         setProducts(
           Array.isArray(productData)
             ? productData
             : []
+        );
+
+        setTotalItems(
+          Number(
+            pagination.totalItems
+          ) || 0
+        );
+
+        setTotalPages(
+          Number(
+            pagination.totalPages
+          ) || 0
         );
       } catch (err) {
         console.error(
@@ -108,6 +162,10 @@ const Products = () => {
           err?.response?.data?.message ||
             "Failed to load products."
         );
+
+        setProducts([]);
+        setTotalItems(0);
+        setTotalPages(0);
       } finally {
         setLoading(false);
       }
@@ -115,7 +173,9 @@ const Products = () => {
     []
   );
 
-  // Load all categories
+  // ---------------------------------------------------------
+  // LOAD CATEGORIES
+  // ---------------------------------------------------------
   const loadCategories = useCallback(
     async () => {
       try {
@@ -140,6 +200,8 @@ const Products = () => {
           err
         );
 
+        setCategories([]);
+
         setError(
           err?.response?.data?.message ||
             "Failed to load categories."
@@ -151,16 +213,45 @@ const Products = () => {
     []
   );
 
-  // Load products and categories
+  // ---------------------------------------------------------
+  // INITIAL LOAD + PAGE CHANGE
+  // ---------------------------------------------------------
   useEffect(() => {
-    loadProducts();
-    loadCategories();
+    loadProducts(currentPage);
   }, [
+    currentPage,
     loadProducts,
-    loadCategories,
   ]);
 
-  // Update form field
+  useEffect(() => {
+    loadCategories();
+  }, [loadCategories]);
+
+  // ---------------------------------------------------------
+  // KEEP CURRENT PAGE VALID
+  // ---------------------------------------------------------
+  useEffect(() => {
+    if (
+      totalPages > 0 &&
+      currentPage > totalPages
+    ) {
+      setCurrentPage(totalPages);
+    }
+
+    if (
+      totalPages === 0 &&
+      currentPage !== 1
+    ) {
+      setCurrentPage(1);
+    }
+  }, [
+    currentPage,
+    totalPages,
+  ]);
+
+  // ---------------------------------------------------------
+  // UPDATE FORM FIELD
+  // ---------------------------------------------------------
   const handleChange = (event) => {
     const {
       name,
@@ -182,23 +273,50 @@ const Products = () => {
     setFormError("");
   };
 
-  // Handle image selection
+  // ---------------------------------------------------------
+  // HANDLE IMAGE SELECTION
+  // ---------------------------------------------------------
   const handleImageChange = (file) => {
+    setFormError("");
+
+    if (!file) {
+      setForm((current) => ({
+        ...current,
+        image: null,
+      }));
+
+      return;
+    }
+
+    if (file.size > MAX_IMAGE_SIZE) {
+      setFormError(
+        "Product image size must not exceed 1 MB."
+      );
+
+      return;
+    }
+
     setForm((current) => ({
       ...current,
       image: file,
     }));
-
-    setFormError("");
   };
 
-  // Open Add Product modal
+  // ---------------------------------------------------------
+  // OPEN ADD PRODUCT MODAL
+  // ---------------------------------------------------------
   const handleAdd = () => {
     setEditingProduct(null);
 
     setForm({
       ...initialForm,
-      display_order: products.length,
+
+      /*
+       * New product is placed after the existing
+       * products.
+       */
+      display_order:
+        totalItems + 1,
     });
 
     setFormError("");
@@ -208,7 +326,9 @@ const Products = () => {
     setIsModalOpen(true);
   };
 
-  // Open Edit Product modal
+  // ---------------------------------------------------------
+  // OPEN EDIT PRODUCT MODAL
+  // ---------------------------------------------------------
   const handleEdit = (product) => {
     setEditingProduct(product);
 
@@ -252,7 +372,9 @@ const Products = () => {
     setIsModalOpen(true);
   };
 
-  // Close Add/Edit modal
+  // ---------------------------------------------------------
+  // CLOSE ADD/EDIT MODAL
+  // ---------------------------------------------------------
   const handleCloseModal = () => {
     if (saving) {
       return;
@@ -268,7 +390,9 @@ const Products = () => {
     setFormError("");
   };
 
-  // Save product
+  // ---------------------------------------------------------
+  // SAVE PRODUCT
+  // ---------------------------------------------------------
   const handleSubmit = async (event) => {
     event.preventDefault();
 
@@ -276,6 +400,7 @@ const Products = () => {
     setError("");
     setSuccess("");
 
+    // Validation
     if (!form.category_id) {
       setFormError(
         "Please select a category."
@@ -315,7 +440,8 @@ const Products = () => {
     try {
       setSaving(true);
 
-      const formData = new FormData();
+      const formData =
+        new FormData();
 
       formData.append(
         "category_id",
@@ -352,11 +478,34 @@ const Products = () => {
         form.image_number.trim()
       );
 
-      formData.append(
-        "display_order",
+      // -------------------------------------------------------
+      // ORDER
+      // -------------------------------------------------------
+
+      /*
+       * When editing:
+       *
+       * Keep the original order in the normal UPDATE request.
+       *
+       * The dedicated backend reorder endpoint will handle
+       * moving the product and shifting all other products.
+       */
+      const oldOrder = editingProduct
+        ? Number(
+            editingProduct.display_order
+          ) || 0
+        : 0;
+
+      const requestedOrder =
         Number(
           form.display_order
-        ) || 0
+        ) || 0;
+
+      formData.append(
+        "display_order",
+        editingProduct
+          ? oldOrder
+          : requestedOrder
       );
 
       formData.append(
@@ -368,13 +517,32 @@ const Products = () => {
           : 0
       );
 
-      // Add image only when a new image is selected
+      // -------------------------------------------------------
+      // IMAGE
+      // -------------------------------------------------------
+
+      // Only send an image when a new image was selected.
       if (form.image) {
+        if (
+          form.image.size >
+          MAX_IMAGE_SIZE
+        ) {
+          setFormError(
+            "Product image size must not exceed 1 MB."
+          );
+
+          return;
+        }
+
         formData.append(
           "image",
           form.image
         );
       }
+
+      // -------------------------------------------------------
+      // UPDATE
+      // -------------------------------------------------------
 
       if (editingProduct) {
         await productsApi.update(
@@ -382,10 +550,30 @@ const Products = () => {
           formData
         );
 
+        /*
+         * Backend reorder works globally across ALL products,
+         * including products on other pages.
+         */
+        if (
+          oldOrder !==
+          requestedOrder
+        ) {
+          await productsApi.reorder(
+            editingProduct.id,
+            requestedOrder
+          );
+        }
+
         setSuccess(
           "Product updated successfully."
         );
-      } else {
+      }
+
+      // -------------------------------------------------------
+      // CREATE
+      // -------------------------------------------------------
+
+      else {
         await productsApi.create(
           formData
         );
@@ -395,6 +583,7 @@ const Products = () => {
         );
       }
 
+      // Close modal
       setIsModalOpen(false);
       setEditingProduct(null);
 
@@ -402,7 +591,10 @@ const Products = () => {
         ...initialForm,
       });
 
-      await loadProducts();
+      // Reload current backend page
+      await loadProducts(
+        currentPage
+      );
     } catch (err) {
       console.error(
         "Save product error:",
@@ -418,7 +610,9 @@ const Products = () => {
     }
   };
 
-  // Toggle product status
+  // ---------------------------------------------------------
+  // TOGGLE PRODUCT STATUS
+  // ---------------------------------------------------------
   const handleToggleStatus = async (
     product
   ) => {
@@ -431,7 +625,8 @@ const Products = () => {
           ? 0
           : 1;
 
-      const formData = new FormData();
+      const formData =
+        new FormData();
 
       formData.append(
         "is_active",
@@ -449,7 +644,10 @@ const Products = () => {
           : "Product deactivated successfully."
       );
 
-      await loadProducts();
+      // Reload current page
+      await loadProducts(
+        currentPage
+      );
     } catch (err) {
       console.error(
         "Toggle product status error:",
@@ -463,7 +661,9 @@ const Products = () => {
     }
   };
 
-  // Open delete confirmation dialog
+  // ---------------------------------------------------------
+  // OPEN DELETE CONFIRMATION
+  // ---------------------------------------------------------
   const handleDeleteClick = (
     product
   ) => {
@@ -471,7 +671,9 @@ const Products = () => {
     setDeleteDialogOpen(true);
   };
 
-  // Close delete confirmation dialog
+  // ---------------------------------------------------------
+  // CLOSE DELETE DIALOG
+  // ---------------------------------------------------------
   const handleCloseDeleteDialog = () => {
     if (deleting) {
       return;
@@ -481,7 +683,9 @@ const Products = () => {
     setDeletingProduct(null);
   };
 
-  // Delete the selected product
+  // ---------------------------------------------------------
+  // DELETE PRODUCT
+  // ---------------------------------------------------------
   const handleDelete = async () => {
     if (!deletingProduct) {
       return;
@@ -492,9 +696,23 @@ const Products = () => {
       setError("");
       setSuccess("");
 
+      // Delete product
       await productsApi.remove(
         deletingProduct.id
       );
+
+      /*
+       * Normalize all product orders on the backend.
+       *
+       * Example:
+       *
+       * 1, 2, 3, 5, 6
+       *
+       * becomes:
+       *
+       * 1, 2, 3, 4, 5
+       */
+      await productsApi.normalizeOrders();
 
       setSuccess(
         "Product deleted successfully."
@@ -503,7 +721,16 @@ const Products = () => {
       setDeleteDialogOpen(false);
       setDeletingProduct(null);
 
-      await loadProducts();
+      /*
+       * Reload the current page.
+       *
+       * If the current page no longer exists,
+       * the page-validation effect will move
+       * currentPage to the previous valid page.
+       */
+      await loadProducts(
+        currentPage
+      );
     } catch (err) {
       console.error(
         "Delete product error:",
@@ -519,14 +746,19 @@ const Products = () => {
     }
   };
 
-  // Product table columns
+  // ---------------------------------------------------------
+  // PRODUCT TABLE COLUMNS
+  // ---------------------------------------------------------
   const columns = useMemo(
     () => [
       {
         key: "image",
         label: "Image",
 
-        render: (value, product) => (
+        render: (
+          value,
+          product
+        ) => (
           <div className="admin-product-table-image">
             {value ? (
               <img
@@ -582,7 +814,9 @@ const Products = () => {
 
             {product.category_name_fr && (
               <span>
-                {product.category_name_fr}
+                {
+                  product.category_name_fr
+                }
               </span>
             )}
           </div>
@@ -748,7 +982,7 @@ const Products = () => {
                     products.length === 1
                       ? "product"
                       : "products"
-                  } in the catalog`}
+                  } on this page · ${totalItems} total`}
             </p>
           </div>
         </div>
@@ -768,6 +1002,16 @@ const Products = () => {
           }
           editLabel="Edit"
           deleteLabel="Delete"
+        />
+
+        {/* Pagination */}
+        <AdminPagination
+          currentPage={currentPage}
+          totalItems={totalItems}
+          itemsPerPage={itemsPerPage}
+          onPageChange={
+            setCurrentPage
+          }
         />
       </div>
 
@@ -812,6 +1056,32 @@ const Products = () => {
               will be displayed for
               this product.
             </p>
+          </div>
+
+          {/* Image size note */}
+          <div className="hero-image-notes">
+            <div className="hero-image-note">
+              <div className="hero-image-note-icon">
+                IMAGE
+              </div>
+
+              <div className="hero-image-note-content">
+                <strong>
+                  Recommended size: 800 × 800 px
+                </strong>
+
+                <span>
+                  Aspect ratio: 1:1 ·
+                  Orientation: Square
+                </span>
+
+                <small>
+                  Use a high-quality image that
+                  clearly presents the product.
+                  Maximum file size: 1 MB.
+                </small>
+              </div>
+            </div>
           </div>
 
           <ImageUploader
@@ -1056,7 +1326,11 @@ const Products = () => {
                 id="display_order"
                 name="display_order"
                 type="number"
-                min="0"
+                min="1"
+                max={
+                  totalItems + 1 ||
+                  1
+                }
                 value={
                   form.display_order
                 }
@@ -1064,6 +1338,12 @@ const Products = () => {
                   handleChange
                 }
               />
+
+              <small className="admin-form-help">
+                Changing the order
+                automatically shifts
+                the other products.
+              </small>
             </div>
 
             <div className="admin-form-group admin-form-group-full">

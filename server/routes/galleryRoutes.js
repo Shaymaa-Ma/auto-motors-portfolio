@@ -8,6 +8,8 @@ const {
   createGalleryItem,
   updateGallerySection,
   updateGalleryItem,
+  reorderGalleryItem,
+  normalizeGalleryOrders,
   deleteGalleryItem,
 } = require("../controllers/galleryController");
 
@@ -31,28 +33,19 @@ const galleryUpload =
   );
 
 // =========================================================
-// PUBLIC
-// =========================================================
-
-// Get all ACTIVE gallery items
-router.get(
-  "/",
-  getGallery
-);
-
-// =========================================================
 // ADMIN - GET
+// IMPORTANT:
+// Admin routes MUST come before /:id
 // =========================================================
 
-// Get ALL gallery items
-// Includes active + inactive
+// Get paginated gallery items
 router.get(
   "/admin",
   authMiddleware,
   getAdminGallery
 );
 
-// Get ONE gallery item for admin
+// Get one gallery item for admin
 router.get(
   "/admin/:id",
   authMiddleware,
@@ -62,7 +55,7 @@ router.get(
 // =========================================================
 // ADMIN - UPDATE SECTION
 // IMPORTANT:
-// /section MUST be BEFORE /:id
+// /section MUST be before /:id
 // =========================================================
 
 router.put(
@@ -73,9 +66,38 @@ router.put(
 );
 
 // =========================================================
-// PUBLIC SINGLE ITEM
+// ADMIN - REORDER
+// IMPORTANT:
+// /:id/order MUST be before /:id
 // =========================================================
 
+router.put(
+  "/:id/order",
+  authMiddleware,
+  reorderGalleryItem
+);
+
+// =========================================================
+// ADMIN - NORMALIZE ORDERS
+// =========================================================
+
+router.post(
+  "/normalize-orders",
+  authMiddleware,
+  normalizeGalleryOrders
+);
+
+// =========================================================
+// PUBLIC
+// =========================================================
+
+// Get all ACTIVE gallery items
+router.get(
+  "/",
+  getGallery
+);
+
+// Get ONE active gallery item
 router.get(
   "/:id",
   getGalleryItemById

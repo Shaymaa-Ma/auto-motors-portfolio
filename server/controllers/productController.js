@@ -130,8 +130,9 @@ const getProductById = async (
   }
 };
 
-// Get all products for Admin
-// GET /api/products/admin
+// Get paginated products for Admin
+// GET /api/products/admin?page=1&limit=10
+// GET /api/products/admin?page=1&limit=10&category=1
 // Protected
 const getAdminProducts = async (
   req,
@@ -142,42 +143,110 @@ const getAdminProducts = async (
       category,
     } = req.query;
 
-    let sql = `
-      SELECT
-        p.*,
-        c.name_fr AS category_name_fr,
-        c.name_en AS category_name_en
-      FROM products p
-      LEFT JOIN product_categories c
-        ON p.category_id = c.id
-    `;
+    // Pagination
+    const page = Math.max(
+      parseInt(req.query.page, 10) || 1,
+      1
+    );
 
-    const params = [];
+    const limit = Math.min(
+      Math.max(
+        parseInt(req.query.limit, 10) || 10,
+        1
+      ),
+      100
+    );
+
+    const offset =
+      (page - 1) * limit;
+
+    // -----------------------------------------
+    // Build WHERE clause
+    // -----------------------------------------
+
+    let whereSql = "";
+    const whereParams = [];
 
     // Filter Admin products by category
     if (category) {
-      sql += `
+      whereSql = `
         WHERE p.category_id = ?
       `;
 
-      params.push(category);
+      whereParams.push(category);
     }
 
-    sql += `
-      ORDER BY
-        p.display_order ASC,
-        p.id ASC
-    `;
+    // -----------------------------------------
+    // Get total number of products
+    // -----------------------------------------
+
+    const [countRows] =
+      await db.query(
+        `
+          SELECT COUNT(*) AS total
+          FROM products p
+          ${whereSql}
+        `,
+        whereParams
+      );
+
+    const total =
+      Number(
+        countRows[0]?.total
+      ) || 0;
+
+    const totalPages =
+      Math.ceil(
+        total / limit
+      );
+
+    // -----------------------------------------
+    // Get current page
+    // -----------------------------------------
 
     const [rows] =
       await db.query(
-        sql,
-        params
+        `
+          SELECT
+            p.*,
+            c.name_fr AS category_name_fr,
+            c.name_en AS category_name_en
+          FROM products p
+          LEFT JOIN product_categories c
+            ON p.category_id = c.id
+          ${whereSql}
+          ORDER BY
+            p.display_order ASC,
+            p.id ASC
+          LIMIT ? OFFSET ?
+        `,
+        [
+          ...whereParams,
+          limit,
+          offset,
+        ]
       );
+
+    // -----------------------------------------
+    // Return paginated response
+    // -----------------------------------------
 
     return sendSuccess(
       res,
-      rows,
+      {
+        data: rows,
+
+        pagination: {
+          currentPage: page,
+          itemsPerPage: limit,
+          totalItems: total,
+          totalPages,
+          hasPreviousPage:
+            page > 1,
+          hasNextPage:
+            page < totalPages,
+        },
+      },
       "Products retrieved successfully"
     );
   } catch (error) {
@@ -671,6 +740,317 @@ const deleteProduct = async (
   }
 };
 
+
+// Reorder one product
+// PUT /api/products/:id/order
+// Protected
+const reorderProduct = async (
+  req,
+  res
+) => {
+  try {
+    const {
+      id,
+    } = req.params;
+
+    const requestedOrder =
+      Math.max(
+        Number(
+          req.body.display_order
+        ) || 1,
+        1
+      );
+
+    // Get the product being moved
+    const [productRows] =
+      await db.query(
+        `
+          SELECT
+            id,
+            display_order
+          FROM products
+          WHERE id = ?
+          LIMIT 1
+        `,
+        [id]
+      );
+
+    if (
+      productRows.length === 0
+    ) {
+      return sendError(
+        res,
+        "Product not found",
+        404
+      );
+    }
+
+    const currentOrder =
+      Number(
+        productRows[0].display_order
+      ) || 1;
+
+    // Get the total number of products
+    const [countRows] =
+      await db.query(
+        `
+          SELECT COUNT(*) AS total
+          FROM products
+        `
+      );
+
+    const total =
+      Number(
+        countRows[0]?.total
+      ) || 0;
+
+    if (total === 0) {
+      return sendSuccess(
+        res,
+        null,
+        "Product order updated successfully"
+      );
+    }
+
+    const newOrder = Math.min(
+      requestedOrder,
+      total
+    );
+
+    // Nothing to change
+    if (
+      currentOrder === newOrder
+    ) {
+      return sendSuccess(
+        res,
+        {
+          id: Number(id),
+          display_order: newOrder,
+        },
+        "Product order updated successfully"
+      );
+    }
+
+    /*
+     * First move the affected records
+     * temporarily outside the normal range.
+     *
+     * This prevents duplicate display_order
+     * conflicts during the reorder operation.
+     */
+
+    if (
+      newOrder < currentOrder
+    ) {
+      // Example:
+      // 1, 2, 3, 4
+      // Move 4 -> 2
+      //
+      // 2 -> temporary
+      // 3 -> temporary
+      // 4 -> temporary
+      //
+      // Then:
+      // 1, 4, 2, 3
+
+      await db.query(
+        `
+          UPDATE products
+          SET display_order =
+            display_order + 1000000
+          WHERE display_order >= ?
+            AND display_order < ?
+        `,
+        [
+          newOrder,
+          currentOrder,
+        ]
+      );
+
+      await db.query(
+        `
+          UPDATE products
+          SET display_order = display_order - 999999
+          WHERE display_order >= ?
+            AND display_order <= ?
+        `,
+        [
+          1000000 + newOrder,
+          1000000 +
+            currentOrder -
+            1,
+        ]
+      );
+    } else {
+      // Example:
+      // 1, 2, 3, 4
+      // Move 2 -> 4
+      //
+      // 2 -> temporary
+      // 3 -> temporary
+      // 4 -> temporary
+      //
+      // Then:
+      // 1, 3, 4, 2
+
+      await db.query(
+        `
+          UPDATE products
+          SET display_order =
+            display_order + 1000000
+          WHERE display_order > ?
+            AND display_order <= ?
+        `,
+        [
+          currentOrder,
+          newOrder,
+        ]
+      );
+
+      await db.query(
+        `
+          UPDATE products
+          SET display_order = display_order - 1000001
+          WHERE display_order >= ?
+            AND display_order <= ?
+        `,
+        [
+          1000000 +
+            currentOrder +
+            1,
+          1000000 +
+            newOrder,
+        ]
+      );
+    }
+
+    // Put the selected product in its final position
+    await db.query(
+      `
+        UPDATE products
+        SET display_order = ?
+        WHERE id = ?
+      `,
+      [
+        newOrder,
+        id,
+      ]
+    );
+
+    return sendSuccess(
+      res,
+      {
+        id: Number(id),
+        display_order: newOrder,
+      },
+      "Product order updated successfully"
+    );
+  } catch (error) {
+    console.error(
+      "Reorder product error:",
+      error
+    );
+
+    return sendError(
+      res,
+      "Failed to reorder product"
+    );
+  }
+};
+
+// Normalize all product orders
+// Used after deleting a product
+// Protected
+const normalizeProductOrders =
+  async (
+    req,
+    res
+  ) => {
+    try {
+      const [rows] =
+        await db.query(
+          `
+            SELECT
+              id,
+              display_order
+            FROM products
+            ORDER BY
+              display_order ASC,
+              id ASC
+          `
+        );
+
+      if (
+        rows.length === 0
+      ) {
+        return sendSuccess(
+          res,
+          [],
+          "Product orders normalized successfully"
+        );
+      }
+
+      /*
+       * First move all records outside
+       * the normal order range.
+       */
+      await Promise.all(
+        rows.map(
+          (product, index) =>
+            db.query(
+              `
+                UPDATE products
+                SET display_order = ?
+                WHERE id = ?
+              `,
+              [
+                1000000 +
+                  index,
+                product.id,
+              ]
+            )
+        )
+      );
+
+      /*
+       * Now assign clean sequential orders:
+       * 1, 2, 3, 4...
+       */
+      await Promise.all(
+        rows.map(
+          (product, index) =>
+            db.query(
+              `
+                UPDATE products
+                SET display_order = ?
+                WHERE id = ?
+              `,
+              [
+                index + 1,
+                product.id,
+              ]
+            )
+        )
+      );
+
+      return sendSuccess(
+        res,
+        null,
+        "Product orders normalized successfully"
+      );
+    } catch (error) {
+      console.error(
+        "Normalize product orders error:",
+        error
+      );
+
+      return sendError(
+        res,
+        "Failed to normalize product orders"
+      );
+    }
+  };
+
 module.exports = {
   getProducts,
   getProductById,
@@ -679,4 +1059,6 @@ module.exports = {
   createProduct,
   updateProduct,
   deleteProduct,
+  reorderProduct,
+  normalizeProductOrders,
 };

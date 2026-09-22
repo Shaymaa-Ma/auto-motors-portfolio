@@ -47,6 +47,9 @@ const About = () => {
     setErrorMessage,
   ] = useState("");
 
+  // Maximum image size: 1 MB
+  const MAX_IMAGE_SIZE = 1 * 1024 * 1024;
+
   // Load About information
   useEffect(() => {
     loadAbout();
@@ -148,8 +151,8 @@ const About = () => {
         setErrorMessage(
           error?.response?.data
             ?.message ||
-            error?.message ||
-            "Failed to load About content."
+          error?.message ||
+          "Failed to load About content."
         );
       } finally {
         setLoading(false);
@@ -180,10 +183,23 @@ const About = () => {
   const handleImageChange = (
     file
   ) => {
-    setSelectedImage(file);
-
     setSuccessMessage("");
     setErrorMessage("");
+
+    if (!file) {
+      setSelectedImage(null);
+      return;
+    }
+
+    if (file.size > MAX_IMAGE_SIZE) {
+      setErrorMessage(
+        "About image size must not exceed 1 MB."
+      );
+
+      return;
+    }
+
+    setSelectedImage(file);
   };
 
   // Save About information
@@ -312,7 +328,7 @@ const About = () => {
       setErrorMessage(
         error?.response?.data
           ?.message ||
-          "Failed to update About content."
+        "Failed to update About content."
       );
     } finally {
       setSaving(false);
@@ -400,6 +416,31 @@ const About = () => {
                 Manage the image displayed
                 in the About section.
               </p>
+            </div>
+          </div>
+
+          {/* Image size note */}
+          <div className="hero-image-notes">
+            <div className="hero-image-note">
+              <div className="hero-image-note-icon">
+                IMAGE
+              </div>
+
+              <div className="hero-image-note-content">
+                <strong>
+                  Recommended size: 800 × 1000 px
+                </strong>
+
+                <span>
+                  Aspect ratio: 4:5 ·
+                  Orientation: Portrait
+                </span>
+
+                <small>
+                  Use a high-quality image that fits
+                  the About section. Maximum file size: 1 MB.
+                </small>
+              </div>
             </div>
           </div>
 
@@ -785,7 +826,7 @@ const About = () => {
                 onChange={
                   handleChange
                 }
-                placeholder="Enter secondary button text"
+                placeholder="Enter English secondary button text"
               />
             </div>
 

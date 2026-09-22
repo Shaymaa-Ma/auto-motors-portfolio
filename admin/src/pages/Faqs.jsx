@@ -1,14 +1,27 @@
-import { useEffect, useState } from "react";
+import {
+  useEffect,
+  useState,
+} from "react";
 
 import {
   faqsApi,
 } from "../api/endpoints";
 
+import AdminPagination from "../components/AdminPagination";
 import DataTable from "../components/DataTable";
 import FormModal from "../components/FormModal";
 import ConfirmDialog from "../components/ConfirmDialog";
 
-// Default FAQ form values
+// =========================================================
+// PAGINATION
+// =========================================================
+
+const ITEMS_PER_PAGE = 10;
+
+// =========================================================
+// DEFAULT FAQ FORM VALUES
+// =========================================================
+
 const initialForm = {
   question_fr: "",
   question_en: "",
@@ -18,7 +31,10 @@ const initialForm = {
   is_active: 1,
 };
 
-// Default FAQ section values
+// =========================================================
+// DEFAULT FAQ SECTION VALUES
+// =========================================================
+
 const initialSectionForm = {
   section_title_fr: "",
   section_title_en: "",
@@ -27,6 +43,11 @@ const initialSectionForm = {
 };
 
 const Faqs = () => {
+  // =======================================================
+  // STATE
+  // =======================================================
+
+  // Only the current page is kept in state.
   const [faqs, setFaqs] =
     useState([]);
 
@@ -69,24 +90,102 @@ const Faqs = () => {
   const [sectionForm, setSectionForm] =
     useState(initialSectionForm);
 
-  // Load all FAQs for Admin
-  const loadFaqs = async () => {
+  // =======================================================
+  // BACKEND PAGINATION STATE
+  // =======================================================
+
+  const [currentPage, setCurrentPage] =
+    useState(1);
+
+  const [totalItems, setTotalItems] =
+    useState(0);
+
+  const [totalPages, setTotalPages] =
+    useState(0);
+
+  // =======================================================
+  // LOAD FAQS
+  // =======================================================
+
+  const loadFaqs = async (
+    page = currentPage
+  ) => {
     try {
       setLoading(true);
       setError("");
 
       const response =
-        await faqsApi.getAll();
+        await faqsApi.getAll(
+          page,
+          ITEMS_PER_PAGE
+        );
 
-      const faqData =
+      /*
+       * Backend response:
+       *
+       * {
+       *   items,
+       *   page,
+       *   limit,
+       *   offset,
+       *   totalItems,
+       *   totalPages
+       * }
+       *
+       * Depending on sendSuccess(), this may be
+       * inside response.data.
+       */
+
+      const payload =
         response?.data ??
         response ??
-        [];
+        {};
 
-      setFaqs(faqData);
+      const faqData =
+        Array.isArray(
+          payload?.items
+        )
+          ? payload.items
+          : Array.isArray(
+            payload
+          )
+            ? payload
+            : [];
 
-      // Load section content from the first FAQ
-      if (faqData.length > 0) {
+      // -----------------------------------------------------
+      // Store only current page
+      // -----------------------------------------------------
+
+      setFaqs(
+        faqData
+      );
+
+      // -----------------------------------------------------
+      // Store pagination metadata
+      // -----------------------------------------------------
+
+      setTotalItems(
+        Number(
+          payload?.totalItems
+        ) || 0
+      );
+
+      setTotalPages(
+        Number(
+          payload?.totalPages
+        ) || 0
+      );
+
+      // -----------------------------------------------------
+      // Load section content
+      //
+      // Section fields are duplicated across FAQ rows,
+      // so any current-page FAQ contains the same values.
+      // -----------------------------------------------------
+
+      if (
+        faqData.length > 0
+      ) {
         const firstFaq =
           faqData[0];
 
@@ -107,7 +206,9 @@ const Faqs = () => {
             firstFaq.section_subtitle_en ??
             "",
         });
-      } else {
+      } else if (
+        totalItems === 0
+      ) {
         setSectionForm({
           ...initialSectionForm,
         });
@@ -120,19 +221,69 @@ const Faqs = () => {
 
       setError(
         err?.response?.data?.message ||
-          "Failed to load FAQs."
+        "Failed to load FAQs."
       );
     } finally {
       setLoading(false);
     }
   };
 
-  // Load FAQs when the page opens
+  // =======================================================
+  // INITIAL LOAD
+  // =======================================================
+
   useEffect(() => {
-    loadFaqs();
+    loadFaqs(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Handle FAQ form field changes
+  // =======================================================
+  // LOAD WHEN PAGE CHANGES
+  // =======================================================
+
+  useEffect(() => {
+    if (
+      currentPage !== 1
+    ) {
+      loadFaqs(
+        currentPage
+      );
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    currentPage,
+  ]);
+
+  // =======================================================
+  // KEEP CURRENT PAGE VALID
+  // =======================================================
+
+  useEffect(() => {
+    if (
+      totalPages > 0 &&
+      currentPage > totalPages
+    ) {
+      setCurrentPage(
+        totalPages
+      );
+    }
+
+    if (
+      totalItems === 0 &&
+      currentPage !== 1
+    ) {
+      setCurrentPage(1);
+    }
+  }, [
+    totalPages,
+    totalItems,
+    currentPage,
+  ]);
+
+  // =======================================================
+  // HANDLE FAQ FORM FIELD CHANGES
+  // =======================================================
+
   const handleChange = (
     event
   ) => {
@@ -143,18 +294,26 @@ const Faqs = () => {
       checked,
     } = event.target;
 
-    setForm((current) => ({
-      ...current,
-      [name]:
-        type === "checkbox"
-          ? checked
-            ? 1
-            : 0
-          : value,
-    }));
+    setForm(
+      (current) => ({
+        ...current,
+
+        [name]:
+          type === "checkbox"
+            ? checked
+              ? 1
+              : 0
+            : value,
+      })
+    );
+
+    setError("");
   };
 
-  // Handle FAQ section field changes
+  // =======================================================
+  // HANDLE FAQ SECTION FIELD CHANGES
+  // =======================================================
+
   const handleSectionChange = (
     event
   ) => {
@@ -172,78 +331,144 @@ const Faqs = () => {
 
     setSectionMessage("");
     setError("");
+    setSuccess("");
   };
 
-  // Save FAQ section title and subtitle
-  const handleSaveSection = async (
-    event
-  ) => {
-    event.preventDefault();
+  // =======================================================
+  // SAVE FAQ SECTION
+  // =======================================================
 
-    if (faqs.length === 0) {
-      setError(
-        "Add at least one FAQ before editing the FAQ section content."
-      );
+  const handleSaveSection =
+    async (
+      event
+    ) => {
+      event.preventDefault();
 
-      return;
-    }
+      if (sectionSaving) {
+        return;
+      }
 
-    try {
-      setSectionSaving(true);
-      setError("");
-      setSuccess("");
-      setSectionMessage("");
+      if (
+        totalItems === 0
+      ) {
+        setError(
+          "Add at least one FAQ before editing the FAQ section content."
+        );
 
-      // Update the section content on all FAQ records
-      await Promise.all(
-        faqs.map((faq) =>
-          faqsApi.update(
-            faq.id,
-            {
-              section_title_fr:
-                sectionForm.section_title_fr.trim(),
+        return;
+      }
 
-              section_title_en:
-                sectionForm.section_title_en.trim(),
+      try {
+        setSectionSaving(
+          true
+        );
 
-              section_subtitle_fr:
-                sectionForm.section_subtitle_fr.trim(),
+        setError("");
+        setSuccess("");
+        setSectionMessage("");
 
-              section_subtitle_en:
-                sectionForm.section_subtitle_en.trim(),
-            }
+        /*
+         * Keep the existing FAQ section behavior.
+         *
+         * Section fields are updated on every FAQ record.
+         *
+         * Since pagination now loads only one page,
+         * we cannot loop through the local `faqs` array.
+         *
+         * Therefore we retrieve all FAQ records through
+         * the admin endpoint page by page only for this
+         * section-save operation.
+         */
+
+        const allFaqs = [];
+
+        for (
+          let page = 1;
+          page <= totalPages;
+          page++
+        ) {
+          const response =
+            await faqsApi.getAll(
+              page,
+              ITEMS_PER_PAGE
+            );
+
+          const payload =
+            response?.data ??
+            response ??
+            {};
+
+          const pageItems =
+            Array.isArray(
+              payload?.items
+            )
+              ? payload.items
+              : [];
+
+          allFaqs.push(
+            ...pageItems
+          );
+        }
+
+        await Promise.all(
+          allFaqs.map(
+            (faq) =>
+              faqsApi.update(
+                faq.id,
+                {
+                  section_title_fr:
+                    sectionForm.section_title_fr.trim(),
+
+                  section_title_en:
+                    sectionForm.section_title_en.trim(),
+
+                  section_subtitle_fr:
+                    sectionForm.section_subtitle_fr.trim(),
+
+                  section_subtitle_en:
+                    sectionForm.section_subtitle_en.trim(),
+                }
+              )
           )
-        )
-      );
+        );
 
-      await loadFaqs();
+        await loadFaqs(
+          currentPage
+        );
 
-      setSectionMessage(
-        "FAQ section content saved successfully."
-      );
-    } catch (err) {
-      console.error(
-        "Save FAQ section error:",
-        err
-      );
+        setSectionMessage(
+          "FAQ section content saved successfully."
+        );
+      } catch (err) {
+        console.error(
+          "Save FAQ section error:",
+          err
+        );
 
-      setError(
-        err?.response?.data?.message ||
+        setError(
+          err?.response?.data?.message ||
           "Failed to save FAQ section content."
-      );
-    } finally {
-      setSectionSaving(false);
-    }
-  };
+        );
+      } finally {
+        setSectionSaving(
+          false
+        );
+      }
+    };
 
-  // Open the Add modal
+  // =======================================================
+  // OPEN ADD MODAL
+  // =======================================================
+
   const handleAdd = () => {
     setEditingFaq(null);
 
     setForm({
       ...initialForm,
+
+      // New FAQ initially goes after existing FAQs.
       display_order:
-        faqs.length,
+        totalItems + 1,
     });
 
     setError("");
@@ -251,11 +476,24 @@ const Faqs = () => {
     setIsModalOpen(true);
   };
 
-  // Open the Edit modal
+  // =======================================================
+  // OPEN EDIT MODAL
+  // =======================================================
+
   const handleEdit = (
     faq
   ) => {
-    setEditingFaq(faq);
+    if (!faq?.id) {
+      setError(
+        "Unable to edit this FAQ because its ID is missing."
+      );
+
+      return;
+    }
+
+    setEditingFaq(
+      faq
+    );
 
     setForm({
       question_fr:
@@ -275,7 +513,8 @@ const Faqs = () => {
         "",
 
       display_order:
-        faq.display_order ?? 0,
+        faq.display_order ??
+        0,
 
       is_active:
         Number(
@@ -290,7 +529,10 @@ const Faqs = () => {
     setIsModalOpen(true);
   };
 
-  // Close the Add/Edit modal
+  // =======================================================
+  // CLOSE ADD / EDIT MODAL
+  // =======================================================
+
   const handleCloseModal = () => {
     if (saving) {
       return;
@@ -298,54 +540,106 @@ const Faqs = () => {
 
     setIsModalOpen(false);
     setEditingFaq(null);
+
     setForm({
       ...initialForm,
     });
+
     setError("");
   };
 
-  // Save the FAQ
+  // =======================================================
+  // SAVE FAQ
+  // =======================================================
+
   const handleSubmit = async (
     event
   ) => {
     event.preventDefault();
+
+    if (saving) {
+      return;
+    }
 
     try {
       setSaving(true);
       setError("");
       setSuccess("");
 
-      if (!form.question_fr.trim()) {
+      // ---------------------------------------------------
+      // Validation
+      // ---------------------------------------------------
+
+      if (
+        !form.question_fr.trim()
+      ) {
         setError(
           "French question is required."
         );
+
         setSaving(false);
         return;
       }
 
-      if (!form.question_en.trim()) {
+      if (
+        !form.question_en.trim()
+      ) {
         setError(
           "English question is required."
         );
+
         setSaving(false);
         return;
       }
 
-      if (!form.answer_fr.trim()) {
+      if (
+        !form.answer_fr.trim()
+      ) {
         setError(
           "French answer is required."
         );
+
         setSaving(false);
         return;
       }
 
-      if (!form.answer_en.trim()) {
+      if (
+        !form.answer_en.trim()
+      ) {
         setError(
           "English answer is required."
         );
+
         setSaving(false);
         return;
       }
+
+      // ---------------------------------------------------
+      // Calculate desired order
+      // ---------------------------------------------------
+
+      const maximumOrder =
+        editingFaq
+          ? Math.max(
+            totalItems,
+            1
+          )
+          : totalItems + 1;
+
+      const desiredOrder =
+        Math.min(
+          Math.max(
+            Number(
+              form.display_order
+            ) || 1,
+            1
+          ),
+          maximumOrder
+        );
+
+      // ---------------------------------------------------
+      // Prepare data
+      // ---------------------------------------------------
 
       const data = {
         question_fr:
@@ -361,9 +655,7 @@ const Faqs = () => {
           form.answer_en.trim(),
 
         display_order:
-          Number(
-            form.display_order
-          ) || 0,
+          desiredOrder,
 
         is_active:
           Number(
@@ -371,29 +663,97 @@ const Faqs = () => {
           ),
       };
 
+      // ===================================================
+      // UPDATE
+      // ===================================================
+
       if (editingFaq) {
+        const oldOrder =
+          Number(
+            editingFaq.display_order
+          ) || 0;
+
+        // -------------------------------------------------
+        // Update FAQ content/status
+        // -------------------------------------------------
+
         await faqsApi.update(
           editingFaq.id,
           data
         );
 
+        // -------------------------------------------------
+        // Reorder through backend
+        // -------------------------------------------------
+
+        if (
+          oldOrder !==
+          desiredOrder
+        ) {
+          await faqsApi.reorder(
+            editingFaq.id,
+            desiredOrder
+          );
+        }
+
         setSuccess(
           "FAQ updated successfully."
         );
-      } else {
-        await faqsApi.create(
-          data
-        );
+      }
+
+      // ===================================================
+      // CREATE
+      // ===================================================
+
+      else {
+        const response =
+          await faqsApi.create(
+            data
+          );
+
+        /*
+         * The create endpoint returns the newly created FAQ.
+         */
+        const createdFaq =
+          response?.data ??
+          response;
+
+        const createdId =
+          createdFaq?.id;
+
+        // -------------------------------------------------
+        // Reorder through backend
+        // -------------------------------------------------
+
+        if (
+          createdId
+        ) {
+          await faqsApi.reorder(
+            createdId,
+            desiredOrder
+          );
+        }
 
         setSuccess(
           "FAQ created successfully."
         );
       }
 
-      await loadFaqs();
+      // ---------------------------------------------------
+      // Reload current page
+      // ---------------------------------------------------
+
+      await loadFaqs(
+        currentPage
+      );
+
+      // ---------------------------------------------------
+      // Close modal
+      // ---------------------------------------------------
 
       setIsModalOpen(false);
       setEditingFaq(null);
+
       setForm({
         ...initialForm,
       });
@@ -405,18 +765,29 @@ const Faqs = () => {
 
       setError(
         err?.response?.data?.message ||
-          "Failed to save FAQ."
+        "Failed to save FAQ."
       );
     } finally {
       setSaving(false);
     }
   };
 
-  // Toggle FAQ status
+  // =======================================================
+  // TOGGLE FAQ STATUS
+  // =======================================================
+
   const handleToggleStatus =
     async (
       faq
     ) => {
+      if (!faq?.id) {
+        setError(
+          "Unable to update FAQ status because the item ID is missing."
+        );
+
+        return;
+      }
+
       try {
         setError("");
         setSuccess("");
@@ -442,7 +813,9 @@ const Faqs = () => {
             : "FAQ deactivated successfully."
         );
 
-        await loadFaqs();
+        await loadFaqs(
+          currentPage
+        );
       } catch (err) {
         console.error(
           "Toggle FAQ status error:",
@@ -451,72 +824,158 @@ const Faqs = () => {
 
         setError(
           err?.response?.data?.message ||
-            "Failed to update FAQ status."
+          "Failed to update FAQ status."
         );
       }
     };
 
-  // Open the delete confirmation dialog
+  // =======================================================
+  // OPEN DELETE CONFIRMATION
+  // =======================================================
+
   const handleDeleteClick = (
     faq
   ) => {
-    setDeletingFaq(faq);
-    setDeleteDialogOpen(true);
-  };
-
-  // Close the delete confirmation dialog
-  const handleCloseDeleteDialog = () => {
-    if (deleting) {
-      return;
-    }
-
-    setDeleteDialogOpen(false);
-    setDeletingFaq(null);
-  };
-
-  // Delete the selected FAQ
-  const handleDelete = async () => {
-    if (!deletingFaq) {
-      return;
-    }
-
-    try {
-      setDeleting(true);
-      setError("");
-      setSuccess("");
-
-      // Delete the FAQ
-      await faqsApi.delete(
-        deletingFaq.id
-      );
-
-      setSuccess(
-        "FAQ deleted successfully."
-      );
-
-      setDeleteDialogOpen(false);
-      setDeletingFaq(null);
-
-      await loadFaqs();
-    } catch (err) {
-      console.error(
-        "Delete FAQ error:",
-        err
-      );
-
+    if (!faq?.id) {
       setError(
-        err?.response?.data?.message ||
-          "Failed to delete FAQ."
+        "Unable to delete this FAQ because its ID is missing."
       );
-    } finally {
-      setDeleting(false);
+
+      return;
     }
+
+    setDeletingFaq(
+      faq
+    );
+
+    setDeleteDialogOpen(
+      true
+    );
+
+    setError("");
+    setSuccess("");
   };
 
-  // Table columns
+  // =======================================================
+  // CLOSE DELETE CONFIRMATION
+  // =======================================================
+
+  const handleCloseDeleteDialog =
+    () => {
+      if (deleting) {
+        return;
+      }
+
+      setDeleteDialogOpen(
+        false
+      );
+
+      setDeletingFaq(
+        null
+      );
+    };
+
+  // =======================================================
+  // DELETE FAQ
+  // =======================================================
+
+  const handleDelete =
+    async () => {
+      if (deleting) {
+        return;
+      }
+
+      if (!deletingFaq?.id) {
+        setDeleteDialogOpen(
+          false
+        );
+
+        setDeletingFaq(
+          null
+        );
+
+        setError(
+          "Unable to delete the FAQ because its ID is missing."
+        );
+
+        return;
+      }
+
+      try {
+        setDeleting(true);
+        setError("");
+        setSuccess("");
+
+        const itemId =
+          deletingFaq.id;
+
+        // -------------------------------------------------
+        // Delete FAQ
+        // -------------------------------------------------
+
+        await faqsApi.remove(
+          itemId
+        );
+
+        // -------------------------------------------------
+        // Normalize remaining orders
+        // -------------------------------------------------
+
+        await faqsApi.normalizeOrders();
+
+        setSuccess(
+          "FAQ deleted successfully."
+        );
+
+        setDeleteDialogOpen(
+          false
+        );
+
+        setDeletingFaq(
+          null
+        );
+
+        // -------------------------------------------------
+        // If this was the only item on the current page
+        // and we are not on page 1, go back one page.
+        // -------------------------------------------------
+
+        if (
+          faqs.length === 1 &&
+          currentPage > 1
+        ) {
+          setCurrentPage(
+            (page) =>
+              page - 1
+          );
+        } else {
+          await loadFaqs(
+            currentPage
+          );
+        }
+      } catch (err) {
+        console.error(
+          "Delete FAQ error:",
+          err
+        );
+
+        setError(
+          err?.response?.data?.message ||
+          "Failed to delete FAQ."
+        );
+      } finally {
+        setDeleting(false);
+      }
+    };
+
+  // =======================================================
+  // TABLE COLUMNS
+  // =======================================================
+
   const columns = [
     {
       key: "display_order",
+
       label: "Order",
 
       render: (
@@ -530,6 +989,7 @@ const Faqs = () => {
 
     {
       key: "question_en",
+
       label: "Question",
 
       render: (
@@ -552,6 +1012,7 @@ const Faqs = () => {
 
     {
       key: "answer_en",
+
       label: "Answer",
 
       render: (
@@ -568,6 +1029,7 @@ const Faqs = () => {
 
     {
       key: "is_active",
+
       label: "Status",
 
       render: (
@@ -576,11 +1038,10 @@ const Faqs = () => {
       ) => (
         <button
           type="button"
-          className={`admin-status-button ${
-            Number(value) === 1
+          className={`admin-status-button ${Number(value) === 1
               ? "active"
               : "inactive"
-          }`}
+            }`}
           onClick={() =>
             handleToggleStatus(
               faq
@@ -602,9 +1063,17 @@ const Faqs = () => {
     },
   ];
 
+  // =======================================================
+  // RENDER
+  // =======================================================
+
   return (
     <div className="admin-page">
-      {/* Page header */}
+
+      {/* ===================================================
+          PAGE HEADER
+          =================================================== */}
+
       <div className="admin-page-header">
         <div>
           <h1>
@@ -622,13 +1091,18 @@ const Faqs = () => {
           type="button"
           className="admin-primary-button"
           onClick={handleAdd}
+          disabled={loading}
         >
           <i className="bi bi-plus-lg" />
+
           Add FAQ
         </button>
       </div>
 
-      {/* Success message */}
+      {/* ===================================================
+          SUCCESS MESSAGE
+          =================================================== */}
+
       {success && (
         <div className="admin-alert admin-alert-success">
           <i className="bi bi-check-circle" />
@@ -649,7 +1123,10 @@ const Faqs = () => {
         </div>
       )}
 
-      {/* Error message */}
+      {/* ===================================================
+          ERROR MESSAGE
+          =================================================== */}
+
       {error && (
         <div className="admin-alert admin-alert-error">
           <i className="bi bi-exclamation-circle" />
@@ -670,7 +1147,10 @@ const Faqs = () => {
         </div>
       )}
 
-      {/* FAQ section content */}
+      {/* ===================================================
+          FAQ SECTION CONTENT
+          =================================================== */}
+
       <form
         className="admin-section-settings"
         onSubmit={
@@ -695,7 +1175,7 @@ const Faqs = () => {
             className="admin-primary-button"
             disabled={
               sectionSaving ||
-              faqs.length === 0
+              totalItems === 0
             }
           >
             <i className="bi bi-check-lg" />
@@ -707,6 +1187,7 @@ const Faqs = () => {
         </div>
 
         <div className="admin-form-grid">
+
           <div className="admin-form-group">
             <label htmlFor="section_title_fr">
               Section Title (French)
@@ -724,7 +1205,7 @@ const Faqs = () => {
               }
               placeholder="Questions fréquentes"
               disabled={
-                faqs.length === 0 ||
+                totalItems === 0 ||
                 sectionSaving
               }
             />
@@ -747,7 +1228,7 @@ const Faqs = () => {
               }
               placeholder="Frequently Asked Questions"
               disabled={
-                faqs.length === 0 ||
+                totalItems === 0 ||
                 sectionSaving
               }
             />
@@ -770,7 +1251,7 @@ const Faqs = () => {
               rows="3"
               placeholder="Trouvez les réponses aux questions les plus fréquentes..."
               disabled={
-                faqs.length === 0 ||
+                totalItems === 0 ||
                 sectionSaving
               }
             />
@@ -793,11 +1274,12 @@ const Faqs = () => {
               rows="3"
               placeholder="Find answers to the most frequently asked questions..."
               disabled={
-                faqs.length === 0 ||
+                totalItems === 0 ||
                 sectionSaving
               }
             />
           </div>
+
         </div>
 
         {sectionMessage && (
@@ -811,7 +1293,10 @@ const Faqs = () => {
         )}
       </form>
 
-      {/* FAQ table */}
+      {/* ===================================================
+          FAQ TABLE
+          =================================================== */}
+
       <DataTable
         columns={columns}
         data={faqs}
@@ -823,7 +1308,25 @@ const Faqs = () => {
         deleteLabel="Delete"
       />
 
-      {/* Add/Edit FAQ modal */}
+      {/* ===================================================
+          PAGINATION
+          =================================================== */}
+
+      <AdminPagination
+        currentPage={currentPage}
+        totalItems={totalItems}
+        itemsPerPage={
+          ITEMS_PER_PAGE
+        }
+        onPageChange={
+          setCurrentPage
+        }
+      />
+
+      {/* ===================================================
+          ADD / EDIT FAQ MODAL
+          =================================================== */}
+
       <FormModal
         isOpen={isModalOpen}
         title={
@@ -846,7 +1349,9 @@ const Faqs = () => {
         loading={saving}
         size="large"
       >
+
         <div className="admin-form-section">
+
           <div className="admin-form-section-header">
             <h3>
               Question
@@ -859,6 +1364,7 @@ const Faqs = () => {
           </div>
 
           <div className="admin-form-grid">
+
             <div className="admin-form-group">
               <label htmlFor="question_fr">
                 Question (French)
@@ -904,10 +1410,16 @@ const Faqs = () => {
                 required
               />
             </div>
+
           </div>
         </div>
 
+        {/* =================================================
+            ANSWER
+            ================================================= */}
+
         <div className="admin-form-section">
+
           <div className="admin-form-section-header">
             <h3>
               Answer
@@ -920,6 +1432,7 @@ const Faqs = () => {
           </div>
 
           <div className="admin-form-grid">
+
             <div className="admin-form-group admin-form-group-full">
               <label htmlFor="answer_fr">
                 Answer (French)
@@ -965,10 +1478,16 @@ const Faqs = () => {
                 required
               />
             </div>
+
           </div>
         </div>
 
+        {/* =================================================
+            DISPLAY SETTINGS
+            ================================================= */}
+
         <div className="admin-form-section">
+
           <div className="admin-form-section-header">
             <h3>
               Display Settings
@@ -981,6 +1500,7 @@ const Faqs = () => {
           </div>
 
           <div className="admin-form-grid">
+
             <div className="admin-form-group">
               <label htmlFor="display_order">
                 Display Order
@@ -990,7 +1510,7 @@ const Faqs = () => {
                 id="display_order"
                 name="display_order"
                 type="number"
-                min="0"
+                min="1"
                 value={
                   form.display_order
                 }
@@ -1001,11 +1521,13 @@ const Faqs = () => {
             </div>
 
             <div className="admin-form-group">
+
               <label>
                 Status
               </label>
 
               <label className="admin-checkbox-label">
+
                 <input
                   type="checkbox"
                   name="is_active"
@@ -1028,34 +1550,36 @@ const Faqs = () => {
                   displayed on the
                   public website.
                 </small>
+
               </label>
+
             </div>
+
           </div>
         </div>
+
       </FormModal>
 
-      {/* Delete confirmation */}
+      {/* ===================================================
+          DELETE CONFIRMATION
+          =================================================== */}
+
       <ConfirmDialog
-        isOpen={
-          deleteDialogOpen
-        }
+        isOpen={deleteDialogOpen}
         title="Delete FAQ"
         message={
           deletingFaq
-            ? `Are you sure you want to delete "${deletingFaq.question_en}"? This action cannot be undone.`
+            ? `Are you sure you want to delete "${deletingFaq.question_en || deletingFaq.question_fr}"? This action cannot be undone.`
             : "Are you sure you want to delete this FAQ?"
         }
         confirmText="Delete FAQ"
         cancelText="Cancel"
-        onConfirm={
-          handleDelete
-        }
-        onClose={
-          handleCloseDeleteDialog
-        }
+        onConfirm={handleDelete}
+        onCancel={handleCloseDeleteDialog}
         loading={deleting}
         danger
       />
+
     </div>
   );
 };

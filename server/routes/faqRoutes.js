@@ -3,25 +3,29 @@ const express = require("express");
 const {
   getFaqs,
   getFaqById,
+
   getAdminFaqs,
   getAdminFaqById,
+
+  reorderFaq,
+  normalizeFaqOrders,
+
   createFaq,
   updateFaq,
   deleteFaq,
 } = require("../controllers/faqController");
 
-const authMiddleware = require("../middleware/authMiddleware");
+const authMiddleware =
+  require("../middleware/authMiddleware");
 
 const router =
   express.Router();
 
-// Get active FAQs for the client
-router.get(
-  "/",
-  getFaqs
-);
+// =========================================================
+// ADMIN - PROTECTED
+// =========================================================
 
-// Get all FAQs for Admin
+// Get paginated FAQs for Admin
 router.get(
   "/admin",
   authMiddleware,
@@ -35,27 +39,55 @@ router.get(
   getAdminFaqById
 );
 
-// Get one active FAQ for the client
+// Reorder FAQ
+router.put(
+  "/:id/order",
+  authMiddleware,
+  reorderFaq
+);
+
+// Normalize all FAQ orders
+router.post(
+  "/normalize-orders",
+  authMiddleware,
+  normalizeFaqOrders
+);
+
+// =========================================================
+// PUBLIC
+// =========================================================
+
+// Get active FAQs for client
+router.get(
+  "/",
+  getFaqs
+);
+
+// Get one active FAQ for client
 router.get(
   "/:id",
   getFaqById
 );
 
-// Create an FAQ
+// =========================================================
+// ADMIN CRUD
+// =========================================================
+
+// Create FAQ
 router.post(
   "/",
   authMiddleware,
   createFaq
 );
 
-// Update an FAQ
+// Update FAQ
 router.put(
   "/:id",
   authMiddleware,
   updateFaq
 );
 
-// Delete an FAQ
+// Delete FAQ
 router.delete(
   "/:id",
   authMiddleware,

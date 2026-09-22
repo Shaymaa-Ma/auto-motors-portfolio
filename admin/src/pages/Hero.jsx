@@ -34,6 +34,9 @@ const Hero = () => {
   const [errorMessage, setErrorMessage] =
     useState("");
 
+  // Maximum image size: 1 MB
+  const MAX_IMAGE_SIZE = 1 * 1024 * 1024;
+
   // Load Hero information
   useEffect(() => {
     loadHero();
@@ -112,18 +115,44 @@ const Hero = () => {
 
   // Handle desktop image selection
   const handleDesktopImageChange = (file) => {
-    setSelectedDesktopImage(file);
-
     setSuccessMessage("");
     setErrorMessage("");
+
+    if (!file) {
+      setSelectedDesktopImage(null);
+      return;
+    }
+
+    if (file.size > MAX_IMAGE_SIZE) {
+      setErrorMessage(
+        "Desktop image size must not exceed 1 MB."
+      );
+
+      return;
+    }
+
+    setSelectedDesktopImage(file);
   };
 
   // Handle mobile image selection
   const handleMobileImageChange = (file) => {
-    setSelectedMobileImage(file);
-
     setSuccessMessage("");
     setErrorMessage("");
+
+    if (!file) {
+      setSelectedMobileImage(null);
+      return;
+    }
+
+    if (file.size > MAX_IMAGE_SIZE) {
+      setErrorMessage(
+        "Mobile image size must not exceed 1 MB."
+      );
+
+      return;
+    }
+
+    setSelectedMobileImage(file);
   };
 
   // Save Hero information
@@ -329,8 +358,7 @@ const Hero = () => {
                 </span>
 
                 <small>
-                  Use this size when uploading or
-                  replacing the desktop Hero image.
+                  Maximum file size: 1 MB.
                 </small>
               </div>
             </div>
@@ -351,8 +379,7 @@ const Hero = () => {
                 </span>
 
                 <small>
-                  Use this size when uploading or
-                  replacing the mobile Hero image.
+                  Maximum file size: 1 MB.
                 </small>
               </div>
             </div>

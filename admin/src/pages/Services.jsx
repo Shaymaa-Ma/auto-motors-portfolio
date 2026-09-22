@@ -1,9 +1,15 @@
-import { useCallback, useEffect, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useState,
+} from "react";
+
 import { servicesApi } from "../api/endpoints";
 
 import DataTable from "../components/DataTable";
 import FormModal from "../components/FormModal";
 import ConfirmDialog from "../components/ConfirmDialog";
+import AdminPagination from "../components/AdminPagination";
 
 // Available Bootstrap Icons for services
 const serviceIcons = [
@@ -91,7 +97,7 @@ const initialForm = {
   description_fr: "",
   description_en: "",
   icon: "",
-  display_order: 0,
+  display_order: 1,
   is_active: 1,
 };
 
@@ -102,12 +108,17 @@ const initialSectionForm = {
   section_subtitle_en: "",
 };
 
+const ITEMS_PER_PAGE = 10;
+
 const Services = () => {
-  const [services, setServices] = useState([]);
+  const [services, setServices] =
+    useState([]);
 
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] =
+    useState(true);
 
-  const [saving, setSaving] = useState(false);
+  const [saving, setSaving] =
+    useState(false);
 
   const [sectionSaving, setSectionSaving] =
     useState(false);
@@ -115,9 +126,11 @@ const Services = () => {
   const [deleting, setDeleting] =
     useState(false);
 
-  const [error, setError] = useState("");
+  const [error, setError] =
+    useState("");
 
-  const [success, setSuccess] = useState("");
+  const [success, setSuccess] =
+    useState("");
 
   const [sectionMessage, setSectionMessage] =
     useState("");
@@ -134,64 +147,77 @@ const Services = () => {
   const [deletingService, setDeletingService] =
     useState(null);
 
-  const [form, setForm] = useState(initialForm);
+  const [form, setForm] =
+    useState(initialForm);
 
   const [sectionForm, setSectionForm] =
     useState(initialSectionForm);
 
-  const [formError, setFormError] = useState("");
+  const [formError, setFormError] =
+    useState("");
 
-  // Load all services for Admin
+  const [currentPage, setCurrentPage] =
+    useState(1);
+
+  const [totalItems, setTotalItems] =
+    useState(0);
+
+  const [totalPages, setTotalPages] =
+    useState(0);
+
+  /*
+   * Load services for the current server-side
+   * pagination page.
+   */
   const loadServices = useCallback(
-    async () => {
+    async (page = 1) => {
       try {
         setLoading(true);
         setError("");
 
         const response =
-          await servicesApi.getAll();
+          await servicesApi.getAll({
+            page,
+            limit: ITEMS_PER_PAGE,
+          });
 
         const serviceData =
+          response?.data?.data ??
           response?.data ??
-          response ??
           [];
 
+        const pagination =
+          response?.data?.pagination ??
+          {};
+
         setServices(serviceData);
-
-        // Load section content from the first service
-        if (serviceData.length > 0) {
-          const firstService =
-            serviceData[0];
-
-          setSectionForm({
-            section_title_fr:
-              firstService.section_title_fr ??
-              "",
-            section_title_en:
-              firstService.section_title_en ??
-              "",
-            section_subtitle_fr:
-              firstService.section_subtitle_fr ??
-              "",
-            section_subtitle_en:
-              firstService.section_subtitle_en ??
-              "",
-          });
-        } else {
-          setSectionForm({
-            ...initialSectionForm,
-          });
-        }
-      } catch (err) {
-        console.error(
-          "Load services error:",
-          err
+        setTotalItems(
+          Number(pagination.totalItems) || 0
+        );
+        setTotalPages(
+          Number(pagination.totalPages) || 0
         );
 
+        if (serviceData.length > 0) {
+          const firstService = serviceData[0];
+          setSectionForm({
+            section_title_fr: firstService.section_title_fr ?? "",
+            section_title_en: firstService.section_title_en ?? "",
+            section_subtitle_fr: firstService.section_subtitle_fr ?? "",
+            section_subtitle_en: firstService.section_subtitle_en ?? "",
+          });
+        } else if (page === 1) {
+          setSectionForm({ ...initialSectionForm });
+        }
+
+        return serviceData;
+      } catch (err) {
+        console.error("Load services error:", err);
         setError(
           err.response?.data?.message ||
-            "Failed to load services."
+          "Failed to load services."
         );
+        return [];
       } finally {
         setLoading(false);
       }
@@ -200,11 +226,13 @@ const Services = () => {
   );
 
   useEffect(() => {
-    loadServices();
-  }, [loadServices]);
+    loadServices(currentPage);
+  }, [currentPage, loadServices]);
 
-  // Update service form field
-  const handleChange = (event) => {
+  // Update service form field.
+  const handleChange = (
+    event
+  ) => {
     const {
       name,
       value,
@@ -225,7 +253,7 @@ const Services = () => {
     setFormError("");
   };
 
-  // Update section form field
+  // Update section form field.
   const handleSectionChange = (
     event
   ) => {
@@ -243,20 +271,27 @@ const Services = () => {
     setError("");
   };
 
-  // Open the Add Service modal
+  // Open Add Service modal.
   const handleAdd = () => {
     setEditingService(null);
 
     setForm({
       ...initialForm,
+
+      // New services are placed at the end
+      // by default.
+      display_order:
+        totalItems + 1,
     });
 
     setFormError("");
     setIsModalOpen(true);
   };
 
-  // Open the Edit Service modal
-  const handleEdit = (service) => {
+  // Open Edit Service modal.
+  const handleEdit = (
+    service
+  ) => {
     setEditingService(service);
 
     setForm({
@@ -276,17 +311,21 @@ const Services = () => {
         service.icon ?? "",
 
       display_order:
-        service.display_order ?? 0,
+        Number(
+          service.display_order
+        ) || 1,
 
       is_active:
-        Number(service.is_active),
+        Number(
+          service.is_active
+        ),
     });
 
     setFormError("");
     setIsModalOpen(true);
   };
 
-  // Close the service form
+  // Close service form.
   const handleCloseModal = () => {
     if (saving) {
       return;
@@ -297,106 +336,128 @@ const Services = () => {
     setFormError("");
   };
 
-  // Save the service
-  const handleSubmit = async (
-    event
-  ) => {
+  /*
+   * Save service and handle display order.
+   */
+  const handleSubmit = async (event) => {
     event.preventDefault();
-
     setFormError("");
     setSuccess("");
 
     if (!form.name_fr.trim()) {
-      setFormError(
-        "French service name is required."
-      );
+      setFormError("French service name is required.");
       return;
     }
-
     if (!form.name_en.trim()) {
-      setFormError(
-        "English service name is required."
-      );
+      setFormError("English service name is required.");
       return;
     }
-
     if (!form.icon) {
-      setFormError(
-        "Please select a service icon."
-      );
+      setFormError("Please select a service icon.");
       return;
     }
 
     try {
       setSaving(true);
 
+      const requestedOrder = Math.min(
+        Math.max(Number(form.display_order) || 1, 1),
+        editingService ? totalItems : totalItems + 1
+      );
+
       const serviceData = {
         ...form,
-
-        name_fr:
-          form.name_fr.trim(),
-
-        name_en:
-          form.name_en.trim(),
-
-        description_fr:
-          form.description_fr.trim(),
-
-        description_en:
-          form.description_en.trim(),
-
-        display_order:
-          Number(form.display_order),
-
-        is_active:
-          Number(form.is_active),
+        name_fr: form.name_fr.trim(),
+        name_en: form.name_en.trim(),
+        description_fr: form.description_fr.trim(),
+        description_en: form.description_en.trim(),
+        display_order: editingService ? requestedOrder : totalItems + 1,
+        is_active: Number(form.is_active),
       };
 
+      let savedServiceId = null;
+
       if (editingService) {
+        savedServiceId = editingService.id;
+
         await servicesApi.update(
           editingService.id,
           serviceData
         );
 
-        setSuccess(
-          "Service updated successfully."
-        );
+        if (Number(editingService.display_order) !== requestedOrder) {
+          await servicesApi.reorder(
+            editingService.id,
+            requestedOrder
+          );
+        }
+
+        setSuccess("Service updated successfully.");
       } else {
-        await servicesApi.create(
-          serviceData
+        const response = await servicesApi.create(serviceData);
+
+        savedServiceId =
+          response?.data?.id ??
+          response?.data?.data?.id ??
+          response?.data?.insertId ??
+          null;
+
+        if (savedServiceId) {
+          await servicesApi.reorder(
+            savedServiceId,
+            requestedOrder
+          );
+        }
+
+        setSuccess("Service created successfully.");
+      }
+
+      if (!savedServiceId && !editingService) {
+        const firstPage = await servicesApi.getAll({
+          page: 1,
+          limit: 100,
+        });
+
+        const allServices =
+          firstPage?.data?.data ??
+          firstPage?.data ??
+          [];
+
+        const createdService = allServices.find(
+          (service) =>
+            service.name_fr === serviceData.name_fr &&
+            service.name_en === serviceData.name_en
         );
 
-        setSuccess(
-          "Service created successfully."
-        );
+        savedServiceId = createdService?.id ?? null;
+
+        if (savedServiceId) {
+          await servicesApi.reorder(
+            savedServiceId,
+            requestedOrder
+          );
+        }
       }
 
       setIsModalOpen(false);
       setEditingService(null);
-
-      setForm({
-        ...initialForm,
-      });
-
-      await loadServices();
+      setForm({ ...initialForm });
+      await loadServices(currentPage);
     } catch (err) {
-      console.error(
-        "Save service error:",
-        err
-      );
-
+      console.error("Save service error:", err);
       setFormError(
         err.response?.data?.message ||
-          "Failed to save service."
+        "Failed to save service."
       );
     } finally {
       setSaving(false);
     }
   };
 
-  // Create section form data
+  // Create section form data.
   const createSectionFormData = () => {
-    const formData = new FormData();
+    const formData =
+      new FormData();
 
     formData.append(
       "section_title_fr",
@@ -421,7 +482,7 @@ const Services = () => {
     return formData;
   };
 
-  // Save Services section content
+  // Save Services section content.
   const handleSaveSection = async (
     event
   ) => {
@@ -444,16 +505,28 @@ const Services = () => {
       const sectionData =
         createSectionFormData();
 
+      const allServicesResponse =
+        await servicesApi.getAll({
+          page: 1,
+          limit: 100,
+        });
+
+      const allServices =
+        allServicesResponse?.data?.data ??
+        allServicesResponse?.data ??
+        [];
+
       await Promise.all(
-        services.map((service) =>
-          servicesApi.update(
-            service.id,
-            sectionData
-          )
+        allServices.map(
+          (service) =>
+            servicesApi.update(
+              service.id,
+              sectionData
+            )
         )
       );
 
-      await loadServices();
+      await loadServices(currentPage);
 
       setSectionMessage(
         "Services section content saved successfully."
@@ -466,14 +539,14 @@ const Services = () => {
 
       setError(
         err.response?.data?.message ||
-          "Failed to save Services section content."
+        "Failed to save Services section content."
       );
     } finally {
       setSectionSaving(false);
     }
   };
 
-  // Toggle service status
+  // Toggle service status.
   const handleToggleStatus = async (
     service
   ) => {
@@ -501,7 +574,7 @@ const Services = () => {
           : "Service activated successfully."
       );
 
-      await loadServices();
+      await loadServices(currentPage);
     } catch (err) {
       console.error(
         "Toggle service status error:",
@@ -510,12 +583,12 @@ const Services = () => {
 
       setError(
         err.response?.data?.message ||
-          "Failed to update service status."
+        "Failed to update service status."
       );
     }
   };
 
-  // Open the delete confirmation dialog
+  // Open delete confirmation.
   const handleDeleteClick = (
     service
   ) => {
@@ -523,7 +596,7 @@ const Services = () => {
     setDeleteDialogOpen(true);
   };
 
-  // Close the delete confirmation dialog
+  // Close delete confirmation.
   const handleCloseDeleteDialog = () => {
     if (deleting) {
       return;
@@ -533,7 +606,10 @@ const Services = () => {
     setDeletingService(null);
   };
 
-  // Delete the selected service
+  /*
+   * Delete service and normalize the
+   * remaining display orders.
+   */
   const handleDelete = async () => {
     if (!deletingService) {
       return;
@@ -544,34 +620,39 @@ const Services = () => {
       setError("");
       setSuccess("");
 
-      await servicesApi.remove(
-        deletingService.id
+      await servicesApi.remove(deletingService.id);
+      await servicesApi.normalizeOrders();
+
+      const nextTotalItems = Math.max(totalItems - 1, 0);
+      const nextTotalPages = Math.ceil(
+        nextTotalItems / ITEMS_PER_PAGE
+      );
+      const nextPage = Math.min(
+        currentPage,
+        Math.max(nextTotalPages, 1)
       );
 
-      setSuccess(
-        "Service deleted successfully."
-      );
+      if (nextPage !== currentPage) {
+        setCurrentPage(nextPage);
+      } else {
+        await loadServices(nextPage);
+      }
 
+      setSuccess("Service deleted successfully.");
       setDeleteDialogOpen(false);
       setDeletingService(null);
-
-      await loadServices();
     } catch (err) {
-      console.error(
-        "Delete service error:",
-        err
-      );
-
+      console.error("Delete service error:", err);
       setError(
         err.response?.data?.message ||
-          "Failed to delete service."
+        "Failed to delete service."
       );
     } finally {
       setDeleting(false);
     }
   };
 
-  // Get the display label for an icon
+  // Get display label for icon.
   const getIconLabel = (
     iconValue
   ) => {
@@ -587,11 +668,12 @@ const Services = () => {
     );
   };
 
-  // Define table columns
+  // Define table columns.
   const columns = [
     {
       key: "name_fr",
       label: "Service",
+
       render: (
         value,
         row
@@ -623,6 +705,7 @@ const Services = () => {
     {
       key: "description_fr",
       label: "Description",
+
       render: (
         value
       ) => (
@@ -635,24 +718,33 @@ const Services = () => {
     {
       key: "display_order",
       label: "Order",
+
       className:
         "admin-table-order",
+
+      render: (
+        value
+      ) => (
+        <span className="admin-order-number">
+          {value}
+        </span>
+      ),
     },
 
     {
       key: "is_active",
       label: "Status",
+
       render: (
         value,
         row
       ) => (
         <button
           type="button"
-          className={`admin-status-button ${
-            Number(value) === 1
-              ? "active"
-              : "inactive"
-          }`}
+          className={`admin-status-button ${Number(value) === 1
+            ? "active"
+            : "inactive"
+            }`}
           onClick={() =>
             handleToggleStatus(
               row
@@ -897,6 +989,18 @@ const Services = () => {
         deleteLabel="Delete"
       />
 
+      {/* Pagination */}
+      <AdminPagination
+        currentPage={currentPage}
+        totalItems={totalItems}
+        itemsPerPage={
+          ITEMS_PER_PAGE
+        }
+        onPageChange={
+          setCurrentPage
+        }
+      />
+
       {/* Add/Edit service modal */}
       <FormModal
         isOpen={isModalOpen}
@@ -1071,37 +1175,55 @@ const Services = () => {
                 )}
               </select>
 
-              {/* Selected icon preview */}
               {form.icon && (
                 <div
                   style={{
-                    display: "flex",
-                    alignItems: "center",
+                    display:
+                      "flex",
+                    alignItems:
+                      "center",
                     gap: "12px",
                     width: "100%",
-                    minHeight: "60px",
-                    boxSizing: "border-box",
-                    marginTop: "10px",
-                    padding: "10px 12px",
-                    border: "1px solid #e2e8f0",
-                    borderRadius: "8px",
-                    background: "#f8fafc",
+                    minHeight:
+                      "60px",
+                    boxSizing:
+                      "border-box",
+                    marginTop:
+                      "10px",
+                    padding:
+                      "10px 12px",
+                    border:
+                      "1px solid #e2e8f0",
+                    borderRadius:
+                      "8px",
+                    background:
+                      "#f8fafc",
                   }}
                 >
-                  {/* Icon */}
                   <div
                     style={{
-                      width: "40px",
-                      height: "40px",
-                      flex: "0 0 40px",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      border: "1px solid #dbe4ee",
-                      borderRadius: "8px",
-                      background: "#ffffff",
-                      color: "#315d8f",
-                      fontSize: "18px",
+                      width:
+                        "40px",
+                      height:
+                        "40px",
+                      flex:
+                        "0 0 40px",
+                      display:
+                        "flex",
+                      alignItems:
+                        "center",
+                      justifyContent:
+                        "center",
+                      border:
+                        "1px solid #dbe4ee",
+                      borderRadius:
+                        "8px",
+                      background:
+                        "#ffffff",
+                      color:
+                        "#315d8f",
+                      fontSize:
+                        "18px",
                     }}
                   >
                     <i
@@ -1110,23 +1232,32 @@ const Services = () => {
                     />
                   </div>
 
-                  {/* Icon information */}
                   <div
                     style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: "2px",
-                      minWidth: 0,
+                      display:
+                        "flex",
+                      flexDirection:
+                        "column",
+                      gap:
+                        "2px",
+                      minWidth:
+                        0,
                     }}
                   >
                     <strong
                       style={{
-                        display: "block",
-                        margin: 0,
-                        color: "#334155",
-                        fontSize: "12px",
-                        fontWeight: 600,
-                        lineHeight: 1.3,
+                        display:
+                          "block",
+                        margin:
+                          0,
+                        color:
+                          "#334155",
+                        fontSize:
+                          "12px",
+                        fontWeight:
+                          600,
+                        lineHeight:
+                          1.3,
                       }}
                     >
                       {getIconLabel(
@@ -1136,14 +1267,22 @@ const Services = () => {
 
                     <span
                       style={{
-                        display: "block",
-                        overflow: "hidden",
-                        color: "#94a3b8",
-                        fontFamily: "monospace",
-                        fontSize: "10px",
-                        lineHeight: 1.3,
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
+                        display:
+                          "block",
+                        overflow:
+                          "hidden",
+                        color:
+                          "#94a3b8",
+                        fontFamily:
+                          "monospace",
+                        fontSize:
+                          "10px",
+                        lineHeight:
+                          1.3,
+                        textOverflow:
+                          "ellipsis",
+                        whiteSpace:
+                          "nowrap",
                       }}
                     >
                       {form.icon}
@@ -1163,7 +1302,13 @@ const Services = () => {
                 id="display_order"
                 name="display_order"
                 type="number"
-                min="0"
+                min="1"
+                max={
+                  editingService
+                    ? services.length
+                    : services.length +
+                    1
+                }
                 value={
                   form.display_order
                 }
@@ -1171,6 +1316,13 @@ const Services = () => {
                   handleChange
                 }
               />
+
+              <small className="admin-form-help">
+                Use 1 for the first item,
+                2 for the second item, and
+                so on. Existing items will
+                automatically shift.
+              </small>
             </div>
 
             {/* Active status */}
@@ -1205,9 +1357,7 @@ const Services = () => {
 
       {/* Delete confirmation */}
       <ConfirmDialog
-        isOpen={
-          deleteDialogOpen
-        }
+        isOpen={deleteDialogOpen}
         title="Delete Service"
         message={
           deletingService
@@ -1216,12 +1366,8 @@ const Services = () => {
         }
         confirmText="Delete Service"
         cancelText="Cancel"
-        onConfirm={
-          handleDelete
-        }
-        onClose={
-          handleCloseDeleteDialog
-        }
+        onConfirm={handleDelete}
+        onCancel={handleCloseDeleteDialog}
         loading={deleting}
         danger
       />

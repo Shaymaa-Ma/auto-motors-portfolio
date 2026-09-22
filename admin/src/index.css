@@ -867,7 +867,6 @@ select:focus-visible {
     translate(2px, -2px);
 }
 
-
 /* ==========================================================================
    8. TOPBAR
    ========================================================================== */
@@ -899,12 +898,22 @@ select:focus-visible {
   -webkit-backdrop-filter: blur(16px);
 }
 
+
+/* --------------------------------------------------------------------------
+   Topbar Left
+   -------------------------------------------------------------------------- */
+
 .topbar-left {
+  min-width: 0;
+
   display: flex;
   align-items: center;
-
-  min-width: 0;
 }
+
+
+/* --------------------------------------------------------------------------
+   Page Title
+   -------------------------------------------------------------------------- */
 
 .topbar-title {
   min-width: 0;
@@ -913,13 +922,15 @@ select:focus-visible {
   flex-direction: column;
 }
 
-.topbar-title>span {
+.topbar-title > span {
   color: var(--sidebar-text-light);
 
   font-size: 0.56rem;
   font-weight: 700;
 
   letter-spacing: 1.7px;
+
+  line-height: 1.2;
 }
 
 .topbar-title h1 {
@@ -932,11 +943,20 @@ select:focus-visible {
   font-size: 1.22rem;
   font-weight: 700;
 
+  line-height: 1.25;
+
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
+
+/* --------------------------------------------------------------------------
+   Topbar Right
+   -------------------------------------------------------------------------- */
+
 .topbar-right {
+  min-width: 0;
+
   display: flex;
   align-items: center;
 
@@ -950,53 +970,133 @@ select:focus-visible {
    9. TOPBAR ADMIN
    ========================================================================== */
 
+/*
+ * Clickable administrator identity control.
+ * Clicking the administrator area opens the Profile page.
+ */
+
 .topbar-admin {
-  display: flex;
+  min-width: 0;
+
+  display: inline-flex;
   align-items: center;
 
   gap: 10px;
+
+  padding: 4px 8px 4px 4px;
+
+  border: 1px solid transparent;
+  border-radius: 10px;
+
+  background: transparent;
+
+  color: inherit;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
 }
+
+.topbar-admin:hover {
+  background:
+    rgba(255, 255, 255, 0.045);
+
+  border-color:
+    rgba(255, 255, 255, 0.08);
+}
+
+.topbar-admin:focus-visible {
+  outline: none;
+
+  border-color:
+    rgba(25, 167, 255, 0.55);
+
+  box-shadow:
+    0 0 0 3px rgba(25, 167, 255, 0.12);
+}
+
+.topbar-admin:active {
+  transform: translateY(1px);
+}
+
+
+/* --------------------------------------------------------------------------
+   Administrator Avatar
+   -------------------------------------------------------------------------- */
 
 .topbar-admin-avatar {
   width: 38px;
   height: 38px;
 
-  flex-shrink: 0;
+  flex: 0 0 38px;
 
   display: flex;
   align-items: center;
   justify-content: center;
 
-  background:
-    rgba(8, 120, 209, 0.14);
-
   border:
-    1px solid rgba(8, 120, 209, 0.25);
+    1px solid rgba(8, 120, 209, 0.3);
 
   border-radius: 50%;
+
+  background:
+    rgba(8, 120, 209, 0.14);
 
   color: var(--color-primary-light);
 
   font-size: 0.9rem;
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease;
 }
+
+.topbar-admin:hover .topbar-admin-avatar {
+  background:
+    rgba(8, 120, 209, 0.2);
+
+  border-color:
+    rgba(25, 167, 255, 0.4);
+}
+
+
+/* --------------------------------------------------------------------------
+   Administrator Information
+   -------------------------------------------------------------------------- */
 
 .topbar-admin-info {
   min-width: 0;
 
+  max-width: 180px;
+
   display: flex;
   flex-direction: column;
+
+  text-align: left;
 }
 
 .topbar-admin-info strong {
+  display: block;
+
+  overflow: hidden;
+
   color: var(--color-white);
 
   font-size: 0.79rem;
   font-weight: 600;
 
-  line-height: 1.2;
+  line-height: 1.25;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .topbar-admin-info span {
+  display: block;
+
   margin-top: 3px;
 
   overflow: hidden;
@@ -1004,26 +1104,69 @@ select:focus-visible {
   color: var(--sidebar-text);
 
   font-size: 0.65rem;
+  font-weight: 400;
 
-  line-height: 1.2;
+  line-height: 1.25;
 
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
+
+/* --------------------------------------------------------------------------
+   Profile Arrow
+   -------------------------------------------------------------------------- */
+
+.topbar-profile-arrow {
+  flex: 0 0 auto;
+
+  margin-left: 2px;
+
+  color:
+    rgba(255, 255, 255, 0.48);
+
+  font-size: 0.65rem;
+
+  transition:
+    color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.topbar-admin:hover .topbar-profile-arrow {
+  color:
+    rgba(255, 255, 255, 0.8);
+
+  transform: translateY(1px);
+}
+
+
+/* --------------------------------------------------------------------------
+   Divider
+   -------------------------------------------------------------------------- */
+
 .topbar-divider {
   width: 1px;
   height: 30px;
 
+  flex: 0 0 1px;
+
+  margin: 0 4px;
+
   background:
     rgba(255, 255, 255, 0.09);
 }
+
+
+/* --------------------------------------------------------------------------
+   Logout
+   -------------------------------------------------------------------------- */
 
 .topbar-logout {
   min-height: 38px;
 
   display: inline-flex;
   align-items: center;
+  justify-content: center;
 
   gap: 7px;
 
@@ -1032,7 +1175,7 @@ select:focus-visible {
   border:
     1px solid rgba(255, 255, 255, 0.1);
 
-  border-radius: 7px;
+  border-radius: 8px;
 
   background: transparent;
 
@@ -1041,10 +1184,13 @@ select:focus-visible {
   font-size: 0.76rem;
   font-weight: 500;
 
+  cursor: pointer;
+
   transition:
     color 0.2s ease,
     background 0.2s ease,
-    border-color 0.2s ease;
+    border-color 0.2s ease,
+    transform 0.2s ease;
 }
 
 .topbar-logout:hover {
@@ -1057,6 +1203,20 @@ select:focus-visible {
     rgba(255, 255, 255, 0.17);
 }
 
+.topbar-logout:focus-visible {
+  outline: none;
+
+  border-color:
+    rgba(25, 167, 255, 0.55);
+
+  box-shadow:
+    0 0 0 3px rgba(25, 167, 255, 0.12);
+}
+
+.topbar-logout:active {
+  transform: translateY(1px);
+}
+
 .topbar-logout i {
   font-size: 0.88rem;
 }
@@ -1065,6 +1225,11 @@ select:focus-visible {
 /* ==========================================================================
    10. MOBILE MENU BUTTON
    ========================================================================== */
+
+/*
+ * Hidden on desktop.
+ * Becomes visible when the sidebar changes to mobile/off-canvas mode.
+ */
 
 .topbar-menu-button {
   display: none;
@@ -1077,7 +1242,9 @@ select:focus-visible {
   align-items: center;
   justify-content: center;
 
-  flex-shrink: 0;
+  flex: 0 0 40px;
+
+  padding: 0;
 
   border:
     1px solid rgba(255, 255, 255, 0.1);
@@ -1091,10 +1258,13 @@ select:focus-visible {
 
   font-size: 1.15rem;
 
+  cursor: pointer;
+
   transition:
     color 0.2s ease,
     border-color 0.2s ease,
-    background 0.2s ease;
+    background 0.2s ease,
+    transform 0.2s ease;
 }
 
 .topbar-menu-button:hover {
@@ -1105,6 +1275,196 @@ select:focus-visible {
 
   background:
     rgba(8, 120, 209, 0.08);
+}
+
+.topbar-menu-button:focus-visible {
+  outline: none;
+
+  border-color:
+    rgba(25, 167, 255, 0.55);
+
+  box-shadow:
+    0 0 0 3px rgba(25, 167, 255, 0.12);
+}
+
+.topbar-menu-button:active {
+  transform: translateY(1px);
+}
+
+
+/* ==========================================================================
+   TOPBAR RESPONSIVE
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Tablet / Mobile
+   -------------------------------------------------------------------------- */
+
+@media (max-width: 991px) {
+
+  /*
+   * Sidebar becomes off-canvas at this same breakpoint.
+   * Therefore the burger button must also become visible here.
+   */
+
+  .topbar-menu-button {
+    display: inline-flex;
+  }
+
+  .admin-topbar {
+    padding: 0 22px;
+  }
+
+}
+
+
+/* --------------------------------------------------------------------------
+   Mobile
+   -------------------------------------------------------------------------- */
+
+@media (max-width: 767px) {
+
+  .admin-topbar {
+    padding: 0 15px;
+  }
+
+  .topbar-right {
+    gap: 9px;
+  }
+
+  /*
+   * Hide administrator text on small screens.
+   * Keep the avatar so the profile button remains accessible.
+   */
+
+  .topbar-admin-info {
+    display: none;
+  }
+
+  .topbar-profile-arrow {
+    display: none;
+  }
+
+  .topbar-admin {
+    padding: 2px;
+
+    gap: 0;
+  }
+
+  .topbar-admin-avatar {
+    width: 36px;
+    height: 36px;
+
+    flex-basis: 36px;
+  }
+
+  .topbar-divider {
+    height: 26px;
+
+    margin: 0 2px;
+  }
+
+  /*
+   * Logout becomes icon-only on mobile.
+   */
+
+  .topbar-logout {
+    width: 38px;
+    height: 38px;
+
+    min-height: 38px;
+
+    padding: 0;
+  }
+
+  .topbar-logout span {
+    display: none;
+  }
+
+}
+
+
+/* --------------------------------------------------------------------------
+   Small Mobile
+   -------------------------------------------------------------------------- */
+
+@media (max-width: 480px) {
+
+  .admin-topbar {
+    padding: 0 12px;
+  }
+
+  .topbar-menu-button {
+    width: 38px;
+    height: 38px;
+
+    flex-basis: 38px;
+
+    margin-right: 10px;
+
+    font-size: 1.05rem;
+  }
+
+  .topbar-title > span {
+    display: none;
+  }
+
+  .topbar-title h1 {
+    margin-top: 0;
+
+    font-size: 0.98rem;
+  }
+
+  .topbar-admin-avatar {
+    width: 36px;
+    height: 36px;
+
+    flex-basis: 36px;
+  }
+
+  .topbar-logout {
+    width: 36px;
+    height: 36px;
+
+    min-height: 36px;
+  }
+
+}
+
+
+/* --------------------------------------------------------------------------
+   Very Small Mobile
+   -------------------------------------------------------------------------- */
+
+@media (max-width: 360px) {
+
+  .admin-topbar {
+    padding: 0 10px;
+  }
+
+  .topbar-menu-button {
+    width: 36px;
+    height: 36px;
+
+    flex-basis: 36px;
+
+    margin-right: 8px;
+  }
+
+  .topbar-admin-avatar {
+    width: 34px;
+    height: 34px;
+
+    flex-basis: 34px;
+  }
+
+  .topbar-logout {
+    width: 34px;
+    height: 34px;
+
+    min-height: 34px;
+  }
+
 }
 
 
@@ -6845,3 +7205,1585 @@ select:focus-visible {
 }
 
 
+
+/* ==========================================================================
+   PROFILE PAGE
+   ========================================================================== */
+
+.profile-card {
+  overflow: hidden;
+
+  margin-bottom: 24px;
+
+  background: #ffffff;
+
+  border:
+    1px solid #e1ebf3;
+
+  border-radius: 18px;
+
+  box-shadow:
+    0 4px 18px rgba(7, 26, 43, 0.035);
+}
+
+
+/* ==========================================================================
+   PROFILE HEADER
+   ========================================================================== */
+
+.profile-card-header {
+  display: flex;
+  align-items: center;
+
+  gap: 18px;
+
+  padding: 26px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #f8fbfe 0%,
+      #f3f8fc 100%
+    );
+
+  border-bottom:
+    1px solid #eaf1f6;
+}
+
+.profile-avatar {
+  width: 68px;
+  height: 68px;
+
+  flex: 0 0 68px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 16px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #0878d1,
+      #055da5
+    );
+
+  color: #ffffff;
+
+  font-size: 28px;
+
+  box-shadow:
+    0 8px 20px rgba(8, 120, 209, 0.18);
+}
+
+.profile-header-info {
+  min-width: 0;
+}
+
+.profile-header-info h3 {
+  overflow: hidden;
+
+  margin: 0 0 5px;
+
+  color: #071a2b;
+
+  font-size: 20px;
+  font-weight: 700;
+
+  line-height: 1.3;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profile-header-info p {
+  margin: 0;
+
+  color: #64748b;
+
+  font-size: 14px;
+
+  line-height: 1.5;
+}
+
+
+/* ==========================================================================
+   PROFILE INFORMATION
+   ========================================================================== */
+
+.profile-content {
+  display: grid;
+
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+}
+
+.profile-field {
+  min-width: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 20px;
+
+  min-height: 68px;
+
+  padding: 18px 26px;
+
+  border-bottom:
+    1px solid #edf3f7;
+}
+
+.profile-field:nth-child(odd) {
+  border-right:
+    1px solid #edf3f7;
+}
+
+/*
+ * Remove the bottom border from the final row.
+ */
+.profile-field:nth-last-child(-n + 2) {
+  border-bottom: 0;
+}
+
+.profile-label {
+  flex: 0 0 auto;
+
+  display: inline-flex;
+  align-items: center;
+
+  gap: 9px;
+
+  color: #64748b;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  line-height: 1.4;
+}
+
+.profile-label i {
+  width: 18px;
+
+  color: #0878d1;
+
+  font-size: 16px;
+
+  text-align: center;
+}
+
+.profile-field strong {
+  min-width: 0;
+
+  color: #071a2b;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  line-height: 1.5;
+
+  text-align: right;
+}
+
+.profile-email-value {
+  max-width: 65%;
+
+  overflow-wrap: anywhere;
+}
+
+
+/* ==========================================================================
+   ROLE
+   ========================================================================== */
+
+.profile-role {
+  display: inline-flex;
+  align-items: center;
+
+  padding: 6px 11px;
+
+  border:
+    1px solid #d7eafa;
+
+  border-radius: 8px;
+
+  background: #edf6fd;
+
+  color: #055da5;
+
+  font-size: 12px;
+  font-weight: 700;
+
+  line-height: 1.2;
+
+  text-transform: capitalize;
+}
+
+
+/* ==========================================================================
+   ACCOUNT STATUS
+   ========================================================================== */
+
+.profile-status {
+  display: inline-flex;
+  align-items: center;
+
+  gap: 7px;
+
+  font-size: 13px;
+  font-weight: 700;
+
+  line-height: 1.3;
+}
+
+.profile-status-active {
+  color: #15803d;
+}
+
+.profile-status-dot {
+  width: 8px;
+  height: 8px;
+
+  flex: 0 0 8px;
+
+  border-radius: 50%;
+
+  background: #16a34a;
+
+  box-shadow:
+    0 0 0 3px rgba(22, 163, 74, 0.1);
+}
+
+
+/* ==========================================================================
+   SECURITY CARD
+   ========================================================================== */
+
+.profile-security-card {
+  display: flex;
+  align-items: flex-start;
+
+  gap: 16px;
+
+  padding: 22px 24px;
+
+  margin-bottom: 28px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #f4f8fc,
+      #f8fbfe
+    );
+
+  border:
+    1px solid #e1ebf3;
+
+  border-radius: 16px;
+}
+
+.profile-security-icon {
+  width: 44px;
+  height: 44px;
+
+  flex: 0 0 44px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border:
+    1px solid #dceaf4;
+
+  border-radius: 12px;
+
+  background: #ffffff;
+
+  color: #0878d1;
+
+  font-size: 19px;
+
+  box-shadow:
+    0 3px 10px rgba(7, 26, 43, 0.035);
+}
+
+.profile-security-card h3 {
+  margin: 1px 0 6px;
+
+  color: #071a2b;
+
+  font-size: 16px;
+  font-weight: 700;
+
+  line-height: 1.4;
+}
+
+.profile-security-card p {
+  max-width: 760px;
+
+  margin: 0;
+
+  color: #64748b;
+
+  font-size: 13px;
+
+  line-height: 1.65;
+}
+
+
+/* ==========================================================================
+   ADMINISTRATOR MANAGEMENT
+   ========================================================================== */
+
+.users-card {
+  overflow: hidden;
+
+  margin-bottom: 28px;
+
+  background: #ffffff;
+
+  border:
+    1px solid #e1ebf3;
+
+  border-radius: 18px;
+
+  box-shadow:
+    0 4px 18px rgba(7, 26, 43, 0.035);
+}
+
+
+/* ==========================================================================
+   USERS CARD HEADER
+   ========================================================================== */
+
+.users-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 24px;
+
+  padding: 24px 26px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #f8fbfe 0%,
+      #f4f8fc 100%
+    );
+
+  border-bottom:
+    1px solid #e8f0f5;
+}
+
+.users-card-header > div:first-child {
+  min-width: 0;
+}
+
+.users-card-eyebrow,
+.user-form-eyebrow {
+  display: block;
+
+  margin-bottom: 6px;
+
+  color: #0878d1;
+
+  font-size: 10px;
+  font-weight: 800;
+
+  letter-spacing: 0.12em;
+
+  line-height: 1.3;
+}
+
+.users-card-header h3 {
+  margin: 0 0 5px;
+
+  color: #071a2b;
+
+  font-size: 18px;
+  font-weight: 700;
+
+  line-height: 1.35;
+}
+
+.users-card-header p {
+  margin: 0;
+
+  color: #64748b;
+
+  font-size: 13px;
+
+  line-height: 1.55;
+}
+
+
+/* ==========================================================================
+   BUTTONS
+   ========================================================================== */
+
+.admin-primary-button,
+.admin-secondary-button {
+  min-height: 40px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 8px;
+
+  padding: 9px 15px;
+
+  border-radius: 8px;
+
+  font-size: 13px;
+  font-weight: 600;
+
+  line-height: 1.2;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+
+.admin-primary-button {
+  flex: 0 0 auto;
+
+  border:
+    1px solid #0878d1;
+
+  background: #0878d1;
+
+  color: #ffffff;
+
+  box-shadow:
+    0 4px 10px rgba(8, 120, 209, 0.12);
+}
+
+.admin-primary-button:hover {
+  border-color: #055da5;
+
+  background: #055da5;
+
+  box-shadow:
+    0 6px 14px rgba(8, 120, 209, 0.18);
+
+  transform: translateY(-1px);
+}
+
+.admin-primary-button:active {
+  transform: translateY(0);
+}
+
+.admin-primary-button:focus-visible,
+.admin-secondary-button:focus-visible {
+  outline: none;
+
+  box-shadow:
+    0 0 0 3px rgba(25, 167, 255, 0.16);
+}
+
+.admin-secondary-button {
+  border:
+    1px solid #d8e4ed;
+
+  background: #ffffff;
+
+  color: #475569;
+}
+
+.admin-secondary-button:hover {
+  border-color: #c6d6e2;
+
+  background: #f8fbfe;
+
+  color: #071a2b;
+}
+
+.admin-primary-button:disabled,
+.admin-secondary-button:disabled {
+  opacity: 0.6;
+
+  cursor: not-allowed;
+
+  transform: none;
+
+  box-shadow: none;
+}
+
+
+/* ==========================================================================
+   ADD ADMINISTRATOR FORM
+   ========================================================================== */
+
+.user-form-card {
+  margin: 22px 26px;
+
+  padding: 22px;
+
+  background: #f8fbfe;
+
+  border:
+    1px solid #e1ebf3;
+
+  border-radius: 14px;
+}
+
+.user-form-header {
+  margin-bottom: 20px;
+}
+
+.user-form-header h3 {
+  margin: 0 0 5px;
+
+  color: #071a2b;
+
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.user-form-header p {
+  margin: 0;
+
+  color: #64748b;
+
+  font-size: 13px;
+
+  line-height: 1.55;
+}
+
+.user-form-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+
+  gap: 18px;
+}
+
+.admin-form-group {
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 7px;
+}
+
+.admin-form-group label {
+  color: #334155;
+
+  font-size: 13px;
+  font-weight: 600;
+
+  line-height: 1.4;
+}
+
+.admin-form-group input,
+.admin-form-group select {
+  width: 100%;
+  height: 42px;
+
+  padding: 9px 12px;
+
+  border:
+    1px solid #d8e4ed;
+
+  border-radius: 8px;
+
+  outline: none;
+
+  background: #ffffff;
+
+  color: #071a2b;
+
+  font-family: inherit;
+
+  font-size: 13px;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
+}
+
+.admin-form-group input::placeholder {
+  color: #94a3b8;
+}
+
+.admin-form-group input:hover,
+.admin-form-group select:hover {
+  border-color: #c4d5e2;
+}
+
+.admin-form-group input:focus,
+.admin-form-group select:focus {
+  border-color: #0878d1;
+
+  box-shadow:
+    0 0 0 3px rgba(8, 120, 209, 0.1);
+}
+
+.admin-form-group input:disabled,
+.admin-form-group select:disabled {
+  background: #f1f5f9;
+
+  color: #94a3b8;
+
+  cursor: not-allowed;
+}
+
+
+/* ==========================================================================
+   PASSWORD FIELD
+   ========================================================================== */
+
+.password-input-wrapper {
+  position: relative;
+
+  width: 100%;
+}
+
+.password-input-wrapper input {
+  padding-right: 44px;
+}
+
+.password-toggle-button {
+  position: absolute;
+
+  top: 50%;
+  right: 5px;
+
+  width: 34px;
+  height: 34px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 0;
+
+  border: 0;
+
+  border-radius: 6px;
+
+  background: transparent;
+
+  color: #64748b;
+
+  font-size: 15px;
+
+  cursor: pointer;
+
+  transform: translateY(-50%);
+
+  transition:
+    color 0.2s ease,
+    background 0.2s ease;
+}
+
+.password-toggle-button:hover {
+  background: #f1f5f9;
+
+  color: #0878d1;
+}
+
+.password-toggle-button:focus-visible {
+  outline: none;
+
+  background: #edf6fd;
+
+  color: #0878d1;
+}
+
+.password-toggle-button:disabled {
+  opacity: 0.5;
+
+  cursor: not-allowed;
+}
+
+
+/* ==========================================================================
+   FORM ACTIONS
+   ========================================================================== */
+
+.user-form-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+
+  gap: 10px;
+
+  margin-top: 22px;
+
+  padding-top: 18px;
+
+  border-top:
+    1px solid #e1ebf3;
+}
+
+
+/* ==========================================================================
+   LOADING
+   ========================================================================== */
+
+.users-loading {
+  min-height: 180px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 10px;
+
+  padding: 30px;
+
+  color: #64748b;
+
+  font-size: 13px;
+}
+
+.admin-spinner {
+  width: 17px;
+  height: 17px;
+
+  flex: 0 0 17px;
+
+  display: inline-block;
+
+  border:
+    2px solid rgba(8, 120, 209, 0.18);
+
+  border-top-color: #0878d1;
+
+  border-radius: 50%;
+
+  animation:
+    admin-spin 0.7s linear infinite;
+}
+
+@keyframes admin-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+
+/* ==========================================================================
+   EMPTY STATE
+   ========================================================================== */
+
+.users-empty {
+  padding: 50px 24px;
+
+  text-align: center;
+}
+
+.users-empty-icon {
+  width: 52px;
+  height: 52px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  margin: 0 auto 14px;
+
+  border:
+    1px solid #dceaf4;
+
+  border-radius: 14px;
+
+  background: #f4f8fc;
+
+  color: #0878d1;
+
+  font-size: 21px;
+}
+
+.users-empty h4 {
+  margin: 0 0 6px;
+
+  color: #071a2b;
+
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.users-empty p {
+  margin: 0;
+
+  color: #64748b;
+
+  font-size: 13px;
+}
+
+
+/* ==========================================================================
+   USERS TABLE
+   ========================================================================== */
+
+.users-table-wrapper {
+  width: 100%;
+
+  overflow-x: auto;
+
+  scrollbar-width: thin;
+  scrollbar-color: #cbd8e2 transparent;
+}
+
+.users-table {
+  width: 100%;
+
+  min-width: 760px;
+
+  border-collapse: collapse;
+}
+
+.users-table thead {
+  background: #fbfdff;
+}
+
+.users-table th {
+  padding: 13px 20px;
+
+  border-bottom:
+    1px solid #e5edf3;
+
+  color: #64748b;
+
+  font-size: 10px;
+  font-weight: 800;
+
+  letter-spacing: 0.06em;
+
+  line-height: 1.4;
+
+  text-align: left;
+
+  text-transform: uppercase;
+
+  white-space: nowrap;
+}
+
+.users-table td {
+  padding: 15px 20px;
+
+  border-bottom:
+    1px solid #edf3f7;
+
+  color: #334155;
+
+  font-size: 13px;
+
+  vertical-align: middle;
+}
+
+.users-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.users-table tbody tr {
+  transition:
+    background 0.18s ease;
+}
+
+.users-table tbody tr:hover {
+  background: #fbfdff;
+}
+
+
+/* ==========================================================================
+   USER TABLE NAME
+   ========================================================================== */
+
+.user-table-name {
+  display: flex;
+  align-items: center;
+
+  gap: 11px;
+
+  min-width: 180px;
+}
+
+.user-table-avatar {
+  width: 36px;
+  height: 36px;
+
+  flex: 0 0 36px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border:
+    1px solid #dceaf4;
+
+  border-radius: 10px;
+
+  background: #f4f8fc;
+
+  color: #0878d1;
+
+  font-size: 14px;
+}
+
+.user-table-name > div:last-child {
+  min-width: 0;
+}
+
+.user-table-name strong {
+  display: block;
+
+  overflow: hidden;
+
+  color: #071a2b;
+
+  font-size: 13px;
+  font-weight: 650;
+
+  line-height: 1.4;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.user-current-label {
+  display: inline-flex;
+
+  margin-top: 3px;
+
+  color: #0878d1;
+
+  font-size: 10px;
+  font-weight: 700;
+
+  line-height: 1.2;
+}
+
+
+/* ==========================================================================
+   USER EMAIL
+   ========================================================================== */
+
+.user-email {
+  color: #64748b;
+
+  font-size: 12px;
+
+  overflow-wrap: anywhere;
+}
+
+
+/* ==========================================================================
+   USER ROLE
+   ========================================================================== */
+
+.user-role-badge {
+  display: inline-flex;
+  align-items: center;
+
+  gap: 6px;
+
+  padding: 5px 8px;
+
+  border:
+    1px solid #dceaf4;
+
+  border-radius: 7px;
+
+  background: #f4f8fc;
+
+  color: #055da5;
+
+  font-size: 11px;
+  font-weight: 700;
+
+  text-transform: capitalize;
+}
+
+.user-role-badge i {
+  font-size: 12px;
+}
+
+
+/* ==========================================================================
+   USER STATUS
+   ========================================================================== */
+
+.user-status {
+  display: inline-flex;
+  align-items: center;
+
+  gap: 7px;
+
+  font-size: 12px;
+  font-weight: 700;
+
+  white-space: nowrap;
+}
+
+.user-status > span {
+  width: 7px;
+  height: 7px;
+
+  flex: 0 0 7px;
+
+  border-radius: 50%;
+}
+
+.user-status-active {
+  color: #15803d;
+}
+
+.user-status-active > span {
+  background: #16a34a;
+
+  box-shadow:
+    0 0 0 3px rgba(22, 163, 74, 0.08);
+}
+
+.user-status-inactive {
+  color: #64748b;
+}
+
+.user-status-inactive > span {
+  background: #94a3b8;
+}
+
+
+/* ==========================================================================
+   USER ACTIONS
+   ========================================================================== */
+
+.user-actions {
+  display: flex;
+  align-items: center;
+
+  gap: 7px;
+}
+
+.user-action-button {
+  width: 34px;
+  height: 34px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 0;
+
+  border:
+    1px solid #dce6ee;
+
+  border-radius: 8px;
+
+  background: #ffffff;
+
+  color: #64748b;
+
+  font-size: 14px;
+
+  cursor: pointer;
+
+  transition:
+    color 0.2s ease,
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.user-action-button:hover:not(:disabled) {
+  border-color: #b9d6ea;
+
+  background: #f4f9fd;
+
+  color: #0878d1;
+
+  transform: translateY(-1px);
+}
+
+.user-action-button:focus-visible {
+  outline: none;
+
+  border-color: #0878d1;
+
+  box-shadow:
+    0 0 0 3px rgba(8, 120, 209, 0.1);
+}
+
+.user-action-delete:hover:not(:disabled) {
+  border-color: #fecaca;
+
+  background: #fef2f2;
+
+  color: #dc2626;
+}
+
+.user-action-button:disabled {
+  opacity: 0.35;
+
+  cursor: not-allowed;
+
+  transform: none;
+}
+
+
+/* ==========================================================================
+   ALERTS
+   ========================================================================== */
+
+.admin-alert {
+  min-height: 46px;
+
+  display: flex;
+  align-items: center;
+
+  gap: 10px;
+
+  margin-bottom: 18px;
+
+  padding: 11px 13px;
+
+  border-radius: 9px;
+
+  font-size: 13px;
+  font-weight: 500;
+
+  line-height: 1.45;
+}
+
+.admin-alert > i:first-child {
+  flex: 0 0 auto;
+
+  font-size: 16px;
+}
+
+.admin-alert > span {
+  min-width: 0;
+
+  flex: 1;
+}
+
+.admin-alert-error {
+  border:
+    1px solid #fecaca;
+
+  background: #fef2f2;
+
+  color: #b91c1c;
+}
+
+.admin-alert-success {
+  border:
+    1px solid #bbf7d0;
+
+  background: #f0fdf4;
+
+  color: #15803d;
+}
+
+.admin-alert-close {
+  width: 28px;
+  height: 28px;
+
+  flex: 0 0 28px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 0;
+
+  border: 0;
+
+  border-radius: 6px;
+
+  background: transparent;
+
+  color: currentColor;
+
+  font-size: 16px;
+
+  cursor: pointer;
+
+  opacity: 0.7;
+
+  transition:
+    background 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.admin-alert-close:hover {
+  background: rgba(0, 0, 0, 0.04);
+
+  opacity: 1;
+}
+
+
+/* ==========================================================================
+   PROFILE RESPONSIVE
+   ========================================================================== */
+
+@media (max-width: 991px) {
+
+  .profile-content {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-field:nth-child(odd) {
+    border-right: 0;
+  }
+
+  .profile-field:nth-last-child(-n + 2) {
+    border-bottom:
+      1px solid #edf3f7;
+  }
+
+  .profile-field:last-child {
+    border-bottom: 0;
+  }
+}
+
+
+@media (max-width: 767px) {
+
+  .profile-card-header {
+    padding: 20px;
+  }
+
+  .profile-content {
+    display: block;
+  }
+
+  .profile-field {
+    min-height: 62px;
+
+    padding: 16px 20px;
+  }
+
+  .profile-field:last-child {
+    border-bottom: 0;
+  }
+
+  .profile-email-value {
+    max-width: 60%;
+  }
+
+  .profile-security-card {
+    padding: 18px;
+
+    margin-bottom: 22px;
+  }
+
+  .users-card-header {
+    align-items: flex-start;
+    flex-direction: column;
+
+    padding: 20px;
+  }
+
+  .users-card-header .admin-primary-button {
+    width: 100%;
+  }
+
+  .user-form-card {
+    margin: 18px 20px;
+
+    padding: 18px;
+  }
+
+  .user-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .user-form-actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .user-form-actions button {
+    width: 100%;
+  }
+
+  .users-table th,
+  .users-table td {
+    padding-right: 15px;
+    padding-left: 15px;
+  }
+}
+
+
+@media (max-width: 480px) {
+
+  .profile-card {
+    border-radius: 14px;
+  }
+
+  .profile-card-header {
+    gap: 14px;
+
+    padding: 18px;
+  }
+
+  .profile-avatar {
+    width: 58px;
+    height: 58px;
+
+    flex-basis: 58px;
+
+    border-radius: 14px;
+
+    font-size: 23px;
+  }
+
+  .profile-header-info h3 {
+    font-size: 18px;
+  }
+
+  .profile-header-info p {
+    font-size: 13px;
+  }
+
+  .profile-field {
+    align-items: flex-start;
+    flex-direction: column;
+
+    gap: 6px;
+
+    padding: 15px 18px;
+  }
+
+  .profile-field strong {
+    width: 100%;
+
+    text-align: left;
+  }
+
+  .profile-email-value {
+    max-width: 100%;
+  }
+
+  .profile-security-card {
+    gap: 12px;
+
+    padding: 16px;
+  }
+
+  .profile-security-icon {
+    width: 40px;
+    height: 40px;
+
+    flex-basis: 40px;
+
+    border-radius: 10px;
+
+    font-size: 17px;
+  }
+
+  .profile-security-card h3 {
+    font-size: 15px;
+  }
+
+  .profile-security-card p {
+    font-size: 12px;
+  }
+
+  .users-card {
+    border-radius: 14px;
+  }
+
+  .users-card-header {
+    padding: 18px;
+  }
+
+  .users-card-header h3 {
+    font-size: 17px;
+  }
+
+  .user-form-card {
+    margin: 16px;
+
+    padding: 16px;
+  }
+}
+
+
+
+/* =========================================================
+   ADMIN PAGINATION
+   ========================================================= */
+
+.admin-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  margin-top: 24px;
+  padding: 4px 0;
+}
+
+.admin-pagination-pages {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.admin-pagination-arrow,
+.admin-pagination-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  padding: 0;
+  border: 1px solid #1c3144;
+  border-radius: 50%;
+  background: transparent;
+  color: #91a7ba;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.admin-pagination-arrow:hover:not(:disabled),
+.admin-pagination-number:hover:not(.active) {
+  border-color: #0878d1;
+  background: rgba(8, 120, 209, 0.08);
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.admin-pagination-arrow:active:not(:disabled),
+.admin-pagination-number:active {
+  transform: translateY(0);
+}
+
+.admin-pagination-arrow i {
+  font-size: 15px;
+}
+
+.admin-pagination-arrow:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.admin-pagination-number.active {
+  border-color: #0878d1;
+  background: #0878d1;
+  color: #ffffff;
+  box-shadow:
+    0 8px 18px rgba(8, 120, 209, 0.22);
+  cursor: default;
+}
+
+.admin-pagination-ellipsis {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 44px;
+  color: #6f8497;
+  font-size: 13px;
+  user-select: none;
+}
+
+/* =========================================================
+   ADMIN ORDER NUMBER
+   ========================================================= */
+
+.admin-order-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+  padding: 0 8px;
+  border: 1px solid #dbe5ee;
+  border-radius: 8px;
+  background: #f5f8fb;
+  color: #315d8f;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* =========================================================
+   ADMIN PAGINATION RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 767px) {
+  .admin-pagination {
+    gap: 8px;
+    margin-top: 20px;
+  }
+
+  .admin-pagination-pages {
+    gap: 6px;
+  }
+
+  .admin-pagination-arrow,
+  .admin-pagination-number {
+    width: 40px;
+    height: 40px;
+    flex-basis: 40px;
+    font-size: 13px;
+  }
+
+  .admin-pagination-arrow i {
+    font-size: 14px;
+  }
+
+  .admin-pagination-ellipsis {
+    min-width: 16px;
+    height: 40px;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .admin-pagination {
+    gap: 6px;
+  }
+
+  .admin-pagination-pages {
+    gap: 4px;
+  }
+
+  .admin-pagination-arrow,
+  .admin-pagination-number {
+    width: 38px;
+    height: 38px;
+    flex-basis: 38px;
+  }
+
+  /*
+   * Keep the pagination compact on very small
+   * screens while still showing the current
+   * page and navigation arrows.
+   */
+  .admin-pagination-number:not(.active) {
+    display: none;
+  }
+
+  .admin-pagination-ellipsis {
+    display: none;
+  }
+}

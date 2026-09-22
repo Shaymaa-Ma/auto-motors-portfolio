@@ -1,7 +1,13 @@
 import axiosClient from "./axiosClient";
 
-// Authentication API
+
+// =========================================================
+// AUTH API
+// =========================================================
+
 export const authApi = {
+
+  // Login administrator
   login: async (email, password) => {
     const response = await axiosClient.post(
       "/auth/login",
@@ -14,6 +20,8 @@ export const authApi = {
     return response.data;
   },
 
+
+  // Initial administrator registration
   register: async (
     name,
     email,
@@ -35,30 +43,111 @@ export const authApi = {
     return response.data;
   },
 
+
+  // Check whether initial registration is available
   registrationStatus: async () => {
-    const response = await axiosClient.get(
-      "/auth/registration-status"
-    );
+    const response =
+      await axiosClient.get(
+        "/auth/registration-status"
+      );
 
     return response.data;
   },
 
+
+  // Get current administrator
   me: async () => {
-    const response = await axiosClient.get(
-      "/auth/me"
-    );
+    const response =
+      await axiosClient.get("/auth/me");
 
     return response.data;
   },
 
+
+  // Logout
   logout: async () => {
-    const response = await axiosClient.post(
-      "/auth/logout"
-    );
+    const response =
+      await axiosClient.post("/auth/logout");
 
     return response.data;
   },
 };
+
+
+// =========================================================
+// USERS API
+// Administrator management
+// =========================================================
+
+export const usersApi = {
+
+  // -------------------------------------------------------
+  // Get all administrators
+  // GET /api/users
+  // -------------------------------------------------------
+
+  getAll: async () => {
+    const response =
+      await axiosClient.get("/users");
+
+    return response.data;
+  },
+
+
+  // -------------------------------------------------------
+  // Create administrator
+  // POST /api/users
+  // -------------------------------------------------------
+
+  create: async (userData) => {
+    const response =
+      await axiosClient.post(
+        "/users",
+        userData
+      );
+
+    return response.data;
+  },
+
+
+  // -------------------------------------------------------
+  // Activate / deactivate administrator
+  // PATCH /api/users/:id/status
+  // -------------------------------------------------------
+
+  updateStatus: async (
+    id,
+    is_active
+  ) => {
+    const response =
+      await axiosClient.patch(
+        `/users/${id}/status`,
+        {
+          is_active,
+        }
+      );
+
+    return response.data;
+  },
+
+
+  // -------------------------------------------------------
+  // Delete administrator
+  // DELETE /api/users/:id
+  // -------------------------------------------------------
+
+  delete: async (id) => {
+    const response =
+      await axiosClient.delete(
+        `/users/${id}`
+      );
+
+    return response.data;
+  },
+};
+
+
+
 
 // Dashboard API
 export const dashboardApi = {
@@ -98,6 +187,8 @@ export const heroApi = {
 };
 
 
+
+
 // About API
 export const aboutApi = {
   get: async () => {
@@ -124,6 +215,11 @@ export const aboutApi = {
   },
 };
 
+
+
+
+
+
 // Services API
 export const servicesApi = {
   // Get active services for the client
@@ -135,10 +231,13 @@ export const servicesApi = {
     return response.data;
   },
 
-  // Get all services for Admin
-  getAll: async () => {
+  // Get paginated services for Admin
+  getAll: async (params) => {
     const response = await axiosClient.get(
-      "/services/admin"
+      "/services/admin",
+      {
+        params,
+      }
     );
 
     return response.data;
@@ -181,10 +280,36 @@ export const servicesApi = {
 
     return response.data;
   },
+
+  // Reorder a service
+  reorder: async (
+    id,
+    display_order
+  ) => {
+    const response = await axiosClient.put(
+      `/services/${id}/order`,
+      {
+        display_order,
+      }
+    );
+
+    return response.data;
+  },
+
+  // Normalize service orders
+  normalizeOrders: async () => {
+    const response = await axiosClient.post(
+      "/services/normalize-orders"
+    );
+
+    return response.data;
+  },
 };
 
 
-//Products API
+
+
+// Products API
 export const productsApi = {
   get: async (params) => {
     const response = await axiosClient.get(
@@ -227,7 +352,8 @@ export const productsApi = {
       formData,
       {
         headers: {
-          "Content-Type": "multipart/form-data",
+          "Content-Type":
+            "multipart/form-data",
         },
       }
     );
@@ -236,13 +362,17 @@ export const productsApi = {
   },
 
   // Update product with optional new image
-  update: async (id, formData) => {
+  update: async (
+    id,
+    formData
+  ) => {
     const response = await axiosClient.put(
       `/products/${id}`,
       formData,
       {
         headers: {
-          "Content-Type": "multipart/form-data",
+          "Content-Type":
+            "multipart/form-data",
         },
       }
     );
@@ -250,9 +380,190 @@ export const productsApi = {
     return response.data;
   },
 
+  // Reorder product
+  reorder: async (
+    id,
+    display_order
+  ) => {
+    const response = await axiosClient.put(
+      `/products/${id}/order`,
+      {
+        display_order,
+      }
+    );
+
+    return response.data;
+  },
+
+  // Normalize all product orders
+  normalizeOrders: async () => {
+    const response =
+      await axiosClient.post(
+        "/products/normalize-orders"
+      );
+
+    return response.data;
+  },
+
   remove: async (id) => {
+    const response =
+      await axiosClient.delete(
+        `/products/${id}`
+      );
+
+    return response.data;
+  },
+};
+
+
+
+
+
+
+
+// Vehicles API
+export const vehiclesApi = {
+  // ===============================
+  // PUBLIC
+  // ===============================
+
+  get: async () => {
+    const response = await axiosClient.get("/vehicles");
+    return response.data;
+  },
+
+  getOne: async (id) => {
+    if (!id) {
+      throw new Error("Vehicle ID is required.");
+    }
+
+    const response = await axiosClient.get(
+      `/vehicles/${id}`
+    );
+
+    return response.data;
+  },
+
+  // ===============================
+  // ADMIN
+  // ===============================
+
+  getAll: async (page = 1, limit = 10) => {
+    const response = await axiosClient.get(
+      "/vehicles/admin",
+      {
+        params: {
+          page,
+          limit,
+        },
+      }
+    );
+
+    return response.data;
+  },
+
+  getAdminOne: async (id) => {
+    if (!id) {
+      throw new Error("Vehicle ID is required.");
+    }
+
+    const response = await axiosClient.get(
+      `/vehicles/admin/${id}`
+    );
+
+    return response.data;
+  },
+
+  // ===============================
+  // UPDATE VEHICLE
+  // ===============================
+
+  update: async (id, formData) => {
+    if (!id) {
+      throw new Error("Vehicle ID is required.");
+    }
+
+    if (!(formData instanceof FormData)) {
+      throw new Error(
+        "Vehicle update data must be FormData."
+      );
+    }
+
+    // IMPORTANT:
+    // Do NOT manually set Content-Type.
+    // Axios/browser automatically creates:
+    // multipart/form-data; boundary=...
+    const response = await axiosClient.put(
+      `/vehicles/${id}`,
+      formData
+    );
+
+    return response.data;
+  },
+
+  // ===============================
+  // UPDATE SECTION
+  // ===============================
+
+  updateSection: async (sectionData) => {
+    const response = await axiosClient.put(
+      "/vehicles/section",
+      sectionData
+    );
+
+    return response.data;
+  },
+
+  // ===============================
+  // REORDER
+  // ===============================
+
+  reorder: async (id, display_order) => {
+    if (!id) {
+      throw new Error("Vehicle ID is required.");
+    }
+
+    const order = Number(display_order);
+
+    if (!Number.isFinite(order)) {
+      throw new Error(
+        "A valid display order is required."
+      );
+    }
+
+    const response = await axiosClient.put(
+      `/vehicles/${id}/order`,
+      {
+        display_order: order,
+      }
+    );
+
+    return response.data;
+  },
+
+  // ===============================
+  // NORMALIZE ORDERS
+  // ===============================
+
+  normalizeOrders: async () => {
+    const response = await axiosClient.post(
+      "/vehicles/normalize-orders"
+    );
+
+    return response.data;
+  },
+
+  // ===============================
+  // DELETE
+  // ===============================
+
+  remove: async (id) => {
+    if (!id) {
+      throw new Error("Vehicle ID is required.");
+    }
+
     const response = await axiosClient.delete(
-      `/products/${id}`
+      `/vehicles/${id}`
     );
 
     return response.data;
@@ -261,96 +572,7 @@ export const productsApi = {
 
 
 
-// Vehicles API
-export const vehiclesApi = {
-  // Get active vehicles for the client
-  get: async () => {
-    const response =
-      await axiosClient.get(
-        "/vehicles"
-      );
 
-    return response.data;
-  },
-
-  // Get one active vehicle
-  getOne: async (
-    id
-  ) => {
-    const response =
-      await axiosClient.get(
-        `/vehicles/${id}`
-      );
-
-    return response.data;
-  },
-
-  // Get all vehicles for Admin
-  getAll: async () => {
-    const response =
-      await axiosClient.get(
-        "/vehicles/admin"
-      );
-
-    return response.data;
-  },
-
-  // Get one vehicle for Admin
-  getAdminOne: async (
-    id
-  ) => {
-    const response =
-      await axiosClient.get(
-        `/vehicles/admin/${id}`
-      );
-
-    return response.data;
-  },
-
-  // Update a vehicle
-  update: async (
-    id,
-    formData
-  ) => {
-    if (!id) {
-      throw new Error(
-        "Vehicle ID is required."
-      );
-    }
-
-    const response =
-      await axiosClient.put(
-        `/vehicles/${id}`,
-        formData,
-        {
-          headers: {
-            "Content-Type":
-              "multipart/form-data",
-          },
-        }
-      );
-
-    return response.data;
-  },
-
-  // Delete a vehicle
-  remove: async (
-    id
-  ) => {
-    if (!id) {
-      throw new Error(
-        "Vehicle ID is required."
-      );
-    }
-
-    const response =
-      await axiosClient.delete(
-        `/vehicles/${id}`
-      );
-
-    return response.data;
-  },
-};
 
 
 
@@ -378,6 +600,12 @@ export const galleryApi = {
   // -------------------------------------------------------
 
   getOne: async (id) => {
+    if (!id) {
+      throw new Error(
+        "Gallery item ID is required."
+      );
+    }
+
     const response =
       await axiosClient.get(
         `/gallery/${id}`
@@ -387,14 +615,22 @@ export const galleryApi = {
   },
 
   // -------------------------------------------------------
-  // ADMIN - GET ALL GALLERY ITEMS
-  // Includes active + inactive
+  // ADMIN - GET PAGINATED GALLERY
   // -------------------------------------------------------
 
-  getAll: async () => {
+  getAll: async (
+    page = 1,
+    limit = 10
+  ) => {
     const response =
       await axiosClient.get(
-        "/gallery/admin"
+        "/gallery/admin",
+        {
+          params: {
+            page,
+            limit,
+          },
+        }
       );
 
     return response.data;
@@ -405,6 +641,12 @@ export const galleryApi = {
   // -------------------------------------------------------
 
   getAdminOne: async (id) => {
+    if (!id) {
+      throw new Error(
+        "Gallery item ID is required."
+      );
+    }
+
     const response =
       await axiosClient.get(
         `/gallery/admin/${id}`
@@ -465,6 +707,12 @@ export const galleryApi = {
     id,
     formData
   ) => {
+    if (!id) {
+      throw new Error(
+        "Gallery item ID is required."
+      );
+    }
+
     const response =
       await axiosClient.put(
         `/gallery/${id}`,
@@ -481,12 +729,56 @@ export const galleryApi = {
   },
 
   // -------------------------------------------------------
+  // ADMIN - REORDER GALLERY ITEM
+  // -------------------------------------------------------
+
+  reorder: async (
+    id,
+    display_order
+  ) => {
+    if (!id) {
+      throw new Error(
+        "Gallery item ID is required."
+      );
+    }
+
+    const response =
+      await axiosClient.put(
+        `/gallery/${id}/order`,
+        {
+          display_order,
+        }
+      );
+
+    return response.data;
+  },
+
+  // -------------------------------------------------------
+  // ADMIN - NORMALIZE ORDERS
+  // -------------------------------------------------------
+
+  normalizeOrders: async () => {
+    const response =
+      await axiosClient.post(
+        "/gallery/normalize-orders"
+      );
+
+    return response.data;
+  },
+
+  // -------------------------------------------------------
   // ADMIN - DELETE GALLERY ITEM
   // -------------------------------------------------------
 
   remove: async (
     id
   ) => {
+    if (!id) {
+      throw new Error(
+        "Gallery item ID is required."
+      );
+    }
+
     const response =
       await axiosClient.delete(
         `/gallery/${id}`
@@ -496,9 +788,15 @@ export const galleryApi = {
   },
 };
 
+
+
+
+
 // Advantages API
 export const advantagesApi = {
+  // ============================================================
   // Get advantages for the client
+  // ============================================================
   get: async () => {
     const response =
       await axiosClient.get(
@@ -508,17 +806,30 @@ export const advantagesApi = {
     return response.data;
   },
 
-  // Get all advantages for Admin
-  getAll: async () => {
+  // ============================================================
+  // Get paginated advantages for Admin
+  // ============================================================
+  getAll: async (
+    page = 1,
+    limit = 10
+  ) => {
     const response =
       await axiosClient.get(
-        "/advantages/admin"
+        "/advantages/admin",
+        {
+          params: {
+            page,
+            limit,
+          },
+        }
       );
 
     return response.data;
   },
 
+  // ============================================================
   // Get one advantage for Admin
+  // ============================================================
   getAdminOne: async (
     id
   ) => {
@@ -536,7 +847,9 @@ export const advantagesApi = {
     return response.data;
   },
 
+  // ============================================================
   // Create an advantage
+  // ============================================================
   create: async (
     formData
   ) => {
@@ -549,7 +862,9 @@ export const advantagesApi = {
     return response.data;
   },
 
+  // ============================================================
   // Update an advantage
+  // ============================================================
   update: async (
     id,
     data
@@ -569,7 +884,45 @@ export const advantagesApi = {
     return response.data;
   },
 
+  // ============================================================
+  // Reorder an advantage
+  // ============================================================
+  reorder: async (
+    id,
+    display_order
+  ) => {
+    if (!id) {
+      throw new Error(
+        "Advantage ID is required."
+      );
+    }
+
+    const response =
+      await axiosClient.put(
+        `/advantages/${id}/order`,
+        {
+          display_order,
+        }
+      );
+
+    return response.data;
+  },
+
+  // ============================================================
+  // Normalize all advantage orders
+  // ============================================================
+  normalizeOrders: async () => {
+    const response =
+      await axiosClient.post(
+        "/advantages/normalize-orders"
+      );
+
+    return response.data;
+  },
+
+  // ============================================================
   // Delete an advantage
+  // ============================================================
   remove: async (
     id
   ) => {
@@ -591,8 +944,14 @@ export const advantagesApi = {
 
 
 
+
+
 // FAQs API
 export const faqsApi = {
+  // =======================================================
+  // PUBLIC
+  // =======================================================
+
   // Get active FAQs for the client
   get: async () => {
     const response =
@@ -602,12 +961,17 @@ export const faqsApi = {
 
     return response.data;
   },
-    
 
   // Get one active FAQ
   getOne: async (
     id
   ) => {
+    if (!id) {
+      throw new Error(
+        "FAQ ID is required."
+      );
+    }
+
     const response =
       await axiosClient.get(
         `/faqs/${id}`
@@ -616,11 +980,24 @@ export const faqsApi = {
     return response.data;
   },
 
-  // Get all FAQs for Admin
-  getAll: async () => {
+  // =======================================================
+  // ADMIN
+  // =======================================================
+
+  // Get paginated FAQs for Admin
+  getAll: async (
+    page = 1,
+    limit = 10
+  ) => {
     const response =
       await axiosClient.get(
-        "/faqs/admin"
+        "/faqs/admin",
+        {
+          params: {
+            page,
+            limit,
+          },
+        }
       );
 
     return response.data;
@@ -630,6 +1007,12 @@ export const faqsApi = {
   getAdminOne: async (
     id
   ) => {
+    if (!id) {
+      throw new Error(
+        "FAQ ID is required."
+      );
+    }
+
     const response =
       await axiosClient.get(
         `/faqs/admin/${id}`
@@ -656,6 +1039,12 @@ export const faqsApi = {
     id,
     data
   ) => {
+    if (!id) {
+      throw new Error(
+        "FAQ ID is required."
+      );
+    }
+
     const response =
       await axiosClient.put(
         `/faqs/${id}`,
@@ -664,7 +1053,61 @@ export const faqsApi = {
 
     return response.data;
   },
+
+  // Reorder FAQ
+  reorder: async (
+    id,
+    display_order
+  ) => {
+    if (!id) {
+      throw new Error(
+        "FAQ ID is required."
+      );
+    }
+
+    const response =
+      await axiosClient.put(
+        `/faqs/${id}/order`,
+        {
+          display_order,
+        }
+      );
+
+    return response.data;
+  },
+
+  // Normalize all FAQ orders
+  normalizeOrders: async () => {
+    const response =
+      await axiosClient.post(
+        "/faqs/normalize-orders"
+      );
+
+    return response.data;
+  },
+
+  // Delete FAQ
+  remove: async (
+    id
+  ) => {
+    if (!id) {
+      throw new Error(
+        "FAQ ID is required."
+      );
+    }
+
+    const response =
+      await axiosClient.delete(
+        `/faqs/${id}`
+      );
+
+    return response.data;
+  },
 };
+
+
+
+
 
 
 // Company API
@@ -738,6 +1181,7 @@ export const contactApi = {
 
 
 
+
 // Categories API
 export const categoriesApi = {
   // Get active categories for the client
@@ -762,11 +1206,17 @@ export const categoriesApi = {
     return response.data;
   },
 
-  // Get all categories for Admin
-  getAll: async () => {
+  // Get categories for Admin
+  // Supports backend pagination
+  getAll: async (
+    params
+  ) => {
     const response =
       await axiosClient.get(
-        "/categories/admin"
+        "/categories/admin",
+        {
+          params,
+        }
       );
 
     return response.data;
@@ -822,11 +1272,43 @@ export const categoriesApi = {
 
     return response.data;
   },
+
+  // Reorder category
+  reorder: async (
+    id,
+    display_order
+  ) => {
+    const response =
+      await axiosClient.put(
+        `/categories/${id}/order`,
+        {
+          display_order,
+        }
+      );
+
+    return response.data;
+  },
+
+  // Normalize all category orders
+  normalizeOrders: async () => {
+    const response =
+      await axiosClient.post(
+        "/categories/normalize-orders"
+      );
+
+    return response.data;
+  },
 };
 
 
-// Social links API
+
+
+
 export const socialLinksApi = {
+  // ==========================================================================
+  // PUBLIC
+  // ==========================================================================
+
   // Get active social links for the client
   get: async () => {
     const response =
@@ -838,9 +1320,13 @@ export const socialLinksApi = {
   },
 
   // Get one active social link
-  getOne: async (
-    id
-  ) => {
+  getOne: async (id) => {
+    if (!id) {
+      throw new Error(
+        "Social link ID is required."
+      );
+    }
+
     const response =
       await axiosClient.get(
         `/social-links/${id}`
@@ -849,20 +1335,37 @@ export const socialLinksApi = {
     return response.data;
   },
 
-  // Get all social links for Admin
-  getAll: async () => {
+  // ==========================================================================
+  // ADMIN
+  // ==========================================================================
+
+  // Get paginated social links
+  getAll: async (
+    page = 1,
+    limit = 10
+  ) => {
     const response =
       await axiosClient.get(
-        "/social-links/admin"
+        "/social-links/admin",
+        {
+          params: {
+            page,
+            limit,
+          },
+        }
       );
 
     return response.data;
   },
 
   // Get one social link for Admin
-  getAdminOne: async (
-    id
-  ) => {
+  getAdminOne: async (id) => {
+    if (!id) {
+      throw new Error(
+        "Social link ID is required."
+      );
+    }
+
     const response =
       await axiosClient.get(
         `/social-links/admin/${id}`
@@ -872,9 +1375,7 @@ export const socialLinksApi = {
   },
 
   // Create a social link
-  create: async (
-    data
-  ) => {
+  create: async (data) => {
     const response =
       await axiosClient.post(
         "/social-links",
@@ -889,6 +1390,12 @@ export const socialLinksApi = {
     id,
     data
   ) => {
+    if (!id) {
+      throw new Error(
+        "Social link ID is required."
+      );
+    }
+
     const response =
       await axiosClient.put(
         `/social-links/${id}`,
@@ -898,10 +1405,71 @@ export const socialLinksApi = {
     return response.data;
   },
 
-  // Delete a social link
-  remove: async (
-    id
+  // Update shared section content
+  updateSection: async (
+    sectionData
   ) => {
+    const response =
+      await axiosClient.put(
+        "/social-links/section",
+        sectionData
+      );
+
+    return response.data;
+  },
+
+  // Reorder a social link
+  reorder: async (
+    id,
+    display_order
+  ) => {
+    if (!id) {
+      throw new Error(
+        "Social link ID is required."
+      );
+    }
+
+    const order =
+      Number(display_order);
+
+    if (
+      !Number.isFinite(order) ||
+      order < 1
+    ) {
+      throw new Error(
+        "A valid display order is required."
+      );
+    }
+
+    const response =
+      await axiosClient.put(
+        `/social-links/${id}/order`,
+        {
+          display_order: order,
+        }
+      );
+
+    return response.data;
+  },
+
+  // Normalize all social link orders
+  normalizeOrders: async () => {
+    const response =
+      await axiosClient.post(
+        "/social-links/normalize-orders"
+      );
+
+    return response.data;
+  },
+
+  // Delete a social link
+  remove: async (id) => {
+    if (!id) {
+      throw new Error(
+        "Social link ID is required."
+      );
+    }
+
     const response =
       await axiosClient.delete(
         `/social-links/${id}`
@@ -910,5 +1478,3 @@ export const socialLinksApi = {
     return response.data;
   },
 };
-
-

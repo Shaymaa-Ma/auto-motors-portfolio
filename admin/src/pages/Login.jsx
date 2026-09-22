@@ -1,99 +1,24 @@
-import {
-  useEffect,
-  useState,
-} from "react";
-
-import {
-  Navigate,
-  useLocation,
-  useNavigate,
-} from "react-router-dom";
+import { useState } from "react";
+import { Navigate, useNavigate } from "react-router-dom";
 
 import { useAuth } from "../context/AuthContext";
-import { authApi } from "../api/endpoints";
 
 const Login = () => {
   const navigate = useNavigate();
-  const location = useLocation();
 
   const {
     login,
     isAuthenticated,
   } = useAuth();
 
-  const [formData, setFormData] =
-    useState({
-      email: "",
-      password: "",
-    });
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+  });
 
-  const [showPassword, setShowPassword] =
-    useState(false);
-
-  const [error, setError] =
-    useState("");
-
-  const [loading, setLoading] =
-    useState(false);
-
-  const [registrationOpen, setRegistrationOpen] =
-    useState(false);
-
-  const [
-    registrationSuccess,
-    setRegistrationSuccess,
-  ] = useState("");
-
-  /* -------------------------------------------------------
-     Check registration availability
-  ------------------------------------------------------- */
-
-  useEffect(() => {
-    const checkRegistrationStatus =
-      async () => {
-        try {
-          const response =
-            await authApi.registrationStatus();
-
-          if (response.success) {
-            setRegistrationOpen(
-              response.registrationOpen
-            );
-          }
-        } catch (error) {
-          console.error(
-            "Registration status error:",
-            error
-          );
-        }
-      };
-
-    checkRegistrationStatus();
-  }, []);
-
-  /* -------------------------------------------------------
-     Registration success message
-  ------------------------------------------------------- */
-
-  useEffect(() => {
-    if (
-      location.state?.registrationSuccess
-    ) {
-      setRegistrationSuccess(
-        location.state.registrationSuccess
-      );
-
-      window.history.replaceState(
-        {},
-        document.title,
-        window.location.pathname
-      );
-    }
-  }, [location]);
-
-  /* -------------------------------------------------------
-     Redirect authenticated users
-  ------------------------------------------------------- */
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   if (isAuthenticated) {
     return (
@@ -103,10 +28,6 @@ const Login = () => {
       />
     );
   }
-
-  /* -------------------------------------------------------
-     Handle input
-  ------------------------------------------------------- */
 
   const handleChange = (event) => {
     const {
@@ -124,15 +45,10 @@ const Login = () => {
     }
   };
 
-  /* -------------------------------------------------------
-     Submit
-  ------------------------------------------------------- */
-
   const handleSubmit = async (event) => {
     event.preventDefault();
 
     setError("");
-    setRegistrationSuccess("");
 
     if (
       !formData.email ||
@@ -157,16 +73,35 @@ const Login = () => {
         navigate("/dashboard", {
           replace: true,
         });
-      } else {
-        setError(
-          response.message ||
-            "Invalid email or password."
-        );
+
+        return;
       }
+
+      let message =
+        response.message ||
+        "Invalid email or password.";
+
+      if (
+        response.attemptsRemaining !==
+        undefined &&
+        response.attemptsRemaining > 0
+      ) {
+        message +=
+          ` ${response.attemptsRemaining} ` +
+          `${response.attemptsRemaining === 1
+            ? "attempt"
+            : "attempts"
+          } remaining.`;
+      }
+
+      setError(message);
     } catch (error) {
+      const responseData =
+        error.response?.data;
+
       setError(
-        error.response?.data?.message ||
-          "Unable to connect to the server."
+        responseData?.message ||
+        "Unable to connect to the server."
       );
     } finally {
       setLoading(false);
@@ -175,8 +110,11 @@ const Login = () => {
 
   return (
     <main className="login-page">
+
       <div className="login-card">
-        {/* Logo */}
+
+        {/* Logo / Icon */}
+
         <div className="login-logo">
           <i
             className="bi bi-speedometer2"
@@ -184,42 +122,35 @@ const Login = () => {
           ></i>
         </div>
 
-        {/* Header */}
         <div className="login-header">
+
           <span className="login-eyebrow">
             AUTO MOTORS SARL
           </span>
 
-          <h1>Admin Login</h1>
+          <h1>
+            Admin Login
+          </h1>
 
           <p>
             Sign in to manage your website
           </p>
+
         </div>
 
-        {/* Registration success */}
-        {registrationSuccess && (
-          <div className="login-success">
-            <i
-              className="bi bi-check-circle"
-              aria-hidden="true"
-            ></i>
 
-            <span>
-              {registrationSuccess}
-            </span>
-          </div>
-        )}
-
-        {/* Login form */}
         <form onSubmit={handleSubmit}>
+
           {/* Email */}
+
           <div className="login-form-group">
+
             <label htmlFor="email">
               Email
             </label>
 
             <div className="login-input-wrapper">
+
               <i
                 className="bi bi-envelope"
                 aria-hidden="true"
@@ -235,16 +166,22 @@ const Login = () => {
                 autoComplete="email"
                 disabled={loading}
               />
+
             </div>
+
           </div>
 
+
           {/* Password */}
+
           <div className="login-form-group">
+
             <label htmlFor="password">
               Password
             </label>
 
             <div className="login-input-wrapper">
+
               <i
                 className="bi bi-lock"
                 aria-hidden="true"
@@ -289,27 +226,38 @@ const Login = () => {
                   aria-hidden="true"
                 ></i>
               </button>
+
             </div>
+
           </div>
 
+
           {/* Error */}
+
           {error && (
             <div className="login-error">
+
               <i
                 className="bi bi-exclamation-circle"
                 aria-hidden="true"
               ></i>
 
-              <span>{error}</span>
+              <span>
+                {error}
+              </span>
+
             </div>
           )}
 
+
           {/* Submit */}
+
           <button
             type="submit"
             className="login-submit"
             disabled={loading}
           >
+
             {loading ? (
               <>
                 <span className="login-spinner"></span>
@@ -324,32 +272,12 @@ const Login = () => {
                 ></i>
               </>
             )}
+
           </button>
+
         </form>
 
-        {/* One-time registration */}
-        {registrationOpen && (
-          <div className="login-register-area">
-            <span>
-              First-time administrator?
-            </span>
 
-            <button
-              type="button"
-              onClick={() =>
-                navigate("/register")
-              }
-            >
-              Create your account
-              <i
-                className="bi bi-arrow-up-right"
-                aria-hidden="true"
-              ></i>
-            </button>
-          </div>
-        )}
-
-        {/* Footer */}
         <div className="login-footer">
           <i
             className="bi bi-shield-lock"
@@ -358,7 +286,9 @@ const Login = () => {
 
           Secure administrator access
         </div>
+
       </div>
+
     </main>
   );
 };

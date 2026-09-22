@@ -25,24 +25,16 @@ const getVehicleImagePath = (image) => {
     return null;
   }
 
-  const normalizedImage =
-    String(image)
-      .replace(/\\/g, "/")
-      .replace(/^[/]+/, "");
+  const normalizedImage = String(image)
+    .replace(/\\/g, "/")
+    .replace(/^[/]+/, "");
 
   // Only allow files belonging to the vehicles upload folder
-  if (
-    !normalizedImage.startsWith(
-      "vehicles/"
-    )
-  ) {
+  if (!normalizedImage.startsWith("vehicles/")) {
     return null;
   }
 
-  const filename =
-    path.basename(
-      normalizedImage
-    );
+  const filename = path.basename(normalizedImage);
 
   if (!filename) {
     return null;
@@ -56,11 +48,8 @@ const getVehicleImagePath = (image) => {
 };
 
 // Delete a vehicle image safely
-const deleteVehicleImage = (
-  image
-) => {
-  const imagePath =
-    getVehicleImagePath(image);
+const deleteVehicleImage = (image) => {
+  const imagePath = getVehicleImagePath(image);
 
   if (
     !imagePath ||
@@ -90,22 +79,18 @@ const deleteVehicleImage = (
 // Get all active vehicles
 // GET /api/vehicles
 // Public
-const getVehicles = async (
-  req,
-  res
-) => {
+const getVehicles = async (req, res) => {
   try {
-    const [rows] =
-      await db.query(
-        `
-          SELECT *
-          FROM vehicles
-          WHERE is_active = 1
-          ORDER BY
-            display_order ASC,
-            id ASC
-        `
-      );
+    const [rows] = await db.query(
+      `
+        SELECT *
+        FROM vehicles
+        WHERE is_active = 1
+        ORDER BY
+          display_order ASC,
+          id ASC
+      `
+    );
 
     return sendSuccess(
       res,
@@ -128,30 +113,22 @@ const getVehicles = async (
 // Get one active vehicle
 // GET /api/vehicles/:id
 // Public
-const getVehicleById = async (
-  req,
-  res
-) => {
+const getVehicleById = async (req, res) => {
   try {
-    const {
-      id,
-    } = req.params;
+    const { id } = req.params;
 
-    const [rows] =
-      await db.query(
-        `
-          SELECT *
-          FROM vehicles
-          WHERE id = ?
-            AND is_active = 1
-          LIMIT 1
-        `,
-        [id]
-      );
+    const [rows] = await db.query(
+      `
+        SELECT *
+        FROM vehicles
+        WHERE id = ?
+          AND is_active = 1
+        LIMIT 1
+      `,
+      [id]
+    );
 
-    if (
-      rows.length === 0
-    ) {
+    if (rows.length === 0) {
       return sendError(
         res,
         "Vehicle not found",
@@ -178,31 +155,72 @@ const getVehicleById = async (
 };
 
 // ==========================================================================
-// ADMIN - READ
+// ADMIN - READ + PAGINATION
 // ==========================================================================
 
-// Get all vehicles for Admin
-// GET /api/vehicles/admin
+// Get vehicles for Admin with pagination
+// GET /api/vehicles/admin?page=1&limit=10
 // Protected
-const getAdminVehicles = async (
-  req,
-  res
-) => {
+const getAdminVehicles = async (req, res) => {
   try {
-    const [rows] =
-      await db.query(
-        `
-          SELECT *
-          FROM vehicles
-          ORDER BY
-            display_order ASC,
-            id ASC
-        `
-      );
+    let page = Number(req.query.page) || 1;
+    let limit = Number(req.query.limit) || 10;
+
+    page = Math.max(1, Math.floor(page));
+    limit = Math.max(1, Math.min(100, Math.floor(limit)));
+
+    const offset = (page - 1) * limit;
+
+    // Count all vehicles
+    const [countRows] = await db.query(
+      `
+        SELECT COUNT(*) AS totalItems
+        FROM vehicles
+      `
+    );
+
+    const totalItems =
+      Number(countRows[0]?.totalItems) || 0;
+
+    const totalPages =
+      totalItems > 0
+        ? Math.ceil(totalItems / limit)
+        : 0;
+
+    // Prevent requesting a page beyond the last page
+    if (
+      totalPages > 0 &&
+      page > totalPages
+    ) {
+      page = totalPages;
+    }
+
+    const finalOffset =
+      (page - 1) * limit;
+
+    // Get current page
+    const [rows] = await db.query(
+      `
+        SELECT *
+        FROM vehicles
+        ORDER BY
+          display_order ASC,
+          id ASC
+        LIMIT ? OFFSET ?
+      `,
+      [limit, finalOffset]
+    );
 
     return sendSuccess(
       res,
-      rows,
+      {
+        items: rows,
+        page,
+        limit,
+        offset: finalOffset,
+        totalItems,
+        totalPages,
+      },
       "Vehicles retrieved successfully"
     );
   } catch (error) {
@@ -221,239 +239,119 @@ const getAdminVehicles = async (
 // Get one vehicle for Admin
 // GET /api/vehicles/admin/:id
 // Protected
-const getAdminVehicleById =
-  async (
-    req,
-    res
-  ) => {
-    try {
-      const {
-        id,
-      } = req.params;
-
-      const [rows] =
-        await db.query(
-          `
-            SELECT *
-            FROM vehicles
-            WHERE id = ?
-            LIMIT 1
-          `,
-          [id]
-        );
-
-      if (
-        rows.length === 0
-      ) {
-        return sendError(
-          res,
-          "Vehicle not found",
-          404
-        );
-      }
-
-      return sendSuccess(
-        res,
-        rows[0],
-        "Vehicle retrieved successfully"
-      );
-    } catch (error) {
-      console.error(
-        "Get admin vehicle error:",
-        error
-      );
-
-      return sendError(
-        res,
-        "Failed to retrieve vehicle"
-      );
-    }
-  };
-
-// ==========================================================================
-// ADMIN - CREATE
-// ==========================================================================
-
-// Create a vehicle
-// POST /api/vehicles
-// Protected
-const createVehicle = async (
+const getAdminVehicleById = async (
   req,
   res
 ) => {
-  let uploadedFilePath =
-    null;
+  try {
+    const { id } = req.params;
 
+    const [rows] = await db.query(
+      `
+        SELECT *
+        FROM vehicles
+        WHERE id = ?
+        LIMIT 1
+      `,
+      [id]
+    );
+
+    if (rows.length === 0) {
+      return sendError(
+        res,
+        "Vehicle not found",
+        404
+      );
+    }
+
+    return sendSuccess(
+      res,
+      rows[0],
+      "Vehicle retrieved successfully"
+    );
+  } catch (error) {
+    console.error(
+      "Get admin vehicle error:",
+      error
+    );
+
+    return sendError(
+      res,
+      "Failed to retrieve vehicle"
+    );
+  }
+};
+
+// ==========================================================================
+// ADMIN - SECTION CONTENT
+// ==========================================================================
+
+// Update shared Vehicles section content
+// PUT /api/vehicles/section
+// Protected
+const updateVehicleSection = async (
+  req,
+  res
+) => {
   try {
     const {
       section_title_fr,
       section_title_en,
       section_subtitle_fr,
       section_subtitle_en,
-      type_fr,
-      type_en,
-      name_fr,
-      name_en,
-      description_fr,
-      description_en,
-      display_order,
-      is_active,
-      icon,
     } = req.body;
 
-    // Validate required fields
-    if (
-      !type_fr?.trim() ||
-      !type_en?.trim() ||
-      !name_fr?.trim() ||
-      !name_en?.trim()
-    ) {
-      return sendError(
-        res,
-        "French and English vehicle type and name are required.",
-        400
-      );
-    }
+    const sectionTitleFr =
+      section_title_fr !== undefined
+        ? String(section_title_fr).trim() || null
+        : null;
 
-    // Image is required when creating
-    if (!req.file) {
-      return sendError(
-        res,
-        "Vehicle image is required.",
-        400
-      );
-    }
+    const sectionTitleEn =
+      section_title_en !== undefined
+        ? String(section_title_en).trim() || null
+        : null;
 
-    // Build stored image path
-    const image =
-      `vehicles/${req.file.filename}`;
+    const sectionSubtitleFr =
+      section_subtitle_fr !== undefined
+        ? String(section_subtitle_fr).trim() || null
+        : null;
 
-    uploadedFilePath =
-      path.join(
-        __dirname,
-        "../uploads",
-        image
-      );
+    const sectionSubtitleEn =
+      section_subtitle_en !== undefined
+        ? String(section_subtitle_en).trim() || null
+        : null;
 
-    // Create vehicle
-    const [result] =
-      await db.query(
-        `
-          INSERT INTO vehicles (
-            section_title_fr,
-            section_title_en,
-            section_subtitle_fr,
-            section_subtitle_en,
-            type_fr,
-            type_en,
-            name_fr,
-            name_en,
-            description_fr,
-            description_en,
-            image,
-            display_order,
-            is_active,
-            icon
-          )
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `,
-        [
-          section_title_fr?.trim() ||
-            null,
-
-          section_title_en?.trim() ||
-            null,
-
-          section_subtitle_fr?.trim() ||
-            null,
-
-          section_subtitle_en?.trim() ||
-            null,
-
-          type_fr.trim(),
-
-          type_en.trim(),
-
-          name_fr.trim(),
-
-          name_en.trim(),
-
-          description_fr?.trim() ||
-            null,
-
-          description_en?.trim() ||
-            null,
-
-          image,
-
-          display_order !==
-          undefined
-            ? Number(
-                display_order
-              ) || 0
-            : 0,
-
-          is_active !==
-          undefined
-            ? Number(
-                is_active
-              ) === 1
-              ? 1
-              : 0
-            : 1,
-
-          icon ||
-            "bi-truck",
-        ]
-      );
-
-    // Get newly created vehicle
-    const [rows] =
-      await db.query(
-        `
-          SELECT *
-          FROM vehicles
-          WHERE id = ?
-          LIMIT 1
-        `,
-        [result.insertId]
-      );
+    await db.query(
+      `
+        UPDATE vehicles
+        SET
+          section_title_fr = ?,
+          section_title_en = ?,
+          section_subtitle_fr = ?,
+          section_subtitle_en = ?
+      `,
+      [
+        sectionTitleFr,
+        sectionTitleEn,
+        sectionSubtitleFr,
+        sectionSubtitleEn,
+      ]
+    );
 
     return sendSuccess(
       res,
-      rows[0],
-      "Vehicle created successfully",
-      201
+      null,
+      "Vehicles section content updated successfully"
     );
   } catch (error) {
     console.error(
-      "Create vehicle error:",
+      "Update vehicle section error:",
       error
     );
 
-    // If database creation fails,
-    // remove only the newly uploaded image.
-    if (
-      uploadedFilePath &&
-      fs.existsSync(
-        uploadedFilePath
-      )
-    ) {
-      try {
-        fs.unlinkSync(
-          uploadedFilePath
-        );
-      } catch (fileError) {
-        console.error(
-          "Failed to remove uploaded vehicle image:",
-          fileError
-        );
-      }
-    }
-
     return sendError(
       res,
-      "Failed to create vehicle"
+      "Failed to update vehicles section content"
     );
   }
 };
@@ -469,29 +367,23 @@ const updateVehicle = async (
   req,
   res
 ) => {
-  let uploadedFilePath =
-    null;
+  let uploadedFilePath = null;
 
   try {
-    const {
-      id,
-    } = req.params;
+    const { id } = req.params;
 
     // Get existing vehicle
-    const [existingRows] =
-      await db.query(
-        `
-          SELECT *
-          FROM vehicles
-          WHERE id = ?
-          LIMIT 1
-        `,
-        [id]
-      );
+    const [existingRows] = await db.query(
+      `
+        SELECT *
+        FROM vehicles
+        WHERE id = ?
+        LIMIT 1
+      `,
+      [id]
+    );
 
-    if (
-      existingRows.length === 0
-    ) {
+    if (existingRows.length === 0) {
       return sendError(
         res,
         "Vehicle not found",
@@ -499,14 +391,9 @@ const updateVehicle = async (
       );
     }
 
-    const existing =
-      existingRows[0];
+    const existing = existingRows[0];
 
     const {
-      section_title_fr,
-      section_title_en,
-      section_subtitle_fr,
-      section_subtitle_en,
       type_fr,
       type_en,
       name_fr,
@@ -518,7 +405,10 @@ const updateVehicle = async (
       icon,
     } = req.body;
 
-    // Validate fields BEFORE processing the new image
+    // ----------------------------------------------------------------------
+    // VALIDATION
+    // ----------------------------------------------------------------------
+
     if (
       type_fr !== undefined &&
       !String(type_fr).trim()
@@ -563,33 +453,30 @@ const updateVehicle = async (
       );
     }
 
-    // Keep existing image by default
-    let image =
-      existing.image;
+    // ----------------------------------------------------------------------
+    // IMAGE
+    // ----------------------------------------------------------------------
 
-    // If a new image was uploaded,
-    // use the new image.
+    let image = existing.image;
+
     if (req.file) {
-      image =
-        `vehicles/${req.file.filename}`;
+      image = `vehicles/${req.file.filename}`;
 
-      uploadedFilePath =
-        path.join(
-          __dirname,
-          "../uploads",
-          image
-        );
+      uploadedFilePath = path.join(
+        __dirname,
+        "../uploads",
+        image
+      );
     }
 
-    // Update vehicle
+    // ----------------------------------------------------------------------
+    // UPDATE
+    // ----------------------------------------------------------------------
+
     await db.query(
       `
         UPDATE vehicles
         SET
-          section_title_fr = ?,
-          section_title_en = ?,
-          section_subtitle_fr = ?,
-          section_subtitle_en = ?,
           type_fr = ?,
           type_en = ?,
           name_fr = ?,
@@ -603,114 +490,54 @@ const updateVehicle = async (
         WHERE id = ?
       `,
       [
-        section_title_fr !==
-        undefined
-          ? String(
-              section_title_fr
-            ).trim() ||
-            null
-          : existing.section_title_fr,
-
-        section_title_en !==
-        undefined
-          ? String(
-              section_title_en
-            ).trim() ||
-            null
-          : existing.section_title_en,
-
-        section_subtitle_fr !==
-        undefined
-          ? String(
-              section_subtitle_fr
-            ).trim() ||
-            null
-          : existing.section_subtitle_fr,
-
-        section_subtitle_en !==
-        undefined
-          ? String(
-              section_subtitle_en
-            ).trim() ||
-            null
-          : existing.section_subtitle_en,
-
-        type_fr !==
-        undefined
-          ? String(
-              type_fr
-            ).trim()
+        type_fr !== undefined
+          ? String(type_fr).trim()
           : existing.type_fr,
 
-        type_en !==
-        undefined
-          ? String(
-              type_en
-            ).trim()
+        type_en !== undefined
+          ? String(type_en).trim()
           : existing.type_en,
 
-        name_fr !==
-        undefined
-          ? String(
-              name_fr
-            ).trim()
+        name_fr !== undefined
+          ? String(name_fr).trim()
           : existing.name_fr,
 
-        name_en !==
-        undefined
-          ? String(
-              name_en
-            ).trim()
+        name_en !== undefined
+          ? String(name_en).trim()
           : existing.name_en,
 
-        description_fr !==
-        undefined
-          ? String(
-              description_fr
-            ).trim() ||
-            null
+        description_fr !== undefined
+          ? String(description_fr).trim() || null
           : existing.description_fr,
 
-        description_en !==
-        undefined
-          ? String(
-              description_en
-            ).trim() ||
-            null
+        description_en !== undefined
+          ? String(description_en).trim() || null
           : existing.description_en,
 
         image,
 
-        display_order !==
-        undefined
-          ? Number(
-              display_order
-            ) || 0
+        display_order !== undefined
+          ? Number(display_order) || existing.display_order
           : existing.display_order,
 
-        is_active !==
-        undefined
-          ? Number(
-              is_active
-            ) === 1
+        is_active !== undefined
+          ? Number(is_active) === 1
             ? 1
             : 0
           : existing.is_active,
 
-        icon !==
-        undefined
-          ? icon ||
-            "bi-truck"
-          : existing.icon ||
-            "bi-truck",
+        icon !== undefined
+          ? String(icon).trim() || "bi-truck"
+          : existing.icon || "bi-truck",
 
         id,
       ]
     );
 
-    // If a new image replaced the old one,
-    // delete the OLD image only AFTER
-    // the database update succeeded.
+    // ----------------------------------------------------------------------
+    // DELETE OLD IMAGE ONLY AFTER SUCCESSFUL UPDATE
+    // ----------------------------------------------------------------------
+
     if (
       req.file &&
       existing.image &&
@@ -722,16 +549,15 @@ const updateVehicle = async (
     }
 
     // Get updated vehicle
-    const [rows] =
-      await db.query(
-        `
-          SELECT *
-          FROM vehicles
-          WHERE id = ?
-          LIMIT 1
-        `,
-        [id]
-      );
+    const [rows] = await db.query(
+      `
+        SELECT *
+        FROM vehicles
+        WHERE id = ?
+        LIMIT 1
+      `,
+      [id]
+    );
 
     return sendSuccess(
       res,
@@ -744,13 +570,11 @@ const updateVehicle = async (
       error
     );
 
-    // If update failed,
-    // remove ONLY the newly uploaded image.
+    // Delete only newly uploaded image
+    // if database update failed
     if (
       uploadedFilePath &&
-      fs.existsSync(
-        uploadedFilePath
-      )
+      fs.existsSync(uploadedFilePath)
     ) {
       try {
         fs.unlinkSync(
@@ -772,6 +596,228 @@ const updateVehicle = async (
 };
 
 // ==========================================================================
+// ADMIN - REORDER
+// ==========================================================================
+
+// Reorder one vehicle
+// PUT /api/vehicles/:id/order
+// Body: { display_order: number }
+// Protected
+const reorderVehicle = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    let desiredOrder = Number(req.body.display_order);
+
+    if (!Number.isFinite(desiredOrder)) {
+      return sendError(
+        res,
+        "A valid display order is required.",
+        400
+      );
+    }
+
+    desiredOrder = Math.floor(desiredOrder);
+
+    // Get all vehicles in their current order
+    const [rows] = await db.query(
+      `
+        SELECT
+          id,
+          display_order
+        FROM vehicles
+        ORDER BY
+          display_order ASC,
+          id ASC
+      `
+    );
+
+    if (rows.length === 0) {
+      return sendError(
+        res,
+        "No vehicles found.",
+        404
+      );
+    }
+
+    // Find the selected vehicle
+    const currentIndex = rows.findIndex(
+      (vehicle) =>
+        Number(vehicle.id) === Number(id)
+    );
+
+    if (currentIndex === -1) {
+      return sendError(
+        res,
+        "Vehicle not found.",
+        404
+      );
+    }
+
+    // Orders are 1-based
+    desiredOrder = Math.max(
+      1,
+      Math.min(desiredOrder, rows.length)
+    );
+
+    const currentOrder = currentIndex + 1;
+
+    // Nothing to change
+    if (currentOrder === desiredOrder) {
+      const [vehicleRows] = await db.query(
+        `
+          SELECT *
+          FROM vehicles
+          WHERE id = ?
+          LIMIT 1
+        `,
+        [id]
+      );
+
+      return sendSuccess(
+        res,
+        vehicleRows[0],
+        "Vehicle order unchanged"
+      );
+    }
+
+    // Remove the selected vehicle from the list
+    // IMPORTANT: do NOT destructure this result.
+    const remaining = rows.filter(
+      (vehicle) =>
+        Number(vehicle.id) !== Number(id)
+    );
+
+    // Insert the selected vehicle
+    // into the requested position.
+    remaining.splice(
+      desiredOrder - 1,
+      0,
+      rows[currentIndex]
+    );
+
+    // Temporarily move the selected vehicle
+    // outside the normal order range.
+    await db.query(
+      `
+        UPDATE vehicles
+        SET display_order = ?
+        WHERE id = ?
+      `,
+      [
+        rows.length + 1000,
+        id,
+      ]
+    );
+
+    // Rewrite all vehicle orders as:
+    // 1, 2, 3, 4, ...
+    for (
+      let index = 0;
+      index < remaining.length;
+      index++
+    ) {
+      await db.query(
+        `
+          UPDATE vehicles
+          SET display_order = ?
+          WHERE id = ?
+        `,
+        [
+          index + 1,
+          remaining[index].id,
+        ]
+      );
+    }
+
+    // Return the updated vehicle
+    const [updatedRows] = await db.query(
+      `
+        SELECT *
+        FROM vehicles
+        WHERE id = ?
+        LIMIT 1
+      `,
+      [id]
+    );
+
+    return sendSuccess(
+      res,
+      updatedRows[0],
+      "Vehicle order updated successfully"
+    );
+  } catch (error) {
+    console.error(
+      "Reorder vehicle error:",
+      error
+    );
+
+    return sendError(
+      res,
+      "Failed to reorder vehicle"
+    );
+  }
+};
+
+// ==========================================================================
+// ADMIN - NORMALIZE
+// ==========================================================================
+
+// Normalize all vehicle orders
+// POST /api/vehicles/normalize-orders
+// Protected
+const normalizeVehicleOrders = async (
+  req,
+  res
+) => {
+  try {
+    const [rows] = await db.query(
+      `
+        SELECT id
+        FROM vehicles
+        ORDER BY
+          display_order ASC,
+          id ASC
+      `
+    );
+
+    for (
+      let index = 0;
+      index < rows.length;
+      index++
+    ) {
+      await db.query(
+        `
+          UPDATE vehicles
+          SET display_order = ?
+          WHERE id = ?
+        `,
+        [
+          index + 1,
+          rows[index].id,
+        ]
+      );
+    }
+
+    return sendSuccess(
+      res,
+      null,
+      "Vehicle orders normalized successfully"
+    );
+  } catch (error) {
+    console.error(
+      "Normalize vehicle orders error:",
+      error
+    );
+
+    return sendError(
+      res,
+      "Failed to normalize vehicle orders"
+    );
+  }
+};
+
+// ==========================================================================
 // ADMIN - DELETE
 // ==========================================================================
 
@@ -783,11 +829,9 @@ const deleteVehicle = async (
   res
 ) => {
   try {
-    const {
-      id,
-    } = req.params;
+    const { id } = req.params;
 
-    // Get vehicle including its image
+    // Get vehicle including image
     const [existingRows] =
       await db.query(
         `
@@ -803,9 +847,7 @@ const deleteVehicle = async (
         [id]
       );
 
-    if (
-      existingRows.length === 0
-    ) {
+    if (existingRows.length === 0) {
       return sendError(
         res,
         "Vehicle not found",
@@ -837,10 +879,39 @@ const deleteVehicle = async (
     }
 
     // Delete associated image
-    // after successful database deletion.
     if (existing.image) {
       deleteVehicleImage(
         existing.image
+      );
+    }
+
+    // Normalize remaining orders
+    const [remainingRows] =
+      await db.query(
+        `
+          SELECT id
+          FROM vehicles
+          ORDER BY
+            display_order ASC,
+            id ASC
+        `
+      );
+
+    for (
+      let index = 0;
+      index < remainingRows.length;
+      index++
+    ) {
+      await db.query(
+        `
+          UPDATE vehicles
+          SET display_order = ?
+          WHERE id = ?
+        `,
+        [
+          index + 1,
+          remainingRows[index].id,
+        ]
       );
     }
 
@@ -862,11 +933,22 @@ const deleteVehicle = async (
   }
 };
 
+// ==========================================================================
+// EXPORTS
+// ==========================================================================
+
 module.exports = {
   getVehicles,
   getVehicleById,
+
   getAdminVehicles,
   getAdminVehicleById,
+
   updateVehicle,
+  updateVehicleSection,
+
+  reorderVehicle,
+  normalizeVehicleOrders,
+
   deleteVehicle,
 };

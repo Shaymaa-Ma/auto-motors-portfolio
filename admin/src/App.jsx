@@ -1,4 +1,3 @@
-
 import {
   BrowserRouter,
   Navigate,
@@ -9,10 +8,9 @@ import {
 import { AuthProvider } from "./context/AuthContext";
 
 import ProtectedRoute from "./components/ProtectedRoute";
-import AdminLayout from "./components/AdminLayout";
+import AdminLayout from "./components/adminLayout";
 
 import Login from "./pages/Login";
-import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 
 import About from "./pages/About";
@@ -28,38 +26,44 @@ import CompanyInfo from "./pages/CompanyInfo";
 import SocialLinks from "./pages/SocialLinks";
 import Contact from "./pages/Contact";
 
+import Profile from "./pages/Profile";
+
+
 const App = () => {
   return (
     <AuthProvider>
+
       <BrowserRouter>
+
         <Routes>
 
-          {/* ===================================================
-              LOGIN & REGISTER
-          =================================================== */}
+          {/* =================================================
+              LOGIN
+          ================================================= */}
 
           <Route
             path="/login"
             element={<Login />}
           />
 
-          <Route
-            path="/register"
-            element={<Register />}
-          />
 
-          {/* ===================================================
+          {/* =================================================
               PROTECTED ADMIN AREA
-          =================================================== */}
+          ================================================= */}
 
           <Route element={<ProtectedRoute />}>
 
             <Route element={<AdminLayout />}>
 
+              {/* Dashboard */}
+
               <Route
                 path="/dashboard"
                 element={<Dashboard />}
               />
+
+
+              {/* Website */}
 
               <Route
                 path="/home"
@@ -91,6 +95,9 @@ const App = () => {
                 element={<Faqs />}
               />
 
+
+              {/* Catalog */}
+
               <Route
                 path="/categories"
                 element={<Categories />}
@@ -105,6 +112,9 @@ const App = () => {
                 path="/vehicles"
                 element={<Vehicles />}
               />
+
+
+              {/* Company */}
 
               <Route
                 path="/company"
@@ -121,13 +131,26 @@ const App = () => {
                 element={<Contact />}
               />
 
+
+              {/* =================================================
+                  ADMIN PROFILE
+
+                  User management is included inside Profile.
+              ================================================= */}
+
+              <Route
+                path="/profile"
+                element={<Profile />}
+              />
+
             </Route>
 
           </Route>
 
-          {/* ===================================================
+
+          {/* =================================================
               DEFAULT
-          =================================================== */}
+          ================================================= */}
 
           <Route
             path="/"
@@ -139,9 +162,10 @@ const App = () => {
             }
           />
 
-          {/* ===================================================
+
+          {/* =================================================
               UNKNOWN ROUTES
-          =================================================== */}
+          ================================================= */}
 
           <Route
             path="*"
@@ -154,7 +178,9 @@ const App = () => {
           />
 
         </Routes>
+
       </BrowserRouter>
+
     </AuthProvider>
   );
 };

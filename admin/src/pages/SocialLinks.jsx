@@ -1,5 +1,4 @@
 import {
-  useCallback,
   useEffect,
   useMemo,
   useState,
@@ -12,12 +11,13 @@ import {
 import DataTable from "../components/DataTable";
 import FormModal from "../components/FormModal";
 import ConfirmDialog from "../components/ConfirmDialog";
+import AdminPagination from "../components/AdminPagination";
 
 const initialForm = {
   platform: "",
   url: "",
   icon: "bi-link-45deg",
-  display_order: 0,
+  display_order: 1,
   is_active: 1,
 };
 
@@ -75,6 +75,8 @@ const socialIcons = [
   },
 ];
 
+const ITEMS_PER_PAGE = 10;
+
 const SocialLinks = () => {
   const [
     socialLinks,
@@ -91,9 +93,7 @@ const SocialLinks = () => {
   const [
     form,
     setForm,
-  ] = useState(
-    initialForm
-  );
+  ] = useState(initialForm);
 
   const [
     loading,
@@ -150,83 +150,154 @@ const SocialLinks = () => {
     setDeletingSocialLink,
   ] = useState(null);
 
-  // Load all social links for Admin
-  const loadSocialLinks =
-    useCallback(
-      async () => {
-        try {
-          setLoading(true);
-          setError("");
+  // ==========================================================================
+  // PAGINATION
+  // ==========================================================================
 
-          const response =
-            await socialLinksApi.getAll();
+  const [
+    currentPage,
+    setCurrentPage,
+  ] = useState(1);
 
-          const socialData =
-            response?.data ??
-            response ??
-            [];
+  const [
+    totalItems,
+    setTotalItems,
+  ] = useState(0);
 
-          const socialList =
-            Array.isArray(
-              socialData
-            )
-              ? socialData
-              : [];
+  const [
+    totalPages,
+    setTotalPages,
+  ] = useState(1);
 
-          setSocialLinks(
-            socialList
-          );
+  // ==========================================================================
+  // LOAD SOCIAL LINKS
+  // ==========================================================================
 
-          // Load section content from the first record
-          if (
-            socialList.length > 0
-          ) {
-            const firstLink =
-              socialList[0];
+  const loadSocialLinks = async (
+    page = currentPage
+  ) => {
+    try {
+      setLoading(true);
+      setError("");
 
-            setSectionForm({
-              section_title_fr:
-                firstLink.section_title_fr ??
-                "",
+      const response =
+        await socialLinksApi.getAll(
+          page,
+          ITEMS_PER_PAGE
+        );
 
-              section_title_en:
-                firstLink.section_title_en ??
-                "",
+      const responseData =
+        response?.data ??
+        response ??
+        {};
 
-              section_subtitle_fr:
-                firstLink.section_subtitle_fr ??
-                "",
+      const items =
+        Array.isArray(
+          responseData?.items
+        )
+          ? responseData.items
+          : [];
 
-              section_subtitle_en:
-                firstLink.section_subtitle_en ??
-                "",
-            });
-          }
-        } catch (err) {
-          console.error(
-            "Load social links error:",
-            err
-          );
+      setSocialLinks(items);
 
-          setError(
-            err?.response?.data?.message ||
-              "Failed to load social links."
-          );
-        } finally {
-          setLoading(false);
-        }
-      },
-      []
-    );
+      setTotalItems(
+        Number(
+          responseData?.totalItems ??
+            0
+        )
+      );
 
-  // Load social links when the page opens
+      setTotalPages(
+        Math.max(
+          1,
+          Number(
+            responseData?.totalPages ??
+              1
+          )
+        )
+      );
+
+      const returnedPage =
+        Number(
+          responseData?.page ??
+            page
+        );
+
+      setCurrentPage(
+        returnedPage
+      );
+
+      // Load shared section content
+      // from the first item returned.
+      if (items.length > 0) {
+        const firstLink =
+          items[0];
+
+        setSectionForm({
+          section_title_fr:
+            firstLink?.section_title_fr ||
+            "",
+
+          section_title_en:
+            firstLink?.section_title_en ||
+            "",
+
+          section_subtitle_fr:
+            firstLink?.section_subtitle_fr ||
+            "",
+
+          section_subtitle_en:
+            firstLink?.section_subtitle_en ||
+            "",
+        });
+      }
+    } catch (err) {
+      console.error(
+        "Load social links error:",
+        err
+      );
+
+      setError(
+        err?.response?.data?.message ||
+          "Failed to load social links."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ==========================================================================
+  // INITIAL LOAD
+  // ==========================================================================
+
   useEffect(() => {
-    loadSocialLinks();
-  }, [
-    loadSocialLinks,
-  ]);
+    loadSocialLinks(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  // Update social link form field
+  // ==========================================================================
+  // PAGINATION
+  // ==========================================================================
+
+  const handlePageChange = (
+    page
+  ) => {
+    if (
+      page < 1 ||
+      page > totalPages ||
+      page === currentPage
+    ) {
+      return;
+    }
+
+    setCurrentPage(page);
+    loadSocialLinks(page);
+  };
+
+  // ==========================================================================
+  // FORM CHANGES
+  // ==========================================================================
+
   const handleChange = (
     event
   ) => {
@@ -252,32 +323,33 @@ const SocialLinks = () => {
     setFormError("");
   };
 
-  // Update section field
-  const handleSectionChange =
-    (event) => {
-      const {
-        name,
-        value,
-      } = event.target;
+  const handleSectionChange = (
+    event
+  ) => {
+    const {
+      name,
+      value,
+    } = event.target;
 
-      setSectionForm(
-        (current) => ({
-          ...current,
-          [name]: value,
-        })
-      );
-    };
-
-  // Open Add Social Link modal
-  const handleAdd = () => {
-    setEditingSocialLink(
-      null
+    setSectionForm(
+      (current) => ({
+        ...current,
+        [name]: value,
+      })
     );
+  };
+
+  // ==========================================================================
+  // ADD
+  // ==========================================================================
+
+  const handleAdd = () => {
+    setEditingSocialLink(null);
 
     setForm({
       ...initialForm,
       display_order:
-        socialLinks.length,
+        totalItems + 1,
     });
 
     setFormError("");
@@ -287,30 +359,44 @@ const SocialLinks = () => {
     setIsModalOpen(true);
   };
 
-  // Open Edit Social Link modal
+  // ==========================================================================
+  // EDIT
+  // ==========================================================================
+
   const handleEdit = (
     socialLink
   ) => {
-    setEditingSocialLink(
-      socialLink
-    );
+    if (!socialLink?.id) {
+      setError(
+        "Social link ID is missing."
+      );
+
+      return;
+    }
+
+    setEditingSocialLink({
+      ...socialLink,
+      original_display_order:
+        Number(
+          socialLink.display_order
+        ),
+    });
 
     setForm({
       platform:
-        socialLink.platform ??
-        "",
+        socialLink.platform || "",
 
       url:
-        socialLink.url ??
-        "",
+        socialLink.url || "",
 
       icon:
         socialLink.icon ||
         "bi-link-45deg",
 
       display_order:
-        socialLink.display_order ??
-        0,
+        Number(
+          socialLink.display_order
+        ) || 1,
 
       is_active:
         Number(
@@ -327,126 +413,150 @@ const SocialLinks = () => {
     setIsModalOpen(true);
   };
 
-  // Close Add/Edit modal
-  const handleCloseModal =
-    () => {
-      if (saving) {
-        return;
+  // ==========================================================================
+  // CLOSE MODAL
+  // ==========================================================================
+
+  const handleCloseModal = () => {
+    if (saving) {
+      return;
+    }
+
+    setIsModalOpen(false);
+    setEditingSocialLink(null);
+
+    setForm({
+      ...initialForm,
+    });
+
+    setFormError("");
+  };
+
+  // ==========================================================================
+  // SAVE SOCIAL LINK
+  // ==========================================================================
+
+  const handleSubmit = async (
+    event
+  ) => {
+    event.preventDefault();
+
+    setFormError("");
+    setError("");
+    setSuccess("");
+
+    if (!form.platform.trim()) {
+      setFormError(
+        "Platform name is required."
+      );
+
+      return;
+    }
+
+    if (!form.url.trim()) {
+      setFormError(
+        "Social media URL is required."
+      );
+
+      return;
+    }
+
+    try {
+      setSaving(true);
+
+      const data = {
+        platform:
+          form.platform.trim(),
+
+        url:
+          form.url.trim(),
+
+        icon:
+          form.icon ||
+          "bi-link-45deg",
+
+        is_active:
+          Number(
+            form.is_active
+          ) === 1
+            ? 1
+            : 0,
+      };
+
+      if (editingSocialLink) {
+        const oldOrder =
+          Number(
+            editingSocialLink.original_display_order ??
+              editingSocialLink.display_order
+          ) || 1;
+
+        const newOrder =
+          Number(
+            form.display_order
+          ) || 1;
+
+        // Update normal fields
+        await socialLinksApi.update(
+          editingSocialLink.id,
+          data
+        );
+
+        // Reorder only if order changed
+        if (
+          oldOrder !== newOrder
+        ) {
+          await socialLinksApi.reorder(
+            editingSocialLink.id,
+            newOrder
+          );
+        }
+
+        setSuccess(
+          "Social link updated successfully."
+        );
+      } else {
+        await socialLinksApi.create({
+          ...data,
+          display_order:
+            Number(
+              form.display_order
+            ) || totalItems + 1,
+        });
+
+        setSuccess(
+          "Social link created successfully."
+        );
       }
 
       setIsModalOpen(false);
-      setEditingSocialLink(
-        null
-      );
+      setEditingSocialLink(null);
 
       setForm({
         ...initialForm,
       });
 
-      setFormError("");
-    };
+      await loadSocialLinks(
+        currentPage
+      );
+    } catch (err) {
+      console.error(
+        "Save social link error:",
+        err
+      );
 
-  // Save social link
-  const handleSubmit =
-    async (
-      event
-    ) => {
-      event.preventDefault();
+      setFormError(
+        err?.response?.data?.message ||
+          "Failed to save social link."
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
 
-      setFormError("");
-      setError("");
-      setSuccess("");
+  // ==========================================================================
+  // SAVE SECTION
+  // ==========================================================================
 
-      if (!form.platform.trim()) {
-        setFormError(
-          "Platform name is required."
-        );
-
-        return;
-      }
-
-      if (!form.url.trim()) {
-        setFormError(
-          "Social media URL is required."
-        );
-
-        return;
-      }
-
-      try {
-        setSaving(true);
-
-        const data = {
-          platform:
-            form.platform.trim(),
-
-          url:
-            form.url.trim(),
-
-          icon:
-            form.icon ||
-            "bi-link-45deg",
-
-          display_order:
-            Number(
-              form.display_order
-            ) || 0,
-
-          is_active:
-            Number(
-              form.is_active
-            ) === 1
-              ? 1
-              : 0,
-        };
-
-        if (
-          editingSocialLink
-        ) {
-          await socialLinksApi.update(
-            editingSocialLink.id,
-            data
-          );
-
-          setSuccess(
-            "Social link updated successfully."
-          );
-        } else {
-          await socialLinksApi.create(
-            data
-          );
-
-          setSuccess(
-            "Social link created successfully."
-          );
-        }
-
-        setIsModalOpen(false);
-        setEditingSocialLink(
-          null
-        );
-
-        setForm({
-          ...initialForm,
-        });
-
-        await loadSocialLinks();
-      } catch (err) {
-        console.error(
-          "Save social link error:",
-          err
-        );
-
-        setFormError(
-          err?.response?.data?.message ||
-            "Failed to save social link."
-        );
-      } finally {
-        setSaving(false);
-      }
-    };
-
-  // Save section content
   const handleSaveSection =
     async () => {
       try {
@@ -454,9 +564,7 @@ const SocialLinks = () => {
         setError("");
         setSuccess("");
 
-        if (
-          socialLinks.length === 0
-        ) {
+        if (totalItems === 0) {
           setError(
             "Add at least one social link before saving the section content."
           );
@@ -478,21 +586,17 @@ const SocialLinks = () => {
             sectionForm.section_subtitle_en.trim(),
         };
 
-        await Promise.all(
-          socialLinks.map(
-            (socialLink) =>
-              socialLinksApi.update(
-                socialLink.id,
-                sectionData
-              )
-          )
+        await socialLinksApi.updateSection(
+          sectionData
         );
 
         setSuccess(
           "Social links section content saved successfully."
         );
 
-        await loadSocialLinks();
+        await loadSocialLinks(
+          currentPage
+        );
       } catch (err) {
         console.error(
           "Save social links section error:",
@@ -508,11 +612,18 @@ const SocialLinks = () => {
       }
     };
 
-  // Toggle social link status
+  // ==========================================================================
+  // TOGGLE STATUS
+  // ==========================================================================
+
   const handleToggleStatus =
     async (
       socialLink
     ) => {
+      if (!socialLink?.id) {
+        return;
+      }
+
       try {
         setError("");
         setSuccess("");
@@ -538,7 +649,9 @@ const SocialLinks = () => {
             : "Social link deactivated successfully."
         );
 
-        await loadSocialLinks();
+        await loadSocialLinks(
+          currentPage
+        );
       } catch (err) {
         console.error(
           "Toggle social link status error:",
@@ -552,83 +665,87 @@ const SocialLinks = () => {
       }
     };
 
-  // Open delete confirmation
-  const handleDeleteClick =
-    (
+  // ==========================================================================
+  // DELETE
+  // ==========================================================================
+
+  const handleDeleteClick = (
+    socialLink
+  ) => {
+    setDeletingSocialLink(
       socialLink
-    ) => {
-      setDeletingSocialLink(
-        socialLink
-      );
+    );
 
-      setDeleteDialogOpen(
-        true
-      );
-    };
+    setDeleteDialogOpen(true);
+  };
 
-  // Close delete confirmation
   const handleCloseDeleteDialog =
     () => {
       if (deleting) {
         return;
       }
 
-      setDeleteDialogOpen(
-        false
-      );
-
-      setDeletingSocialLink(
-        null
-      );
+      setDeleteDialogOpen(false);
+      setDeletingSocialLink(null);
     };
 
-  // Delete the selected social link
-  const handleDelete =
-    async () => {
+  const handleDelete = async () => {
+    if (!deletingSocialLink?.id) {
+      return;
+    }
+
+    try {
+      setDeleting(true);
+      setError("");
+      setSuccess("");
+
+      await socialLinksApi.remove(
+        deletingSocialLink.id
+      );
+
+      let pageToLoad =
+        currentPage;
+
+      // If the deleted item was the
+      // only item on the current page,
+      // move to the previous page.
       if (
-        !deletingSocialLink
+        socialLinks.length === 1 &&
+        currentPage > 1
       ) {
-        return;
+        pageToLoad =
+          currentPage - 1;
       }
 
-      try {
-        setDeleting(true);
-        setError("");
-        setSuccess("");
+      setDeleteDialogOpen(false);
+      setDeletingSocialLink(null);
 
-        await socialLinksApi.remove(
-          deletingSocialLink.id
-        );
+      setSuccess(
+        "Social link deleted successfully."
+      );
 
-        setSuccess(
-          "Social link deleted successfully."
-        );
+      await loadSocialLinks(
+        pageToLoad
+      );
+    } catch (err) {
+      console.error(
+        "Delete social link error:",
+        err
+      );
 
-        setDeleteDialogOpen(
-          false
-        );
+      setError(
+        err?.response?.data?.message ||
+          "Failed to delete social link."
+      );
+    } finally {
+      setDeleting(false);
+    }
+  };
 
-        setDeletingSocialLink(
-          null
-        );
+  // ==========================================================================
+  // TABLE COLUMNS
+  // ==========================================================================
 
-        await loadSocialLinks();
-      } catch (err) {
-        console.error(
-          "Delete social link error:",
-          err
-        );
-
-        setError(
-          err?.response?.data?.message ||
-            "Failed to delete social link."
-        );
-      } finally {
-        setDeleting(false);
-      }
-    };
-
-  // Social links table columns
   const columns = useMemo(
     () => [
       {
@@ -643,7 +760,7 @@ const SocialLinks = () => {
             <div className="admin-social-icon">
               <i
                 className={`bi ${
-                  socialLink.icon ||
+                  socialLink?.icon ||
                   "bi-link-45deg"
                 }`}
               />
@@ -656,7 +773,7 @@ const SocialLinks = () => {
               </strong>
 
               <span>
-                {socialLink.url ||
+                {socialLink?.url ||
                   "—"}
               </span>
             </div>
@@ -718,7 +835,7 @@ const SocialLinks = () => {
           value
         ) => (
           <span className="admin-order-number">
-            {value ?? 0}
+            {value ?? "—"}
           </span>
         ),
       },
@@ -761,11 +878,17 @@ const SocialLinks = () => {
         ),
       },
     ],
-    []
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [currentPage]
   );
+
+  // ==========================================================================
+  // RENDER
+  // ==========================================================================
 
   return (
     <div className="admin-page">
+
       {/* Page header */}
       <div className="admin-page-header">
         <div>
@@ -837,7 +960,7 @@ const SocialLinks = () => {
         </div>
       )}
 
-      {/* Social links section content */}
+      {/* Section content */}
       <div className="admin-section-settings">
         <div className="admin-section-settings-header">
           <div>
@@ -861,7 +984,8 @@ const SocialLinks = () => {
             }
             disabled={
               sectionSaving ||
-              loading
+              loading ||
+              totalItems === 0
             }
           >
             <i className="bi bi-check-lg" />
@@ -929,7 +1053,7 @@ const SocialLinks = () => {
                 handleSectionChange
               }
               rows="3"
-              placeholder="Retrouvez-nous sur les réseaux sociaux..."
+              placeholder="Restez connectés avec AUTO MOTORS SARL"
             />
           </div>
 
@@ -949,7 +1073,7 @@ const SocialLinks = () => {
                 handleSectionChange
               }
               rows="3"
-              placeholder="Connect with us on social media..."
+              placeholder="Stay connected with AUTO MOTORS SARL"
             />
           </div>
         </div>
@@ -966,9 +1090,8 @@ const SocialLinks = () => {
             <p>
               {loading
                 ? "Loading social links..."
-                : `${socialLinks.length} ${
-                    socialLinks.length ===
-                    1
+                : `${totalItems} ${
+                    totalItems === 1
                       ? "social link"
                       : "social links"
                   } configured`}
@@ -990,11 +1113,28 @@ const SocialLinks = () => {
           editLabel="Edit"
           deleteLabel="Delete"
         />
+
+        <AdminPagination
+          currentPage={
+            currentPage
+          }
+          totalItems={
+            totalItems
+          }
+          itemsPerPage={
+            ITEMS_PER_PAGE
+          }
+          onPageChange={
+            handlePageChange
+          }
+        />
       </div>
 
-      {/* Add/Edit social link modal */}
+      {/* Add/Edit modal */}
       <FormModal
-        isOpen={isModalOpen}
+        isOpen={
+          isModalOpen
+        }
         title={
           editingSocialLink
             ? "Edit Social Link"
@@ -1156,7 +1296,7 @@ const SocialLinks = () => {
                 id="display_order"
                 name="display_order"
                 type="number"
-                min="0"
+                min="1"
                 value={
                   form.display_order
                 }
@@ -1164,6 +1304,11 @@ const SocialLinks = () => {
                   handleChange
                 }
               />
+
+              <small className="admin-form-help">
+                Use 1 for first, 2 for
+                second, and so on.
+              </small>
             </div>
 
             <div className="admin-form-group admin-form-group-full">

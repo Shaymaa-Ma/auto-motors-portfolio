@@ -8,6 +8,8 @@ const {
   createProduct,
   updateProduct,
   deleteProduct,
+  reorderProduct,
+  normalizeProductOrders,
 } = require("../controllers/productController");
 
 const authenticateAdmin = require(
@@ -76,4 +78,17 @@ router.delete(
   deleteProduct
 );
 
+// Reorder product
+router.put(
+  "/:id/order",
+  authenticateAdmin,
+  reorderProduct
+);
+
+// Normalize product orders
+router.post(
+  "/normalize-orders",
+  authenticateAdmin,
+  normalizeProductOrders
+);
 module.exports = router;

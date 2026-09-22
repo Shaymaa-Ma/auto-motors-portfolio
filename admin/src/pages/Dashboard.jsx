@@ -153,10 +153,10 @@ const Dashboard = () => {
       path: "/products",
     },
     {
-      title: "Add Vehicle",
-      description: "Add a vehicle to the website",
-      icon: "bi-car-front",
-      path: "/vehicles",
+      title: "Manage Social Links",
+      description: "Update your social media links",
+      icon: "bi-share",
+      path: "/social-links",
     },
     {
       title: "Edit Homepage",
