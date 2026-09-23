@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1:3306
--- Generation Time: Sep 22, 2026 at 07:19 PM
+-- Generation Time: Sep 23, 2026 at 09:28 AM
 -- Server version: 8.4.7
 -- PHP Version: 8.3.28
 
@@ -87,8 +87,8 @@ CREATE TABLE IF NOT EXISTS `admins` (
 --
 
 INSERT INTO `admins` (`id`, `name`, `email`, `password_hash`, `role`, `is_active`, `created_at`, `updated_at`, `failed_login_attempts`, `login_blocked_until`) VALUES
-(1, 'Admin Management', 'Motorsauto166@gmail.com', '$2b$12$ja4yoCc2De0Eed2qjLqUDOTYorPomzLrpl2xxr0X.m2.apmndxQ0.', 'super_admin', 1, '2026-09-08 13:56:39', '2026-09-22 19:18:14', 1, NULL),
-(3, 'Shaymaa Mashaal', 'shaimaamashaal73@gmail.com', '$2b$12$gV/rJULZ2zlRC8lwWD63A.YZMC0J/6EcA9YoZf7jWXVKd0sKOm8ES', 'admin', 1, '2026-09-16 08:47:06', '2026-09-22 19:18:05', 3, NULL);
+(1, 'Admin Management', 'Motorsauto166@gmail.com', '$2b$10$dchX1ti7IktyrzPlrzHECeNKQiIwa88NWfGNnycofrkYweFq0fWU2', 'super_admin', 1, '2026-09-08 13:56:39', '2026-09-23 09:06:46', 1, NULL),
+(3, 'Shaymaa Mashaal', 'shaimaamashaal73@gmail.com', '$2b$12$gV/rJULZ2zlRC8lwWD63A.YZMC0J/6EcA9YoZf7jWXVKd0sKOm8ES', 'admin', 1, '2026-09-16 08:47:06', '2026-09-23 07:18:53', 1, NULL);
 
 -- --------------------------------------------------------
 
@@ -156,7 +156,7 @@ CREATE TABLE IF NOT EXISTS `company_info` (
 --
 
 INSERT INTO `company_info` (`id`, `company_name`, `tagline_fr`, `tagline_en`, `address_fr`, `address_en`, `email`, `phone_1`, `phone_2`, `phone_3`, `logo`, `created_at`, `updated_at`) VALUES
-(1, 'AUTO MOTORS SARL', 'Votre partenaire en produits automobiles', 'Your Automotive Products Partner', 'San Pedro, Gar Cartier Sotref, en face de SACC Cacao. Nous proposons également la livraison selon les besoins de nos clients.', 'San Pedro, Gar Cartier Sotref, opposite SACC Cacao. We also provide delivery according to our customers’ needs.', 'Motorsauto166@gmail.com', '0749616161', '0778969396', '0708236417', 'logo/company-logo.jpg', '2026-09-05 04:20:28', '2026-09-14 11:24:58');
+(1, 'AUTO MOTORS SARL', 'Votre partenaire en produits automobiles', 'Your Automotive Products Partner', 'San Pedro, Gar Cartier Sotref, en face de SACC Cacao. Nous proposons également la livraison selon les besoins de nos clients.', 'San Pedro, Gar Cartier Sotref, opposite SACC Cacao. We also provide delivery according to our customers’ needs.', 'Motorsauto166@gmail.com', '0749616161', '0778969396', '0708236417', 'logo/company-logo.jpg', '2026-09-05 04:20:28', '2026-09-23 06:35:52');
 
 -- --------------------------------------------------------
 
@@ -310,7 +310,7 @@ CREATE TABLE IF NOT EXISTS `hero` (
 --
 
 INSERT INTO `hero` (`id`, `title_fr`, `title_en`, `subtitle_fr`, `subtitle_en`, `description_fr`, `description_en`, `primary_button_fr`, `primary_button_en`, `secondary_button_fr`, `secondary_button_en`, `background_image_desktop`, `created_at`, `updated_at`, `background_image_mobile`) VALUES
-(1, 'AUTO MOTORS SARL', 'AUTO MOTORS SARL', 'Votre partenaire en pièces automobiles', 'Your Automotive Parts Partner', 'Des produits de qualité, des prix compétitifs et un service fiable pour répondre aux besoins des particuliers et des professionnels.', 'Quality products, competitive prices and reliable service to meet the needs of individuals and professionals.', 'Découvrir nos produits', 'Explore Our Products', 'Nous contacter', 'Contact Us', 'hero/hero-main-desktop.jpg', '2026-09-05 07:20:28', '2026-09-16 11:38:34', 'hero/hero-main-mobile.jpg');
+(1, 'AUTO MOTORS SARL', 'AUTO MOTORS SARL', 'Votre partenaire en pièces automobiles', 'Your Automotive Parts Partner', 'Des produits de qualité, des prix compétitifs et un service fiable pour répondre aux besoins des particuliers et des professionnels.', 'Quality products, competitive prices and reliable service to meet the needs of individuals and professionals.', 'Découvrir nos produits', 'Explore Our Products', 'Nous contacter', 'Contact Us', 'hero/hero-main-desktop.jpg', '2026-09-05 07:20:28', '2026-09-23 08:49:19', 'hero/hero-main-mobile.png');
 
 -- --------------------------------------------------------
 
@@ -429,7 +429,7 @@ CREATE TABLE IF NOT EXISTS `services` (
 --
 
 INSERT INTO `services` (`id`, `section_title_fr`, `section_title_en`, `section_subtitle_fr`, `section_subtitle_en`, `name_fr`, `name_en`, `description_fr`, `description_en`, `icon`, `display_order`, `is_active`, `created_at`, `updated_at`) VALUES
-(1, 'Des solutions automobiles adaptées à vos besoins', 'Automotive Solutions Tailored to Your Needs', 'Une gamme de services pour les particuliers et les professionnels', 'A range of services for individuals and professionals', 'Importation de pièces automobiles', 'Automotive Parts Importation', 'Importation de pièces et équipements automobiles de qualité.', 'Importation of quality automotive parts and equipment.', 'bi-car-front', 1, 1, '2026-09-05 07:20:28', '2026-09-22 16:35:22'),
+(1, 'Des solutions automobiles adaptées à vos besoins', 'Automotive Solutions Tailored to Your Needs', 'Une gamme de services pour les particuliers et les professionnels', 'A range of services for individuals and professionals', 'Importation de pièces automobiles', 'Automotive Parts Importation', 'Importation de pièces et équipements automobiles de qualité.', 'Importation of quality automotive parts and equipment.', 'bi-car-front', 1, 1, '2026-09-05 07:20:28', '2026-09-23 08:52:01'),
 (2, 'Des solutions automobiles adaptées à vos besoins', 'Automotive Solutions Tailored to Your Needs', 'Une gamme de services pour les particuliers et les professionnels', 'A range of services for individuals and professionals', 'Pneus pour véhicules et camions', 'Tires for Vehicles and Trucks', 'Fourniture de pneus adaptés aux différents types de véhicules.', 'Supply of tires suitable for different types of vehicles.', 'bi-circle', 2, 1, '2026-09-05 07:20:28', '2026-09-22 16:35:22'),
 (3, 'Des solutions automobiles adaptées à vos besoins', 'Automotive Solutions Tailored to Your Needs', 'Une gamme de services pour les particuliers et les professionnels', 'A range of services for individuals and professionals', 'Batteries automobiles', 'Automotive Batteries', 'Vente de batteries fiables pour voitures et véhicules professionnels.', 'Sale of reliable batteries for cars and professional vehicles.', 'bi-battery-full', 3, 1, '2026-09-05 07:20:28', '2026-09-22 16:35:22'),
 (4, 'Des solutions automobiles adaptées à vos besoins', 'Automotive Solutions Tailored to Your Needs', 'Une gamme de services pour les particuliers et les professionnels', 'A range of services for individuals and professionals', 'Lubrifiants et huiles moteur', 'Lubricants and Motor Oils', 'Distribution de lubrifiants et huiles moteur TOTAL.', 'Distribution of TOTAL lubricants and motor oils.', 'bi-droplet', 4, 1, '2026-09-05 07:20:28', '2026-09-22 16:35:22'),
@@ -504,7 +504,7 @@ CREATE TABLE IF NOT EXISTS `vehicles` (
 --
 
 INSERT INTO `vehicles` (`id`, `section_title_fr`, `section_title_en`, `section_subtitle_fr`, `section_subtitle_en`, `type_fr`, `type_en`, `name_fr`, `name_en`, `description_fr`, `description_en`, `image`, `display_order`, `is_active`, `created_at`, `updated_at`, `icon`) VALUES
-(1, 'Des solutions pour différents types de véhicules', 'Solutions for Different Types of Vehicles', 'Des produits adaptés aux véhicules légers et poids lourds', 'Products suitable for light and heavy-duty vehicles', 'Camionnette', 'Light Truck', 'Kia', 'Kia', 'Produits adaptés aux véhicules utilitaires Kia.', 'Products suitable for Kia light commercial vehicles.', 'vehicles/kia.jpg', 1, 1, '2026-09-05 07:20:28', '2026-09-22 19:00:15', 'bi-truck'),
+(1, 'Des solutions pour différents types de véhicules', 'Solutions for Different Types of Vehicles', 'Des produits adaptés aux véhicules légers et poids lourds', 'Products suitable for light and heavy-duty vehicles', 'Camionnette', 'Light Truck', 'Kia', 'Kia', 'Produits adaptés aux véhicules utilitaires Kia.', 'Products suitable for Kia light commercial vehicles.', 'vehicles/kia.jpg', 1, 1, '2026-09-05 07:20:28', '2026-09-23 08:53:00', 'bi-truck'),
 (2, 'Des solutions pour différents types de véhicules', 'Solutions for Different Types of Vehicles', 'Des produits adaptés aux véhicules légers et poids lourds', 'Products suitable for light and heavy-duty vehicles', 'Camionnette', 'Light Truck', 'Hyundai', 'Hyundai', 'Produits adaptés aux véhicules utilitaires Hyundai.', 'Products suitable for Hyundai light commercial vehicles.', 'vehicles/hyundai.jpg', 2, 1, '2026-09-05 07:20:28', '2026-09-22 19:00:15', 'bi-truck'),
 (3, 'Des solutions pour différents types de véhicules', 'Solutions for Different Types of Vehicles', 'Des produits adaptés aux véhicules légers et poids lourds', 'Products suitable for light and heavy-duty vehicles', 'Camionnette', 'Light Truck', 'Canter', 'Canter', 'Produits adaptés aux véhicules Canter.', 'Products suitable for Canter vehicles.', 'vehicles/canter.jpg', 3, 1, '2026-09-05 07:20:28', '2026-09-22 19:00:15', 'bi-truck'),
 (4, 'Des solutions pour différents types de véhicules', 'Solutions for Different Types of Vehicles', 'Des produits adaptés aux véhicules légers et poids lourds', 'Products suitable for light and heavy-duty vehicles', 'Poids lourds', 'Heavy Duty', 'Mercedes', 'Mercedes', 'Produits adaptés aux véhicules lourds Mercedes.', 'Products suitable for Mercedes heavy-duty vehicles.', 'vehicles/mercedes.jpg', 4, 1, '2026-09-05 07:20:28', '2026-09-22 19:00:15', 'bi-truck'),
