@@ -8,14 +8,19 @@ import axiosClient from "./axiosClient";
 export const authApi = {
 
   // Login administrator
-  login: async (email, password) => {
-    const response = await axiosClient.post(
-      "/auth/login",
-      {
-        email,
-        password,
-      }
-    );
+  login: async (
+    email,
+    password
+  ) => {
+
+    const response =
+      await axiosClient.post(
+        "/auth/login",
+        {
+          email,
+          password,
+        }
+      );
 
     return response.data;
   },
@@ -29,16 +34,18 @@ export const authApi = {
     confirmPassword,
     setupKey
   ) => {
-    const response = await axiosClient.post(
-      "/auth/register",
-      {
-        name,
-        email,
-        password,
-        confirmPassword,
-        setupKey,
-      }
-    );
+
+    const response =
+      await axiosClient.post(
+        "/auth/register",
+        {
+          name,
+          email,
+          password,
+          confirmPassword,
+          setupKey,
+        }
+      );
 
     return response.data;
   },
@@ -46,6 +53,7 @@ export const authApi = {
 
   // Check whether initial registration is available
   registrationStatus: async () => {
+
     const response =
       await axiosClient.get(
         "/auth/registration-status"
@@ -57,8 +65,11 @@ export const authApi = {
 
   // Get current administrator
   me: async () => {
+
     const response =
-      await axiosClient.get("/auth/me");
+      await axiosClient.get(
+        "/auth/me"
+      );
 
     return response.data;
   },
@@ -66,8 +77,11 @@ export const authApi = {
 
   // Logout
   logout: async () => {
+
     const response =
-      await axiosClient.post("/auth/logout");
+      await axiosClient.post(
+        "/auth/logout"
+      );
 
     return response.data;
   },
@@ -83,12 +97,14 @@ export const usersApi = {
 
   // -------------------------------------------------------
   // Get all administrators
-  // GET /api/users
   // -------------------------------------------------------
 
   getAll: async () => {
+
     const response =
-      await axiosClient.get("/users");
+      await axiosClient.get(
+        "/users"
+      );
 
     return response.data;
   },
@@ -96,10 +112,12 @@ export const usersApi = {
 
   // -------------------------------------------------------
   // Create administrator
-  // POST /api/users
   // -------------------------------------------------------
 
-  create: async (userData) => {
+  create: async (
+    userData
+  ) => {
+
     const response =
       await axiosClient.post(
         "/users",
@@ -112,13 +130,13 @@ export const usersApi = {
 
   // -------------------------------------------------------
   // Activate / deactivate administrator
-  // PATCH /api/users/:id/status
   // -------------------------------------------------------
 
   updateStatus: async (
     id,
     is_active
   ) => {
+
     const response =
       await axiosClient.patch(
         `/users/${id}/status`,
@@ -133,10 +151,12 @@ export const usersApi = {
 
   // -------------------------------------------------------
   // Delete administrator
-  // DELETE /api/users/:id
   // -------------------------------------------------------
 
-  delete: async (id) => {
+  delete: async (
+    id
+  ) => {
+
     const response =
       await axiosClient.delete(
         `/users/${id}`
@@ -145,6 +165,8 @@ export const usersApi = {
     return response.data;
   },
 };
+
+
 
 
 
@@ -159,6 +181,8 @@ export const dashboardApi = {
     return response.data;
   },
 };
+
+
 
 // Hero API
 export const heroApi = {

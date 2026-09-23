@@ -1,61 +1,102 @@
 const jwt = require("jsonwebtoken");
 const pool = require("../config/db");
 
-const authMiddleware = async (req, res, next) => {
+
+const authMiddleware = async (
+  req,
+  res,
+  next
+) => {
+
   try {
-    const token = req.cookies?.admin_token;
+
+    // =======================================================
+    // GET TOKEN
+    // =======================================================
+
+    const token =
+      req.cookies?.admin_token;
+
 
     if (!token) {
       return res.status(401).json({
         success: false,
-        message: "Authentication required.",
+        message:
+          "Authentication required.",
       });
     }
 
-    const decoded = jwt.verify(
-      token,
-      process.env.JWT_SECRET
-    );
 
-    // -----------------------------------------------------
-    // Re-check the account in the database on every request.
-    //
-    // The JWT is only proof of WHO logged in and WHEN — it is
-    // not proof that the account is still active or still
-    // holds the role it had at login time. Without this
-    // check, deactivating or deleting an administrator (see
-    // userController.js) would not take effect until their
-    // existing token naturally expired, up to
-    // JWT_EXPIRES_IN (8h) later.
-    // -----------------------------------------------------
+    // =======================================================
+    // VERIFY JWT
+    // =======================================================
 
-    const [admins] = await pool.execute(
-      `
-        SELECT
-          id,
-          email,
-          role,
-          is_active
-        FROM admins
-        WHERE id = ?
-        LIMIT 1
-      `,
-      [decoded.id]
-    );
+    const decoded =
+      jwt.verify(
+        token,
+        process.env.JWT_SECRET
+      );
+
+
+    // =======================================================
+    // RE-CHECK ADMIN IN DATABASE
+    // =======================================================
+
+    const [admins] =
+      await pool.execute(
+        `
+          SELECT
+            id,
+            email,
+            role,
+            is_active
+          FROM admins
+          WHERE id = ?
+          LIMIT 1
+        `,
+        [decoded.id]
+      );
+
+
+    // =======================================================
+    // ADMIN DOES NOT EXIST
+    // =======================================================
 
     if (admins.length === 0) {
-      res.clearCookie("admin_token", { path: "/" });
+
+      res.clearCookie(
+        "admin_token",
+        {
+          path: "/",
+        }
+      );
+
 
       return res.status(401).json({
         success: false,
-        message: "Invalid or expired authentication.",
+        message:
+          "Invalid or expired authentication.",
       });
     }
 
-    const admin = admins[0];
+
+    const admin =
+      admins[0];
+
+
+    // =======================================================
+    // ACCOUNT DISABLED
+    // =======================================================
 
     if (!admin.is_active) {
-      res.clearCookie("admin_token", { path: "/" });
+
+      res.clearCookie(
+        "admin_token",
+        {
+          path: "/",
+        }
+      );
+
 
       return res.status(403).json({
         success: false,
@@ -64,10 +105,14 @@ const authMiddleware = async (req, res, next) => {
       });
     }
 
-    // -----------------------------------------------------
-    // Use the CURRENT email/role from the database, not the
-    // (possibly stale) values baked into the token.
-    // -----------------------------------------------------
+
+    // =======================================================
+    // CURRENT DATABASE VALUES
+    // =======================================================
+    //
+    // Do not trust stale role/email values from the JWT.
+    //
+    // =======================================================
 
     req.admin = {
       id: admin.id,
@@ -75,18 +120,25 @@ const authMiddleware = async (req, res, next) => {
       role: admin.role,
     };
 
+
     next();
+
   } catch (error) {
+
     console.error(
       "Authentication error:",
       error.message
     );
 
+
     return res.status(401).json({
       success: false,
-      message: "Invalid or expired authentication.",
+      message:
+        "Invalid or expired authentication.",
     });
   }
 };
 
-module.exports = authMiddleware;
+
+module.exports =
+  authMiddleware;
