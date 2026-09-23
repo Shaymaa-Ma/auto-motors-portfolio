@@ -1,20 +1,28 @@
+
+// Reusable image upload setup that validates image types, 
+// limits files to 1 MB, and safely stores unique filenames 
+// in the selected folder.
+
+
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 
-// Configure reusable image upload
+// Reusable image upload setup.
+// Each section can choose its own upload folder and filename prefix.
 const createImageUpload = (
   folder,
   prefix = folder
 ) => {
-  // Define the upload directory
+
+  // Store uploaded images inside the selected folder.
   const uploadDirectory = path.join(
     __dirname,
     "../uploads",
     folder
   );
 
-  // Create the directory if it does not exist
+  // Create the folder automatically if it does not exist yet.
   if (!fs.existsSync(uploadDirectory)) {
     fs.mkdirSync(
       uploadDirectory,
@@ -24,7 +32,8 @@ const createImageUpload = (
     );
   }
 
-  // Configure file storage
+  // Tell Multer where to save the uploaded image
+  // and how the filename should be generated.
   const storage =
     multer.diskStorage({
       destination: (
@@ -38,7 +47,8 @@ const createImageUpload = (
         );
       },
 
-      // Generate a clean unique filename
+      // Keep the original filename readable,
+      // but clean it and avoid replacing an existing file.
       filename: (
         req,
         file,
@@ -57,7 +67,8 @@ const createImageUpload = (
             file.originalname
           ).toLowerCase();
 
-        // Clean the original filename
+        // Remove spaces and special characters
+        // so the filename is safe to use on the server.
         const cleanName =
           originalName
             .trim()
@@ -71,7 +82,8 @@ const createImageUpload = (
             )
             .toLowerCase();
 
-        // Use the prefix when the filename is empty
+        // Use the section prefix if the original
+        // filename does not contain a usable name.
         const baseName =
           cleanName ||
           prefix;
@@ -81,7 +93,8 @@ const createImageUpload = (
 
         let counter = 1;
 
-        // Add a small counter when the filename already exists
+        // If the same filename already exists,
+        // add a number instead of overwriting it.
         while (
           fs.existsSync(
             path.join(
@@ -103,7 +116,7 @@ const createImageUpload = (
       },
     });
 
-  // Allow supported image formats
+  // Only allow the image formats used by the website.
   const imageFilter = (
     req,
     file,
@@ -135,14 +148,14 @@ const createImageUpload = (
     }
   };
 
-  // Configure image upload limits
+  // Apply the final upload rules.
+  // Images larger than 1 MB are rejected by the backend.
   return multer({
     storage,
     fileFilter:
       imageFilter,
     limits: {
-      fileSize:
-        5 * 1024 * 1024,
+      fileSize: 1 * 1024 * 1024, // Maximum 1 MB
     },
   });
 };

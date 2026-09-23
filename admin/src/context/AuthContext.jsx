@@ -1,3 +1,8 @@
+
+// Manages the admin's login state across the application, 
+// including checking the existing session, logging in, logging out, 
+// and providing authentication information to other components.
+
 import {
   createContext,
   useContext,
@@ -23,9 +28,8 @@ export const AuthProvider = ({
     useState(true);
 
 
-  // =========================================================
+
   // CHECK EXISTING LOGIN
-  // =========================================================
 
   const checkAuth = async () => {
 
@@ -59,9 +63,8 @@ export const AuthProvider = ({
   };
 
 
-  // =========================================================
+
   // LOGIN
-  // =========================================================
 
   const login = async (
     email,
@@ -106,9 +109,8 @@ export const AuthProvider = ({
   };
 
 
-  // =========================================================
+
   // LOGOUT
-  // =========================================================
 
   const logout = async () => {
 
@@ -124,9 +126,7 @@ export const AuthProvider = ({
   };
 
 
-  // =========================================================
   // INITIAL AUTH CHECK
-  // =========================================================
 
   useEffect(() => {
 
@@ -135,9 +135,8 @@ export const AuthProvider = ({
   }, []);
 
 
-  // =========================================================
+
   // CONTEXT VALUE
-  // =========================================================
 
   const value = {
 
@@ -164,9 +163,8 @@ export const AuthProvider = ({
 };
 
 
-// =========================================================
+
 // useAuth HOOK
-// =========================================================
 
 export const useAuth = () => {
 

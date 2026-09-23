@@ -1,24 +1,14 @@
-// =========================================================
-// ROLE MIDDLEWARE
-// =========================================================
-//
-// Restricts specific routes to specific administrator roles.
-//
-// Roles:
-// - super_admin → Main Administrator
-// - admin       → Regular Administrator
-//
-// This middleware must be used AFTER authMiddleware.
-//
-// =========================================================
+
+// Allow only authenticated Main Administrators (super_admin)
+// to access routes that manage administrator accounts or
+// other actions reserved for the highest admin role.
 
 
 const requireSuperAdmin = (req, res, next) => {
-  // -------------------------------------------------------
+ 
   // Make sure authentication middleware has identified
-  // the current administrator.
-  // -------------------------------------------------------
-
+  // the current administrator
+  
   if (!req.admin) {
     return res.status(401).json({
       success: false,
@@ -27,10 +17,9 @@ const requireSuperAdmin = (req, res, next) => {
   }
 
 
-  // -------------------------------------------------------
-  // Only the Main Administrator can continue.
-  // -------------------------------------------------------
 
+  // Only the Main Administrator can continue
+ 
   if (req.admin.role !== "super_admin") {
     return res.status(403).json({
       success: false,

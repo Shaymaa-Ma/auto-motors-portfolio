@@ -3988,17 +3988,6 @@ select:focus-visible {
     opacity 0.2s ease;
 }
 
-.admin-primary-button {
-  min-height: 44px;
-  padding: 0 20px;
-  border: 1px solid #1d4ed8;
-  background: #2563eb;
-  color: #ffffff;
-}
-
-.admin-primary-button:hover {
-  background: #1d4ed8;
-}
 
 .admin-secondary-button {
   min-height: 42px;
@@ -4300,6 +4289,9 @@ select:focus-visible {
   margin-top: 26px;
 }
 
+
+
+
 /* Form modal */
 .admin-form-modal {
   width: 100%;
@@ -4486,6 +4478,8 @@ select:focus-visible {
 
   font-size: 12px;
 }
+
+
 
 /* Admin buttons */
 .admin-primary-button,
@@ -4800,6 +4794,9 @@ select:focus-visible {
     grid-column: auto;
   }
 }
+
+
+
 
 /* Services page */
 .admin-page {
