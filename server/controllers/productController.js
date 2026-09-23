@@ -543,7 +543,7 @@ const updateProduct = async (
     let image =
       existing.image;
 
-    // Handle the new uploaded image
+    // Handle the new uploaded image 
     if (req.file) {
       image =
         `products/${req.file.filename}`;
