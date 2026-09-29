@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1:3306
--- Generation Time: Sep 29, 2026 at 11:21 AM
+-- Generation Time: Sep 29, 2026 at 07:19 PM
 -- Server version: 8.4.7
 -- PHP Version: 8.3.28
 
@@ -85,7 +85,7 @@ CREATE TABLE IF NOT EXISTS `admins` (
 
 INSERT INTO `admins` (`id`, `name`, `email`, `password_hash`, `role`, `is_active`, `created_at`, `updated_at`) VALUES
 (1, 'Admin Management', 'motorsauto166@gmail.com', '$2b$10$dchX1ti7IktyrzPlrzHECeNKQiIwa88NWfGNnycofrkYweFq0fWU2', 'super_admin', 1, '2026-09-08 13:56:39', '2026-09-29 10:03:38'),
-(4, 'Shaymaa Mashaal', 'shaimaamashaal73@gmail.com', '$2b$12$PUPhpweqiwLMUMHTgbqlJ.t9CQvm1D7IeMFOoFIYldpNL9PDAJKZy', 'Employee', 1, '2026-09-29 09:54:19', '2026-09-29 10:01:35');
+(4, 'Shaymaa Mashaal', 'shaimaamashaal73@gmail.com', '$2b$12$PUPhpweqiwLMUMHTgbqlJ.t9CQvm1D7IeMFOoFIYldpNL9PDAJKZy', 'Employee', 1, '2026-09-29 09:54:19', '2026-09-29 11:23:57');
 
 -- --------------------------------------------------------
 
@@ -335,27 +335,27 @@ CREATE TABLE IF NOT EXISTS `products` (
   KEY `idx_products_display_order` (`display_order`),
   KEY `idx_products_is_active` (`is_active`),
   KEY `idx_products_active_order` (`is_active`,`display_order`,`id`)
-) ENGINE=MyISAM AUTO_INCREMENT=22 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=23 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `products`
 --
 
 INSERT INTO `products` (`id`, `category_id`, `name_fr`, `name_en`, `description_fr`, `description_en`, `price`, `image`, `image_number`, `display_order`, `is_active`, `created_at`, `updated_at`) VALUES
-(1, 1, 'Batterie automobile 12V', '12V Automotive Battery', 'Batterie destinée aux véhicules automobiles.', 'Battery designed for automotive vehicles.', '70 $', 'products/battery-001.jpg', '001', 1, 1, '2026-09-05 07:20:28', '2026-09-22 15:42:52'),
-(2, 1, 'Batterie automobile 24V', '24V Automotive Battery', 'Batterie adaptée aux véhicules professionnels et poids lourds.', 'Battery suitable for professional and heavy-duty vehicles.', '120 $', 'products/battery-002.jpg', '002', 2, 1, '2026-09-05 07:20:28', '2026-09-22 15:42:52'),
-(3, 1, 'Batterie haute performance', 'High-Performance Battery', 'Batterie fiable adaptée aux besoins des véhicules professionnels.', 'Reliable battery suitable for professional vehicle needs.', '95 $', 'products/battery-003.jpg', '003', 3, 1, '2026-09-05 07:20:28', '2026-09-22 15:42:52'),
-(4, 2, 'Pneu pour camion', 'Truck Tire', 'Pneu destiné aux véhicules et camions.', 'Tire designed for vehicles and trucks.', '150 $', 'products/tire-001.jpg', '004', 4, 1, '2026-09-05 07:20:28', '2026-09-22 15:42:52'),
-(5, 2, 'Pneu pour camionnette', 'Light Truck Tire', 'Pneu adapté aux camionnettes et véhicules utilitaires.', 'Tire suitable for light trucks and utility vehicles.', '120 $', 'products/tire-002.jpg', '005', 5, 1, '2026-09-05 07:20:28', '2026-09-22 15:42:52'),
-(6, 2, 'Pneu poids lourd', 'Heavy-Duty Truck Tire', 'Pneu adapté aux véhicules lourds et aux besoins professionnels.', 'Tire suitable for heavy-duty vehicles and professional use.', '200 $', 'products/tire-003.jpg', '006', 6, 1, '2026-09-05 07:20:28', '2026-09-22 15:42:52'),
-(7, 3, 'Huile moteur TOTAL 15W40', 'TOTAL 15W40 Engine Oil', 'Huile moteur destinée à l’entretien des véhicules.', 'Engine oil designed for vehicle maintenance.', '28 $', 'products/oil-001.jpg', '007', 7, 1, '2026-09-05 07:20:28', '2026-09-22 15:42:52'),
-(8, 3, 'Huile moteur TOTAL 20W50', 'TOTAL 20W50 Engine Oil', 'Huile moteur pour différents types de véhicules.', 'Engine oil for different types of vehicles.', '32 $', 'products/oil-002.jpg', '008', 8, 1, '2026-09-05 07:20:28', '2026-09-22 15:42:52'),
-(9, 3, 'Lubrifiant automobile TOTAL', 'TOTAL Automotive Lubricant', 'Lubrifiant destiné aux besoins d’entretien automobile.', 'Lubricant designed for automotive maintenance needs.', '36 $', 'products/oil-003.jpg', '009', 9, 1, '2026-09-05 07:20:28', '2026-09-22 15:42:52'),
-(10, 4, 'Filtre à huile', 'Oil Filter', 'Filtre destiné au système de lubrification du moteur.', 'Filter designed for the engine lubrication system.', '12 $', 'products/filter-oil-001.jpg', '010', 11, 1, '2026-09-05 07:20:28', '2026-09-22 15:42:52'),
-(11, 4, 'Filtre à air', 'Air Filter', 'Filtre destiné à la filtration de l’air du moteur.', 'Filter designed to clean the air entering the engine.', '10 $', 'products/filter-air-001.jpg', '011', 10, 1, '2026-09-05 07:20:28', '2026-09-22 15:42:52'),
-(12, 4, 'Filtre à carburant', 'Fuel Filter', 'Filtre destiné à la filtration du carburant.', 'Filter designed to clean the fuel.', '14 $', 'products/filter-fuel-001.jpg', '012', 12, 1, '2026-09-05 07:20:28', '2026-09-22 15:42:52'),
-(13, 4, 'Plaquettes de frein', 'Brake Pads', 'Pièces de freinage destinées aux véhicules automobiles.', 'Braking components designed for automotive vehicles.', '40 $', 'products/brake-pads-001.jpg', '013', 13, 1, '2026-09-05 07:20:28', '2026-09-22 15:42:52'),
-(14, 4, 'Disques de frein', 'Brake Discs', 'Composants du système de freinage automobile.', 'Components of an automotive braking system.', '55 $', 'products/brake-discs-001.jpg', '014', 14, 1, '2026-09-05 07:20:28', '2026-09-22 15:42:52');
+(1, 1, 'Batterie automobile 12V', '12V Automotive Battery', 'Batterie destinée aux véhicules automobiles.', 'Battery designed for automotive vehicles.', '70 $', 'products/battery-001.jpg', '001', 1, 1, '2026-09-05 07:20:28', '2026-09-29 18:56:12'),
+(2, 1, 'Batterie automobile 24V', '24V Automotive Battery', 'Batterie adaptée aux véhicules professionnels et poids lourds.', 'Battery suitable for professional and heavy-duty vehicles.', '120 $', 'products/battery-002.jpg', '002', 2, 1, '2026-09-05 07:20:28', '2026-09-29 18:56:12'),
+(3, 1, 'Batterie haute performance', 'High-Performance Battery', 'Batterie fiable adaptée aux besoins des véhicules professionnels.', 'Reliable battery suitable for professional vehicle needs.', '95 $', 'products/battery-003.jpg', '003', 3, 1, '2026-09-05 07:20:28', '2026-09-29 18:56:12'),
+(4, 2, 'Pneu pour camion', 'Truck Tire', 'Pneu destiné aux véhicules et camions.', 'Tire designed for vehicles and trucks.', '150 $', 'products/tire-001.jpg', '004', 4, 1, '2026-09-05 07:20:28', '2026-09-29 18:56:12'),
+(5, 2, 'Pneu pour camionnette', 'Light Truck Tire', 'Pneu adapté aux camionnettes et véhicules utilitaires.', 'Tire suitable for light trucks and utility vehicles.', '120 $', 'products/tire-002.jpg', '005', 5, 1, '2026-09-05 07:20:28', '2026-09-29 18:56:12'),
+(6, 2, 'Pneu poids lourd', 'Heavy-Duty Truck Tire', 'Pneu adapté aux véhicules lourds et aux besoins professionnels.', 'Tire suitable for heavy-duty vehicles and professional use.', '200 $', 'products/tire-003.jpg', '006', 6, 1, '2026-09-05 07:20:28', '2026-09-29 18:56:12'),
+(7, 3, 'Huile moteur TOTAL 15W40', 'TOTAL 15W40 Engine Oil', 'Huile moteur destinée à l’entretien des véhicules.', 'Engine oil designed for vehicle maintenance.', '28 $', 'products/oil-001.jpg', '007', 7, 1, '2026-09-05 07:20:28', '2026-09-29 18:56:12'),
+(8, 3, 'Huile moteur TOTAL 20W50', 'TOTAL 20W50 Engine Oil', 'Huile moteur pour différents types de véhicules.', 'Engine oil for different types of vehicles.', '32 $', 'products/oil-002.jpg', '008', 8, 1, '2026-09-05 07:20:28', '2026-09-29 18:56:12'),
+(9, 3, 'Lubrifiant automobile TOTAL', 'TOTAL Automotive Lubricant', 'Lubrifiant destiné aux besoins d’entretien automobile.', 'Lubricant designed for automotive maintenance needs.', '36 $', 'products/oil-003.jpg', '009', 9, 1, '2026-09-05 07:20:28', '2026-09-29 18:56:12'),
+(10, 4, 'Filtre à huile', 'Oil Filter', 'Filtre destiné au système de lubrification du moteur.', 'Filter designed for the engine lubrication system.', '12 $', 'products/filter-oil-001.jpg', '010', 11, 1, '2026-09-05 07:20:28', '2026-09-29 18:56:12'),
+(11, 4, 'Filtre à air', 'Air Filter', 'Filtre destiné à la filtration de l’air du moteur.', 'Filter designed to clean the air entering the engine.', '10 $', 'products/filter-air-001.jpg', '011', 10, 1, '2026-09-05 07:20:28', '2026-09-29 18:56:12'),
+(12, 4, 'Filtre à carburant', 'Fuel Filter', 'Filtre destiné à la filtration du carburant.', 'Filter designed to clean the fuel.', '14 $', 'products/filter-fuel-001.jpg', '012', 12, 1, '2026-09-05 07:20:28', '2026-09-29 18:56:12'),
+(13, 4, 'Plaquettes de frein', 'Brake Pads', 'Pièces de freinage destinées aux véhicules automobiles.', 'Braking components designed for automotive vehicles.', '40 $', 'products/brake-pads-001.jpg', '013', 13, 1, '2026-09-05 07:20:28', '2026-09-29 18:56:12'),
+(14, 4, 'Disques de frein', 'Brake Discs', 'Composants du système de freinage automobile.', 'Components of an automotive braking system.', '55 $', 'products/brake-discs-001.jpg', '014', 14, 1, '2026-09-05 07:20:28', '2026-09-29 18:56:12');
 
 -- --------------------------------------------------------
 
@@ -374,24 +374,23 @@ CREATE TABLE IF NOT EXISTS `product_categories` (
   `name_en` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
   `description_fr` text COLLATE utf8mb4_unicode_ci,
   `description_en` text COLLATE utf8mb4_unicode_ci,
-  `image` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `display_order` int DEFAULT '0',
   `is_active` tinyint(1) DEFAULT '1',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `idx_product_categories_is_active` (`is_active`)
-) ENGINE=MyISAM AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `product_categories`
 --
 
-INSERT INTO `product_categories` (`id`, `section_title_fr`, `section_title_en`, `section_subtitle_fr`, `section_subtitle_en`, `name_fr`, `name_en`, `description_fr`, `description_en`, `image`, `display_order`, `is_active`, `created_at`, `updated_at`) VALUES
-(1, 'Des produits automobiles de qualité', 'Quality Automotive Products', 'Batteries, pneus, lubrifiants et pièces détachées', 'Batteries, tires, lubricants and spare parts', 'Batteries', 'Batteries', 'Batteries automobiles pour différents types de véhicules.', 'Automotive batteries for different types of vehicles.', 'categories/batteries.jpg', 1, 1, '2026-09-05 07:20:28', '2026-09-22 16:24:43'),
-(2, 'Des produits automobiles de qualité', 'Quality Automotive Products', 'Batteries, pneus, lubrifiants et pièces détachées', 'Batteries, tires, lubricants and spare parts', 'Pneus', 'Tires', 'Pneus adaptés aux voitures, camionnettes et véhicules lourds.', 'Tires suitable for cars, light trucks and heavy-duty vehicles.', 'categories/tires.jpg', 2, 1, '2026-09-05 07:20:28', '2026-09-22 16:24:43'),
-(3, 'Des produits automobiles de qualité', 'Quality Automotive Products', 'Batteries, pneus, lubrifiants et pièces détachées', 'Batteries, tires, lubricants and spare parts', 'Lubrifiants', 'Lubricants', 'Lubrifiants et huiles moteur pour différents types de véhicules.', 'Lubricants and motor oils for different types of vehicles.', 'categories/lubricants.jpg', 3, 1, '2026-09-05 07:20:28', '2026-09-22 16:24:43'),
-(4, 'Des produits automobiles de qualité', 'Quality Automotive Products', 'Batteries, pneus, lubrifiants et pièces détachées', 'Batteries, tires, lubricants and spare parts', 'Pièces détachées', 'Spare Parts', 'Pièces et composants automobiles pour différents besoins.', 'Automotive parts and components for different needs.', 'categories/spare-parts.jpg', 4, 1, '2026-09-05 07:20:28', '2026-09-22 16:24:43');
+INSERT INTO `product_categories` (`id`, `section_title_fr`, `section_title_en`, `section_subtitle_fr`, `section_subtitle_en`, `name_fr`, `name_en`, `description_fr`, `description_en`, `display_order`, `is_active`, `created_at`, `updated_at`) VALUES
+(1, 'Des produits automobiles de qualité', 'Quality Automotive Products', 'Batteries, pneus, lubrifiants et pièces détachées', 'Batteries, tires, lubricants and spare parts', 'Batteries', 'Batteries', 'Batteries automobiles pour différents types de véhicules.', 'Automotive batteries for different types of vehicles.', 1, 1, '2026-09-05 07:20:28', '2026-09-29 19:18:23'),
+(2, 'Des produits automobiles de qualité', 'Quality Automotive Products', 'Batteries, pneus, lubrifiants et pièces détachées', 'Batteries, tires, lubricants and spare parts', 'Pneus', 'Tires', 'Pneus adaptés aux voitures, camionnettes et véhicules lourds.', 'Tires suitable for cars, light trucks and heavy-duty vehicles.', 2, 1, '2026-09-05 07:20:28', '2026-09-29 19:18:23'),
+(3, 'Des produits automobiles de qualité', 'Quality Automotive Products', 'Batteries, pneus, lubrifiants et pièces détachées', 'Batteries, tires, lubricants and spare parts', 'Lubrifiants', 'Lubricants', 'Lubrifiants et huiles moteur pour différents types de véhicules.', 'Lubricants and motor oils for different types of vehicles.', 3, 1, '2026-09-05 07:20:28', '2026-09-29 19:18:23'),
+(4, 'Des produits automobiles de qualité', 'Quality Automotive Products', 'Batteries, pneus, lubrifiants et pièces détachées', 'Batteries, tires, lubricants and spare parts', 'Pièces détachées', 'Spare Parts', 'Pièces et composants automobiles pour différents besoins.', 'Automotive parts and components for different needs.', 4, 1, '2026-09-05 07:20:28', '2026-09-29 19:18:23');
 
 -- --------------------------------------------------------
 
@@ -494,20 +493,30 @@ CREATE TABLE IF NOT EXISTS `vehicles` (
   PRIMARY KEY (`id`),
   KEY `idx_vehicles_order` (`display_order`,`id`),
   KEY `idx_vehicles_active_order` (`is_active`,`display_order`,`id`)
-) ENGINE=MyISAM AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=16 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `vehicles`
 --
 
 INSERT INTO `vehicles` (`id`, `section_title_fr`, `section_title_en`, `section_subtitle_fr`, `section_subtitle_en`, `type_fr`, `type_en`, `name_fr`, `name_en`, `description_fr`, `description_en`, `image`, `display_order`, `is_active`, `created_at`, `updated_at`, `icon`) VALUES
-(1, 'Des solutions pour différents types de véhicules', 'Solutions for Different Types of Vehicles', 'Des produits adaptés aux véhicules légers et poids lourds', 'Products suitable for light and heavy-duty vehicles', 'Camionnette', 'Light Truck', 'Kia', 'Kia', 'Produits adaptés aux véhicules utilitaires Kia.', 'Products suitable for Kia light commercial vehicles.', 'vehicles/kia.jpg', 1, 1, '2026-09-05 07:20:28', '2026-09-29 10:54:14', 'bi-truck'),
-(2, 'Des solutions pour différents types de véhicules', 'Solutions for Different Types of Vehicles', 'Des produits adaptés aux véhicules légers et poids lourds', 'Products suitable for light and heavy-duty vehicles', 'Camionnette', 'Light Truck', 'Hyundai', 'Hyundai', 'Produits adaptés aux véhicules utilitaires Hyundai.', 'Products suitable for Hyundai light commercial vehicles.', 'vehicles/hyundai.jpg', 2, 1, '2026-09-05 07:20:28', '2026-09-29 10:54:14', 'bi-truck'),
-(3, 'Des solutions pour différents types de véhicules', 'Solutions for Different Types of Vehicles', 'Des produits adaptés aux véhicules légers et poids lourds', 'Products suitable for light and heavy-duty vehicles', 'Camionnette', 'Light Truck', 'Canter', 'Canter', 'Produits adaptés aux véhicules Canter.', 'Products suitable for Canter vehicles.', 'vehicles/canter.jpg', 3, 1, '2026-09-05 07:20:28', '2026-09-29 10:54:14', 'bi-truck'),
-(4, 'Des solutions pour différents types de véhicules', 'Solutions for Different Types of Vehicles', 'Des produits adaptés aux véhicules légers et poids lourds', 'Products suitable for light and heavy-duty vehicles', 'Poids lourds', 'Heavy Duty', 'Mercedes', 'Mercedes', 'Produits adaptés aux véhicules lourds Mercedes.', 'Products suitable for Mercedes heavy-duty vehicles.', 'vehicles/mercedes.jpg', 4, 1, '2026-09-05 07:20:28', '2026-09-29 10:54:14', 'bi-truck'),
-(5, 'Des solutions pour différents types de véhicules', 'Solutions for Different Types of Vehicles', 'Des produits adaptés aux véhicules légers et poids lourds', 'Products suitable for light and heavy-duty vehicles', 'Poids lourds', 'Heavy Duty', 'Sinotruk', 'Sinotruk', 'Produits adaptés aux véhicules lourds Sinotruk.', 'Products suitable for Sinotruk heavy-duty vehicles.', 'vehicles/sinotruk.jpg', 5, 1, '2026-09-05 07:20:28', '2026-09-29 10:54:14', 'bi-truck'),
-(6, 'Des solutions pour différents types de véhicules', 'Solutions for Different Types of Vehicles', 'Des produits adaptés aux véhicules légers et poids lourds', 'Products suitable for light and heavy-duty vehicles', 'Poids lourds', 'Heavy Duty', 'DAF', 'DAF', 'Produits adaptés aux véhicules lourds DAF.', 'Products suitable for DAF heavy-duty vehicles.', 'vehicles/daf.jpg', 6, 1, '2026-09-05 07:20:28', '2026-09-29 10:54:14', 'bi-truck'),
-(7, 'Des solutions pour différents types de véhicules', 'Solutions for Different Types of Vehicles', 'Des produits adaptés aux véhicules légers et poids lourds', 'Products suitable for light and heavy-duty vehicles', 'Poids lourds', 'Heavy Duty', 'Renault', 'Renault', 'Produits adaptés aux véhicules lourds Renault.', 'Products suitable for Renault heavy-duty vehicles.', 'vehicles/renault.jpg', 7, 1, '2026-09-05 07:20:28', '2026-09-29 10:54:14', 'bi-truck');
+(1, 'Des solutions pour différents types de véhicules', 'Solutions for Different Types of Vehicles', 'Des produits adaptés aux véhicules légers et poids lourds', 'Products suitable for light and heavy-duty vehicles', 'Camionnette', 'Light Truck', 'Kia', 'Kia', 'Produits adaptés aux véhicules utilitaires Kia.', 'Products suitable for Kia light commercial vehicles.', 'vehicles/kia.jpg', 1, 1, '2026-09-05 07:20:28', '2026-09-29 11:52:19', 'bi-truck'),
+(2, 'Des solutions pour différents types de véhicules', 'Solutions for Different Types of Vehicles', 'Des produits adaptés aux véhicules légers et poids lourds', 'Products suitable for light and heavy-duty vehicles', 'Camionnette', 'Light Truck', 'Hyundai', 'Hyundai', 'Produits adaptés aux véhicules utilitaires Hyundai.', 'Products suitable for Hyundai light commercial vehicles.', 'vehicles/hyundai.jpg', 2, 1, '2026-09-05 07:20:28', '2026-09-29 11:52:19', 'bi-truck'),
+(3, 'Des solutions pour différents types de véhicules', 'Solutions for Different Types of Vehicles', 'Des produits adaptés aux véhicules légers et poids lourds', 'Products suitable for light and heavy-duty vehicles', 'Camionnette', 'Light Truck', 'Canter', 'Canter', 'Produits adaptés aux véhicules Canter.', 'Products suitable for Canter vehicles.', 'vehicles/canter.jpg', 3, 1, '2026-09-05 07:20:28', '2026-09-29 11:52:19', 'bi-truck'),
+(4, 'Des solutions pour différents types de véhicules', 'Solutions for Different Types of Vehicles', 'Des produits adaptés aux véhicules légers et poids lourds', 'Products suitable for light and heavy-duty vehicles', 'Poids lourds', 'Heavy Duty', 'Mercedes', 'Mercedes', 'Produits adaptés aux véhicules lourds Mercedes.', 'Products suitable for Mercedes heavy-duty vehicles.', 'vehicles/mercedes.jpg', 4, 1, '2026-09-05 07:20:28', '2026-09-29 11:52:19', 'bi-truck'),
+(5, 'Des solutions pour différents types de véhicules', 'Solutions for Different Types of Vehicles', 'Des produits adaptés aux véhicules légers et poids lourds', 'Products suitable for light and heavy-duty vehicles', 'Poids lourds', 'Heavy Duty', 'Sinotruk', 'Sinotruk', 'Produits adaptés aux véhicules lourds Sinotruk.', 'Products suitable for Sinotruk heavy-duty vehicles.', 'vehicles/sinotruk.jpg', 5, 1, '2026-09-05 07:20:28', '2026-09-29 11:52:19', 'bi-truck'),
+(6, 'Des solutions pour différents types de véhicules', 'Solutions for Different Types of Vehicles', 'Des produits adaptés aux véhicules légers et poids lourds', 'Products suitable for light and heavy-duty vehicles', 'Poids lourds', 'Heavy Duty', 'DAF', 'DAF', 'Produits adaptés aux véhicules lourds DAF.', 'Products suitable for DAF heavy-duty vehicles.', 'vehicles/daf.jpg', 6, 1, '2026-09-05 07:20:28', '2026-09-29 11:52:19', 'bi-truck'),
+(7, 'Des solutions pour différents types de véhicules', 'Solutions for Different Types of Vehicles', 'Des produits adaptés aux véhicules légers et poids lourds', 'Products suitable for light and heavy-duty vehicles', 'Poids lourds', 'Heavy Truck', 'Renault', 'Renault', 'Produits adaptés aux véhicules lourds Renault.', 'Products suitable for Renault heavy-duty vehicles.', 'vehicles/renault.jpg', 7, 1, '2026-09-05 07:20:28', '2026-09-29 11:52:19', 'bi-truck');
+
+--
+-- Constraints for dumped tables
+--
+
+--
+-- Constraints for table `products`
+--
+ALTER TABLE `products`
+  ADD CONSTRAINT `fk_products_category` FOREIGN KEY (`category_id`) REFERENCES `product_categories` (`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

@@ -848,55 +848,95 @@ export const contactApi = {
 // CATEGORIES API
 // =========================================================
 export const categoriesApi = {
-  // Get active categories for the client
   get: async () => {
-    const response = await axiosClient.get("/categories");
+    const response = await axiosClient.get(
+      "/categories"
+    );
+
     return response.data;
   },
 
-  // Get one active category
   getOne: async (id) => {
-    const response = await axiosClient.get(`/categories/${id}`);
+    const response = await axiosClient.get(
+      `/categories/${id}`
+    );
+
     return response.data;
   },
 
-  // Get categories for Admin (supports backend pagination)
   getAll: async (params) => {
-    const response = await axiosClient.get("/categories/admin", { params });
+    const response = await axiosClient.get(
+      "/categories/admin",
+      {
+        params,
+      }
+    );
+
     return response.data;
   },
 
-  // Get one category for Admin
   getAdminOne: async (id) => {
-    const response = await axiosClient.get(`/categories/admin/${id}`);
+    const response = await axiosClient.get(
+      `/categories/admin/${id}`
+    );
+
     return response.data;
   },
 
-  // Create a category
-  create: async (formData) => {
-    const response = await axiosClient.post("/categories", formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
+  create: async (data) => {
+    const response = await axiosClient.post(
+      "/categories",
+      data
+    );
+
     return response.data;
   },
 
-  // Update a category
-  update: async (id, formData) => {
-    const response = await axiosClient.put(`/categories/${id}`, formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
+  update: async (id, data) => {
+    const response = await axiosClient.put(
+      `/categories/${id}`,
+      data
+    );
+
     return response.data;
   },
 
-  // Reorder category
-  reorder: async (id, display_order) => {
-    const response = await axiosClient.put(`/categories/${id}/order`, { display_order });
+  updateSection: async (data) => {
+    const response = await axiosClient.put(
+      "/categories/section",
+      data
+    );
+
     return response.data;
   },
 
-  // Normalize all category orders
+  reorder: async (
+    id,
+    display_order
+  ) => {
+    const response = await axiosClient.put(
+      `/categories/${id}/order`,
+      {
+        display_order,
+      }
+    );
+
+    return response.data;
+  },
+
   normalizeOrders: async () => {
-    const response = await axiosClient.post("/categories/normalize-orders");
+    const response = await axiosClient.post(
+      "/categories/normalize-orders"
+    );
+
+    return response.data;
+  },
+
+  remove: async (id) => {
+    const response = await axiosClient.delete(
+      `/categories/${id}`
+    );
+
     return response.data;
   },
 };

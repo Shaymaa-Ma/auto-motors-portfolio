@@ -86,6 +86,7 @@ const Products = () => {
   // ---------------------------------------------------------
   // SERVER-SIDE PAGINATION
   // ---------------------------------------------------------
+
   const [currentPage, setCurrentPage] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
@@ -95,6 +96,7 @@ const Products = () => {
   // ---------------------------------------------------------
   // LOAD PRODUCTS
   // ---------------------------------------------------------
+
   const loadProducts = useCallback(
     async (page = 1) => {
       try {
@@ -176,6 +178,7 @@ const Products = () => {
   // ---------------------------------------------------------
   // LOAD CATEGORIES
   // ---------------------------------------------------------
+
   const loadCategories = useCallback(
     async () => {
       try {
@@ -184,11 +187,50 @@ const Products = () => {
         const response =
           await categoriesApi.getAll();
 
-        const categoryData =
-          response?.data ??
-          response ??
-          [];
+        /*
+         * IMPORTANT:
+         *
+         * Depending on the categories endpoint,
+         * the response may be:
+         *
+         * 1. { success: true, data: [...] }
+         *
+         * OR
+         *
+         * 2. { success: true, data: { data: [...] } }
+         *
+         * We support both structures here.
+         */
 
+        const responseData =
+          response?.data ?? response ?? {};
+
+        let categoryData = [];
+
+        // Format 1:
+        // data: [...]
+        if (
+          Array.isArray(responseData)
+        ) {
+          categoryData =
+            responseData;
+        }
+
+        // Format 2:
+        // data: { data: [...] }
+        else if (
+          Array.isArray(
+            responseData?.data
+          )
+        ) {
+          categoryData =
+            responseData.data;
+        }
+
+        /*
+         * Safety:
+         * Only store an array in categories state.
+         */
         setCategories(
           Array.isArray(categoryData)
             ? categoryData
@@ -216,6 +258,7 @@ const Products = () => {
   // ---------------------------------------------------------
   // INITIAL LOAD + PAGE CHANGE
   // ---------------------------------------------------------
+
   useEffect(() => {
     loadProducts(currentPage);
   }, [
@@ -230,6 +273,7 @@ const Products = () => {
   // ---------------------------------------------------------
   // KEEP CURRENT PAGE VALID
   // ---------------------------------------------------------
+
   useEffect(() => {
     if (
       totalPages > 0 &&
@@ -252,6 +296,7 @@ const Products = () => {
   // ---------------------------------------------------------
   // UPDATE FORM FIELD
   // ---------------------------------------------------------
+
   const handleChange = (event) => {
     const {
       name,
@@ -276,6 +321,7 @@ const Products = () => {
   // ---------------------------------------------------------
   // HANDLE IMAGE SELECTION
   // ---------------------------------------------------------
+
   const handleImageChange = (file) => {
     setFormError("");
 
@@ -305,6 +351,7 @@ const Products = () => {
   // ---------------------------------------------------------
   // OPEN ADD PRODUCT MODAL
   // ---------------------------------------------------------
+
   const handleAdd = () => {
     setEditingProduct(null);
 
@@ -312,8 +359,8 @@ const Products = () => {
       ...initialForm,
 
       /*
-       * New product is placed after the existing
-       * products.
+       * New product is placed after the
+       * existing products.
        */
       display_order:
         totalItems + 1,
@@ -329,6 +376,7 @@ const Products = () => {
   // ---------------------------------------------------------
   // OPEN EDIT PRODUCT MODAL
   // ---------------------------------------------------------
+
   const handleEdit = (product) => {
     setEditingProduct(product);
 
@@ -375,6 +423,7 @@ const Products = () => {
   // ---------------------------------------------------------
   // CLOSE ADD/EDIT MODAL
   // ---------------------------------------------------------
+
   const handleCloseModal = () => {
     if (saving) {
       return;
@@ -393,6 +442,7 @@ const Products = () => {
   // ---------------------------------------------------------
   // SAVE PRODUCT
   // ---------------------------------------------------------
+
   const handleSubmit = async (event) => {
     event.preventDefault();
 
@@ -487,9 +537,10 @@ const Products = () => {
        *
        * Keep the original order in the normal UPDATE request.
        *
-       * The dedicated backend reorder endpoint will handle
-       * moving the product and shifting all other products.
+       * The dedicated backend reorder endpoint handles
+       * moving the product and shifting other products.
        */
+
       const oldOrder = editingProduct
         ? Number(
             editingProduct.display_order
@@ -551,9 +602,10 @@ const Products = () => {
         );
 
         /*
-         * Backend reorder works globally across ALL products,
-         * including products on other pages.
+         * Backend reorder works globally across
+         * all products, including other pages.
          */
+
         if (
           oldOrder !==
           requestedOrder
@@ -613,6 +665,7 @@ const Products = () => {
   // ---------------------------------------------------------
   // TOGGLE PRODUCT STATUS
   // ---------------------------------------------------------
+
   const handleToggleStatus = async (
     product
   ) => {
@@ -664,6 +717,7 @@ const Products = () => {
   // ---------------------------------------------------------
   // OPEN DELETE CONFIRMATION
   // ---------------------------------------------------------
+
   const handleDeleteClick = (
     product
   ) => {
@@ -674,6 +728,7 @@ const Products = () => {
   // ---------------------------------------------------------
   // CLOSE DELETE DIALOG
   // ---------------------------------------------------------
+
   const handleCloseDeleteDialog = () => {
     if (deleting) {
       return;
@@ -686,6 +741,7 @@ const Products = () => {
   // ---------------------------------------------------------
   // DELETE PRODUCT
   // ---------------------------------------------------------
+
   const handleDelete = async () => {
     if (!deletingProduct) {
       return;
@@ -712,6 +768,7 @@ const Products = () => {
        *
        * 1, 2, 3, 4, 5
        */
+
       await productsApi.normalizeOrders();
 
       setSuccess(
@@ -728,6 +785,7 @@ const Products = () => {
        * the page-validation effect will move
        * currentPage to the previous valid page.
        */
+
       await loadProducts(
         currentPage
       );
@@ -749,6 +807,7 @@ const Products = () => {
   // ---------------------------------------------------------
   // PRODUCT TABLE COLUMNS
   // ---------------------------------------------------------
+
   const columns = useMemo(
     () => [
       {
@@ -897,6 +956,7 @@ const Products = () => {
   return (
     <div className="admin-page">
       {/* Page header */}
+
       <div className="admin-page-header">
         <div>
           <span className="admin-page-eyebrow">
@@ -926,6 +986,7 @@ const Products = () => {
       </div>
 
       {/* Success message */}
+
       {success && (
         <div className="admin-alert admin-alert-success">
           <i className="bi bi-check-circle" />
@@ -947,6 +1008,7 @@ const Products = () => {
       )}
 
       {/* Error message */}
+
       {error && (
         <div className="admin-alert admin-alert-error">
           <i className="bi bi-exclamation-circle" />
@@ -968,6 +1030,7 @@ const Products = () => {
       )}
 
       {/* Products section */}
+
       <div className="admin-products-section">
         <div className="admin-products-section-header">
           <div>
@@ -988,6 +1051,7 @@ const Products = () => {
         </div>
 
         {/* Products table */}
+
         <DataTable
           columns={columns}
           data={products}
@@ -1005,6 +1069,7 @@ const Products = () => {
         />
 
         {/* Pagination */}
+
         <AdminPagination
           currentPage={currentPage}
           totalItems={totalItems}
@@ -1016,6 +1081,7 @@ const Products = () => {
       </div>
 
       {/* Add/Edit product modal */}
+
       <FormModal
         isOpen={isModalOpen}
         title={
@@ -1045,6 +1111,7 @@ const Products = () => {
         )}
 
         {/* Product image */}
+
         <div className="admin-form-section">
           <div className="admin-form-section-header">
             <h3>
@@ -1059,6 +1126,7 @@ const Products = () => {
           </div>
 
           {/* Image size note */}
+
           <div className="hero-image-notes">
             <div className="hero-image-note">
               <div className="hero-image-note-icon">
@@ -1099,6 +1167,7 @@ const Products = () => {
         </div>
 
         {/* Product information */}
+
         <div className="admin-form-section">
           <div className="admin-form-section-header">
             <h3>
@@ -1113,9 +1182,12 @@ const Products = () => {
           </div>
 
           <div className="admin-form-grid">
+            {/* CATEGORY */}
+
             <div className="admin-form-group">
               <label htmlFor="category_id">
                 Category
+
                 <span className="required">
                   *
                 </span>
@@ -1138,6 +1210,9 @@ const Products = () => {
                 <option value="">
                   {categoriesLoading
                     ? "Loading categories..."
+                    : categories.length ===
+                      0
+                    ? "No categories available"
                     : "Select a category"}
                 </option>
 
@@ -1151,9 +1226,12 @@ const Products = () => {
                         category.id
                       }
                     >
-                      {category.name_en}
+                      {category.name_en ||
+                        category.name_fr ||
+                        `Category #${category.id}`}
 
-                      {category.name_fr
+                      {category.name_en &&
+                      category.name_fr
                         ? ` — ${category.name_fr}`
                         : ""}
                     </option>
@@ -1161,6 +1239,8 @@ const Products = () => {
                 )}
               </select>
             </div>
+
+            {/* PRICE */}
 
             <div className="admin-form-group">
               <label htmlFor="price">
@@ -1187,10 +1267,13 @@ const Products = () => {
               </small>
             </div>
 
+            {/* FRENCH NAME */}
+
             <div className="admin-form-group">
               <label htmlFor="name_fr">
                 Product Name
                 (French)
+
                 <span className="required">
                   *
                 </span>
@@ -1211,10 +1294,13 @@ const Products = () => {
               />
             </div>
 
+            {/* ENGLISH NAME */}
+
             <div className="admin-form-group">
               <label htmlFor="name_en">
                 Product Name
                 (English)
+
                 <span className="required">
                   *
                 </span>
@@ -1235,6 +1321,8 @@ const Products = () => {
               />
             </div>
 
+            {/* FRENCH DESCRIPTION */}
+
             <div className="admin-form-group admin-form-group-full">
               <label htmlFor="description_fr">
                 Description
@@ -1254,6 +1342,8 @@ const Products = () => {
                 placeholder="Description du produit..."
               />
             </div>
+
+            {/* ENGLISH DESCRIPTION */}
 
             <div className="admin-form-group admin-form-group-full">
               <label htmlFor="description_en">
@@ -1278,6 +1368,7 @@ const Products = () => {
         </div>
 
         {/* Product display settings */}
+
         <div className="admin-form-section">
           <div className="admin-form-section-header">
             <h3>
@@ -1292,6 +1383,8 @@ const Products = () => {
           </div>
 
           <div className="admin-form-grid">
+            {/* IMAGE NUMBER */}
+
             <div className="admin-form-group">
               <label htmlFor="image_number">
                 Image Number
@@ -1316,6 +1409,8 @@ const Products = () => {
                 product image.
               </small>
             </div>
+
+            {/* DISPLAY ORDER */}
 
             <div className="admin-form-group">
               <label htmlFor="display_order">
@@ -1345,6 +1440,8 @@ const Products = () => {
                 the other products.
               </small>
             </div>
+
+            {/* ACTIVE STATUS */}
 
             <div className="admin-form-group admin-form-group-full">
               <label className="admin-checkbox-label">
@@ -1377,6 +1474,7 @@ const Products = () => {
       </FormModal>
 
       {/* Delete confirmation */}
+
       <ConfirmDialog
         isOpen={
           deleteDialogOpen

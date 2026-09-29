@@ -51,6 +51,9 @@ const Categories = () => {
   const [sectionSaving, setSectionSaving] =
     useState(false);
 
+  const [deleting, setDeleting] =
+    useState(false);
+
   const [error, setError] =
     useState("");
 
@@ -76,13 +79,11 @@ const Categories = () => {
     useState("");
 
   // =========================================================
-  // Load Categories - Current Page
+  // LOAD CATEGORIES
   // =========================================================
 
   const loadCategories = useCallback(
-    async (
-      page = 1
-    ) => {
+    async (page = 1) => {
       try {
         setLoading(true);
         setError("");
@@ -94,24 +95,31 @@ const Categories = () => {
           });
 
         const responseData =
-          response?.data ?? {};
-
-        const categoryData =
-          responseData?.data ?? [];
-
-        const pagination =
-          responseData?.pagination ??
+          response?.data ??
+          response ??
           {};
 
-        const normalizedData =
+        const categoryData =
           Array.isArray(
-            categoryData
+            responseData
           )
-            ? categoryData
+            ? responseData
+            : Array.isArray(
+                responseData?.data
+              )
+            ? responseData.data
             : [];
 
+        const pagination =
+          !Array.isArray(
+            responseData
+          )
+            ? responseData?.pagination ??
+              {}
+            : {};
+
         setCategories(
-          normalizedData
+          categoryData
         );
 
         setTotalItems(
@@ -127,18 +135,18 @@ const Categories = () => {
         );
 
         /*
-         * Keep the existing section-content
-         * behavior.
+         * All categories contain the same
+         * section values.
          *
-         * Section content is stored with the
-         * categories, so use the first returned
-         * category as the source of the values.
+         * Therefore the first category on
+         * the current page can populate the
+         * global section form.
          */
         if (
-          normalizedData.length > 0
+          categoryData.length > 0
         ) {
           const firstCategory =
-            normalizedData[0];
+            categoryData[0];
 
           setSectionForm({
             section_title_fr:
@@ -172,7 +180,7 @@ const Categories = () => {
 
         setError(
           err?.response?.data?.message ||
-          "Failed to load categories."
+            "Failed to load categories."
         );
       } finally {
         setLoading(false);
@@ -182,7 +190,7 @@ const Categories = () => {
   );
 
   // =========================================================
-  // Initial / Page Load
+  // INITIAL LOAD / PAGINATION
   // =========================================================
 
   useEffect(() => {
@@ -193,10 +201,6 @@ const Categories = () => {
     currentPage,
     loadCategories,
   ]);
-
-  // =========================================================
-  // Keep Current Page Valid
-  // =========================================================
 
   useEffect(() => {
     if (
@@ -220,7 +224,7 @@ const Categories = () => {
   ]);
 
   // =========================================================
-  // Update Category Form
+  // CATEGORY FORM CHANGE
   // =========================================================
 
   const handleChange = (
@@ -233,25 +237,22 @@ const Categories = () => {
       checked,
     } = event.target;
 
-    setForm(
-      (current) => ({
-        ...current,
+    setForm((current) => ({
+      ...current,
 
-        [name]:
-          type ===
-            "checkbox"
-            ? checked
-              ? 1
-              : 0
-            : value,
-      })
-    );
+      [name]:
+        type === "checkbox"
+          ? checked
+            ? 1
+            : 0
+          : value,
+    }));
 
     setFormError("");
   };
 
   // =========================================================
-  // Update Section Form
+  // SECTION FORM CHANGE
   // =========================================================
 
   const handleSectionChange = (
@@ -274,7 +275,7 @@ const Categories = () => {
   };
 
   // =========================================================
-  // Add Category
+  // ADD
   // =========================================================
 
   const handleAdd = () => {
@@ -282,7 +283,6 @@ const Categories = () => {
 
     setForm({
       ...initialForm,
-
       display_order:
         totalItems + 1,
     });
@@ -295,7 +295,7 @@ const Categories = () => {
   };
 
   // =========================================================
-  // Edit Category
+  // EDIT
   // =========================================================
 
   const handleEdit = (
@@ -307,12 +307,10 @@ const Categories = () => {
 
     setForm({
       name_fr:
-        category.name_fr ??
-        "",
+        category.name_fr ?? "",
 
       name_en:
-        category.name_en ??
-        "",
+        category.name_en ?? "",
 
       description_fr:
         category.description_fr ??
@@ -323,8 +321,7 @@ const Categories = () => {
         "",
 
       display_order:
-        category.display_order ??
-        0,
+        category.display_order ?? 0,
 
       is_active:
         Number(
@@ -340,7 +337,70 @@ const Categories = () => {
   };
 
   // =========================================================
-  // Close Category Modal
+  // DELETE
+  // =========================================================
+
+  const handleDelete = async (
+    category
+  ) => {
+    if (!category?.id) {
+      return;
+    }
+
+    const confirmed =
+      window.confirm(
+        `Are you sure you want to delete "${
+          category.name_en ||
+          category.name_fr
+        }"?\n\nIf this category is assigned to any products, it cannot be deleted.`
+      );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setDeleting(true);
+      setError("");
+      setSuccess("");
+
+      await categoriesApi.remove(
+        category.id
+      );
+
+      setSuccess(
+        "Category deleted successfully."
+      );
+
+      if (
+        categories.length === 1 &&
+        currentPage > 1
+      ) {
+        setCurrentPage(
+          currentPage - 1
+        );
+      } else {
+        await loadCategories(
+          currentPage
+        );
+      }
+    } catch (err) {
+      console.error(
+        "Delete category error:",
+        err
+      );
+
+      setError(
+        err?.response?.data?.message ||
+          "Failed to delete category."
+      );
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  // =========================================================
+  // CLOSE MODAL
   // =========================================================
 
   const handleCloseModal = () => {
@@ -354,39 +414,90 @@ const Categories = () => {
   };
 
   // =========================================================
-  // Create Category Data
+  // CATEGORY DATA
   // =========================================================
 
   const createCategoryData =
     () => {
-      return {
-        name_fr:
-          form.name_fr.trim(),
+      const formData =
+        new FormData();
 
-        name_en:
-          form.name_en.trim(),
+      formData.append(
+        "name_fr",
+        form.name_fr.trim()
+      );
 
-        description_fr:
-          form.description_fr.trim(),
+      formData.append(
+        "name_en",
+        form.name_en.trim()
+      );
 
-        description_en:
-          form.description_en.trim(),
+      formData.append(
+        "description_fr",
+        form.description_fr.trim()
+      );
 
-        display_order:
+      formData.append(
+        "description_en",
+        form.description_en.trim()
+      );
+
+      formData.append(
+        "display_order",
+        String(
           Number(
             form.display_order
           ) ||
-          totalItems + 1,
+            totalItems + 1
+        )
+      );
 
-        is_active:
+      formData.append(
+        "is_active",
+        String(
           Number(
             form.is_active
-          ),
-      };
+          )
+        )
+      );
+
+      return formData;
     };
 
   // =========================================================
-  // Save Category
+  // SECTION DATA
+  // =========================================================
+
+  const createSectionData =
+    () => {
+      const formData =
+        new FormData();
+
+      formData.append(
+        "section_title_fr",
+        sectionForm.section_title_fr.trim()
+      );
+
+      formData.append(
+        "section_title_en",
+        sectionForm.section_title_en.trim()
+      );
+
+      formData.append(
+        "section_subtitle_fr",
+        sectionForm.section_subtitle_fr.trim()
+      );
+
+      formData.append(
+        "section_subtitle_en",
+        sectionForm.section_subtitle_en.trim()
+      );
+
+      return formData;
+    };
+
+  // =========================================================
+  // SAVE CATEGORY
   // =========================================================
 
   const handleSubmit = async (
@@ -421,17 +532,7 @@ const Categories = () => {
     try {
       setSaving(true);
 
-      const categoryData =
-        createCategoryData();
-
       if (editingCategory) {
-        /*
-         * Keep the original display order
-         * during the normal category update.
-         *
-         * Backend reorder handles the actual
-         * order change.
-         */
         const oldOrder =
           Number(
             editingCategory.display_order
@@ -439,17 +540,53 @@ const Categories = () => {
 
         const requestedOrder =
           Number(
-            categoryData.display_order
-          ) || 0;
+            form.display_order
+          ) || oldOrder;
+
+        const updateData =
+          new FormData();
+
+        updateData.append(
+          "name_fr",
+          form.name_fr.trim()
+        );
+
+        updateData.append(
+          "name_en",
+          form.name_en.trim()
+        );
+
+        updateData.append(
+          "description_fr",
+          form.description_fr.trim()
+        );
+
+        updateData.append(
+          "description_en",
+          form.description_en.trim()
+        );
+
+        /*
+         * Normal category update does not
+         * modify global section fields.
+         */
+        updateData.append(
+          "display_order",
+          String(oldOrder)
+        );
+
+        updateData.append(
+          "is_active",
+          String(
+            Number(
+              form.is_active
+            )
+          )
+        );
 
         await categoriesApi.update(
           editingCategory.id,
-          {
-            ...categoryData,
-
-            display_order:
-              oldOrder,
-          }
+          updateData
         );
 
         if (
@@ -467,7 +604,7 @@ const Categories = () => {
         );
       } else {
         await categoriesApi.create(
-          categoryData
+          createCategoryData()
         );
 
         setSuccess(
@@ -493,7 +630,7 @@ const Categories = () => {
 
       setFormError(
         err?.response?.data?.message ||
-        "Failed to save category."
+          "Failed to save category."
       );
     } finally {
       setSaving(false);
@@ -501,28 +638,7 @@ const Categories = () => {
   };
 
   // =========================================================
-  // Create Section Data
-  // =========================================================
-
-  const createSectionData =
-    () => {
-      return {
-        section_title_fr:
-          sectionForm.section_title_fr.trim(),
-
-        section_title_en:
-          sectionForm.section_title_en.trim(),
-
-        section_subtitle_fr:
-          sectionForm.section_subtitle_fr.trim(),
-
-        section_subtitle_en:
-          sectionForm.section_subtitle_en.trim(),
-      };
-    };
-
-  // =========================================================
-  // Save Categories Section Content
+  // SAVE GLOBAL SECTION
   // =========================================================
 
   const handleSaveSection =
@@ -548,22 +664,17 @@ const Categories = () => {
       try {
         setSectionSaving(true);
 
-        const sectionData =
-          createSectionData();
-
         /*
-         * Keep the original behavior:
-         * update the categories currently
-         * loaded on the page.
+         * IMPORTANT:
+         *
+         * This updates ALL categories through
+         * one backend query.
+         *
+         * It does NOT loop through the current
+         * pagination page.
          */
-        await Promise.all(
-          categories.map(
-            (category) =>
-              categoriesApi.update(
-                category.id,
-                sectionData
-              )
-          )
+        await categoriesApi.updateSection(
+          createSectionData()
         );
 
         await loadCategories(
@@ -581,7 +692,7 @@ const Categories = () => {
 
         setError(
           err?.response?.data?.message ||
-          "Failed to save Categories section content."
+            "Failed to save Categories section content."
         );
       } finally {
         setSectionSaving(false);
@@ -589,7 +700,7 @@ const Categories = () => {
     };
 
   // =========================================================
-  // Toggle Category Status
+  // TOGGLE STATUS
   // =========================================================
 
   const handleToggleStatus =
@@ -600,16 +711,23 @@ const Categories = () => {
         setError("");
         setSuccess("");
 
+        const updateData =
+          new FormData();
+
+        updateData.append(
+          "is_active",
+          String(
+            Number(
+              category.is_active
+            ) === 1
+              ? 0
+              : 1
+          )
+        );
+
         await categoriesApi.update(
           category.id,
-          {
-            is_active:
-              Number(
-                category.is_active
-              ) === 1
-                ? 0
-                : 1,
-          }
+          updateData
         );
 
         setSuccess(
@@ -631,13 +749,13 @@ const Categories = () => {
 
         setError(
           err?.response?.data?.message ||
-          "Failed to update category status."
+            "Failed to update category status."
         );
       }
     };
 
   // =========================================================
-  // Table Columns
+  // TABLE COLUMNS
   // =========================================================
 
   const columns = useMemo(
@@ -693,36 +811,37 @@ const Categories = () => {
         ) => (
           <button
             type="button"
-            className={`admin-status-button ${Number(value) === 1
-              ? "active"
-              : "inactive"
-              }`}
+            className={`admin-status-button ${
+              Number(value) === 1
+                ? "active"
+                : "inactive"
+            }`}
             onClick={() =>
               handleToggleStatus(
                 row
               )
             }
+            disabled={deleting}
           >
             <span className="admin-status-dot" />
 
-            {Number(value) ===
-              1
+            {Number(value) === 1
               ? "Active"
               : "Inactive"}
           </button>
         ),
       },
     ],
-    []
+    [deleting]
   );
 
   // =========================================================
-  // Render
+  // RENDER
   // =========================================================
 
   return (
     <div className="admin-page">
-      {/* Page header */}
+      {/* PAGE HEADER */}
 
       <div className="admin-page-header">
         <div>
@@ -739,10 +858,9 @@ const Categories = () => {
             displayed on your website.
           </p>
         </div>
-
       </div>
 
-      {/* Success message */}
+      {/* SUCCESS ALERT */}
 
       {success && (
         <div className="admin-alert admin-alert-success">
@@ -764,7 +882,7 @@ const Categories = () => {
         </div>
       )}
 
-      {/* Error message */}
+      {/* ERROR ALERT */}
 
       {error && (
         <div className="admin-alert admin-alert-error">
@@ -786,7 +904,7 @@ const Categories = () => {
         </div>
       )}
 
-      {/* Categories section content */}
+      {/* GLOBAL SECTION CONTENT */}
 
       <section className="admin-section-settings">
         <div className="admin-section-settings-header">
@@ -798,7 +916,7 @@ const Categories = () => {
             <p>
               Edit the title and subtitle
               displayed above the Categories
-              section on the public website.
+              section on your website.
             </p>
           </div>
 
@@ -816,11 +934,13 @@ const Categories = () => {
             {sectionSaving ? (
               <>
                 <span className="admin-button-spinner" />
+
                 Saving...
               </>
             ) : (
               <>
                 <i className="bi bi-check-lg" />
+
                 Save Section
               </>
             )}
@@ -932,11 +1052,13 @@ const Categories = () => {
         </div>
       </section>
 
+      {/* ADD CATEGORY BUTTON */}
 
       <div
         style={{
           display: "flex",
-          justifyContent: "flex-end",
+          justifyContent:
+            "flex-end",
           marginTop: "24px",
           marginBottom: "16px",
         }}
@@ -945,15 +1067,15 @@ const Categories = () => {
           type="button"
           className="admin-primary-button"
           onClick={handleAdd}
+          disabled={deleting}
         >
           <i className="bi bi-plus-lg" />
+
           Add Category
         </button>
       </div>
 
-
-
-      {/* Categories table */}
+      {/* TABLE */}
 
       <DataTable
         columns={columns}
@@ -961,10 +1083,12 @@ const Categories = () => {
         loading={loading}
         emptyMessage="No categories have been added yet."
         onEdit={handleEdit}
+        onDelete={handleDelete}
         editLabel="Edit"
+        deleteLabel="Delete"
       />
 
-      {/* Pagination */}
+      {/* PAGINATION */}
 
       <AdminPagination
         currentPage={currentPage}
@@ -977,7 +1101,7 @@ const Categories = () => {
         }
       />
 
-      {/* Add/Edit category modal */}
+      {/* ADD / EDIT MODAL */}
 
       <FormModal
         isOpen={isModalOpen}
@@ -1010,7 +1134,7 @@ const Categories = () => {
           </div>
         )}
 
-        {/* Category information */}
+        {/* CATEGORY INFORMATION */}
 
         <div className="admin-form-section">
           <div className="admin-form-section-header">
@@ -1103,7 +1227,7 @@ const Categories = () => {
           </div>
         </div>
 
-        {/* Display settings */}
+        {/* DISPLAY SETTINGS */}
 
         <div className="admin-form-section">
           <div className="admin-form-section-header">

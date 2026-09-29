@@ -7,33 +7,28 @@ const {
   getAdminCategoryById,
   createCategory,
   updateCategory,
+  updateCategorySection,
+  deleteCategory,
   reorderCategory,
   normalizeCategoryOrders,
 } = require("../controllers/categoryController");
 
 const authMiddleware = require("../middleware/authMiddleware");
 
-const {
-  createImageUpload,
-} = require("../middleware/uploadMiddleware");
-
 const router = express.Router();
 
-const categoryUpload =
-  createImageUpload("categories", "category");
-
-/* =========================================================
-   PUBLIC
-========================================================= */
+// =========================================================
+// PUBLIC
+// =========================================================
 
 router.get(
   "/",
   getCategories
 );
 
-/* =========================================================
-   ADMIN
-========================================================= */
+// =========================================================
+// ADMIN
+// =========================================================
 
 router.get(
   "/admin",
@@ -47,11 +42,20 @@ router.get(
   getAdminCategoryById
 );
 
-/* =========================================================
-   ADMIN ORDERING
-   IMPORTANT:
-   These must come before "/:id"
-========================================================= */
+// =========================================================
+// GLOBAL CATEGORY SECTION
+// IMPORTANT: before /:id
+// =========================================================
+
+router.put(
+  "/section",
+  authMiddleware,
+  updateCategorySection
+);
+
+// =========================================================
+// ORDERING
+// =========================================================
 
 router.post(
   "/normalize-orders",
@@ -65,30 +69,38 @@ router.put(
   reorderCategory
 );
 
-/* =========================================================
-   PUBLIC SINGLE CATEGORY
-========================================================= */
+// =========================================================
+// DELETE
+// =========================================================
+
+router.delete(
+  "/:id",
+  authMiddleware,
+  deleteCategory
+);
+
+// =========================================================
+// PUBLIC SINGLE CATEGORY
+// =========================================================
 
 router.get(
   "/:id",
   getCategoryById
 );
 
-/* =========================================================
-   ADMIN CREATE / UPDATE
-========================================================= */
+// =========================================================
+// CREATE / UPDATE
+// =========================================================
 
 router.post(
   "/",
   authMiddleware,
-  categoryUpload.single("image"),
   createCategory
 );
 
 router.put(
   "/:id",
   authMiddleware,
-  categoryUpload.single("image"),
   updateCategory
 );
 
