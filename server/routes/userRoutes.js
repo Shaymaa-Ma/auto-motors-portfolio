@@ -3,6 +3,8 @@ const express = require("express");
 const {
   getUsers,
   createUser,
+  updateMyProfile,
+  updateUser,
   updateUserStatus,
   deleteUser,
 } = require("../controllers/userController");
@@ -22,7 +24,7 @@ const router = express.Router();
 // AUTHENTICATION
 // =========================================================
 //
-// The administrator must first be authenticated.
+// Every route requires authentication.
 //
 // =========================================================
 
@@ -30,14 +32,30 @@ router.use(authMiddleware);
 
 
 // =========================================================
-// MAIN ADMIN ONLY
+// CURRENT USER PROFILE
 // =========================================================
 //
-// Everything below this point is restricted to:
+// Accessible by:
+// - super_admin
+// - Employee
+// - Manager
+// - any other authenticated role
 //
-// role = "super_admin"
+// Role/status cannot be changed by regular users.
+// =========================================================
+
+router.patch(
+  "/me",
+  updateMyProfile
+);
+
+
+// =========================================================
+// SUPER ADMIN ONLY
+// =========================================================
 //
-// Regular administrators receive HTTP 403.
+// Everything below this point requires:
+// role = super_admin
 //
 // =========================================================
 
@@ -46,7 +64,7 @@ router.use(requireSuperAdmin);
 
 // =========================================================
 // GET /api/users
-// Get all administrators
+// Get all users
 // =========================================================
 
 router.get(
@@ -57,7 +75,7 @@ router.get(
 
 // =========================================================
 // POST /api/users
-// Create regular administrator
+// Create user
 // =========================================================
 
 router.post(
@@ -67,8 +85,25 @@ router.post(
 
 
 // =========================================================
+// PATCH /api/users/:id
+// Edit user
+//
+// Super admin can edit:
+// - name
+// - email
+// - password
+// - role
+// =========================================================
+
+router.patch(
+  "/:id",
+  updateUser
+);
+
+
+// =========================================================
 // PATCH /api/users/:id/status
-// Activate / deactivate regular administrator
+// Activate / deactivate user
 // =========================================================
 
 router.patch(
@@ -79,7 +114,7 @@ router.patch(
 
 // =========================================================
 // DELETE /api/users/:id
-// Delete regular administrator
+// Delete user
 // =========================================================
 
 router.delete(

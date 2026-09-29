@@ -1087,16 +1087,6 @@ const Faqs = () => {
           </p>
         </div>
 
-        <button
-          type="button"
-          className="admin-primary-button"
-          onClick={handleAdd}
-          disabled={loading}
-        >
-          <i className="bi bi-plus-lg" />
-
-          Add FAQ
-        </button>
       </div>
 
       {/* ===================================================
@@ -1292,6 +1282,27 @@ const Faqs = () => {
           </div>
         )}
       </form>
+
+
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "flex-end",
+          marginTop: "24px",
+          marginBottom: "16px",
+        }}
+      >
+        <button
+          type="button"
+          className="admin-primary-button"
+          onClick={handleAdd}
+        >
+          <i className="bi bi-plus-lg" />
+          Add FAQ
+        </button>
+      </div>
+
+      
 
       {/* ===================================================
           FAQ TABLE

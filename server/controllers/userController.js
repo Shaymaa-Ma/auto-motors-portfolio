@@ -1,22 +1,11 @@
 const bcrypt = require("bcryptjs");
-
 const pool = require("../config/db");
 
-
 // =========================================================
-// HELPER
-// =========================================================
-//
-// Only the Main Administrator can manage administrator
-// accounts.
-//
-// The route middleware also checks this, but keeping the
-// protection inside the controller provides an additional
-// backend security layer.
-//
+// HELPERS
 // =========================================================
 
-const ensureSuperAdmin = (req, res) => {
+const ensureAuthenticated = (req, res) => {
   if (!req.admin) {
     res.status(401).json({
       success: false,
@@ -26,6 +15,18 @@ const ensureSuperAdmin = (req, res) => {
     return false;
   }
 
+  return true;
+};
+
+
+// =========================================================
+// SUPER ADMIN CHECK
+// =========================================================
+
+const ensureSuperAdmin = (req, res) => {
+  if (!ensureAuthenticated(req, res)) {
+    return false;
+  }
 
   if (req.admin.role !== "super_admin") {
     res.status(403).json({
@@ -37,8 +38,58 @@ const ensureSuperAdmin = (req, res) => {
     return false;
   }
 
-
   return true;
+};
+
+
+// =========================================================
+// VALIDATE ROLE
+// =========================================================
+//
+// Custom roles are allowed.
+//
+// IMPORTANT:
+// A newly created account cannot be given super_admin
+// privileges through the management form.
+//
+// =========================================================
+
+const validateUserRole = (role) => {
+  if (typeof role !== "string") {
+    return {
+      valid: false,
+      message: "Role is required.",
+    };
+  }
+
+  const cleanRole = role.trim();
+
+  if (!cleanRole) {
+    return {
+      valid: false,
+      message: "Role is required.",
+    };
+  }
+
+  if (cleanRole.length > 50) {
+    return {
+      valid: false,
+      message: "Role must not exceed 50 characters.",
+    };
+  }
+
+  if (cleanRole.toLowerCase() === "super_admin") {
+    return {
+      valid: false,
+      message:
+        "The super administrator role cannot be assigned to another account.",
+    };
+  }
+
+  return {
+    valid: true,
+    role: cleanRole,
+  };
 };
 
 
@@ -46,61 +97,43 @@ const ensureSuperAdmin = (req, res) => {
 // GET /api/users
 // Get all administrators
 //
-// ONLY Main Administrator
+// ONLY SUPER ADMIN
 // =========================================================
 
 const getUsers = async (req, res) => {
   try {
-
-    // -------------------------------------------------------
-    // Permission check
-    // -------------------------------------------------------
-
     if (!ensureSuperAdmin(req, res)) {
       return;
     }
 
-
-    // -------------------------------------------------------
-    // Get administrators
-    // -------------------------------------------------------
-
-    const [users] = await pool.execute(
-      `
-        SELECT
-          id,
-          name,
-          email,
-          role,
-          is_active
-        FROM admins
-        ORDER BY
-          CASE
-            WHEN role = 'super_admin' THEN 0
-            ELSE 1
-          END,
-          id DESC
-      `
-    );
-
+    const [users] = await pool.execute(`
+      SELECT
+        id,
+        name,
+        email,
+        role,
+        is_active,
+        created_at,
+        updated_at
+      FROM admins
+      ORDER BY
+        CASE
+          WHEN role = 'super_admin' THEN 0
+          ELSE 1
+        END,
+        id DESC
+    `);
 
     return res.status(200).json({
       success: true,
       users,
     });
-
   } catch (error) {
-
-    console.error(
-      "Get users error:",
-      error
-    );
-
+    console.error("Get users error:", error);
 
     return res.status(500).json({
       success: false,
-      message:
-        "Unable to retrieve administrators.",
+      message: "Unable to retrieve administrators.",
     });
   }
 };
@@ -108,32 +141,22 @@ const getUsers = async (req, res) => {
 
 // =========================================================
 // POST /api/users
-// Create administrator
+// Create user
 //
-// ONLY Main Administrator
-//
-// IMPORTANT:
-// The client cannot choose the role.
-// Every account created from this page is a regular admin.
-//
+// ONLY SUPER ADMIN
 // =========================================================
 
 const createUser = async (req, res) => {
   try {
-
-    // -------------------------------------------------------
-    // Permission check
-    // -------------------------------------------------------
-
     if (!ensureSuperAdmin(req, res)) {
       return;
     }
-
 
     const {
       name,
       email,
       password,
+      role,
     } = req.body;
 
 
@@ -144,12 +167,13 @@ const createUser = async (req, res) => {
     if (
       typeof name !== "string" ||
       typeof email !== "string" ||
-      typeof password !== "string"
+      typeof password !== "string" ||
+      typeof role !== "string"
     ) {
       return res.status(400).json({
         success: false,
         message:
-          "Name, email, and password are required.",
+          "Name, email, password, and role are required.",
       });
     }
 
@@ -158,8 +182,7 @@ const createUser = async (req, res) => {
     // Clean input
     // -------------------------------------------------------
 
-    const cleanName =
-      name.trim();
+    const cleanName = name.trim();
 
     const cleanEmail =
       email.trim().toLowerCase();
@@ -177,12 +200,23 @@ const createUser = async (req, res) => {
       });
     }
 
+    if (cleanName.length > 100) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Name must not exceed 100 characters.",
+      });
+    }
+
 
     // -------------------------------------------------------
     // Validate email
     // -------------------------------------------------------
 
-    if (cleanEmail.length === 0) {
+    if (
+      cleanEmail.length === 0 ||
+      cleanEmail.length > 191
+    ) {
       return res.status(400).json({
         success: false,
         message:
@@ -202,6 +236,24 @@ const createUser = async (req, res) => {
           "Password must contain at least 8 characters.",
       });
     }
+
+
+    // -------------------------------------------------------
+    // Validate role
+    // -------------------------------------------------------
+
+    const roleValidation =
+      validateUserRole(role);
+
+    if (!roleValidation.valid) {
+      return res.status(400).json({
+        success: false,
+        message: roleValidation.message,
+      });
+    }
+
+    const userRole =
+      roleValidation.role;
 
 
     // -------------------------------------------------------
@@ -241,27 +293,7 @@ const createUser = async (req, res) => {
 
 
     // -------------------------------------------------------
-    // IMPORTANT
-    //
-    // Administrator accounts created from the Main Admin
-    // dashboard are ALWAYS regular admins.
-    //
-    // Never accept "role" from req.body.
-    //
-    // This prevents somebody from sending:
-    //
-    // {
-    //   "role": "super_admin"
-    // }
-    //
-    // through Postman or another client.
-    // -------------------------------------------------------
-
-    const userRole = "admin";
-
-
-    // -------------------------------------------------------
-    // Insert administrator
+    // Create account
     // -------------------------------------------------------
 
     const [result] =
@@ -286,17 +318,11 @@ const createUser = async (req, res) => {
       );
 
 
-    // -------------------------------------------------------
-    // Return safe user information
-    //
-    // NEVER return password_hash.
-    // -------------------------------------------------------
-
     return res.status(201).json({
       success: true,
 
       message:
-        "Administrator created successfully.",
+        "User created successfully.",
 
       user: {
         id: result.insertId,
@@ -306,22 +332,10 @@ const createUser = async (req, res) => {
         is_active: 1,
       },
     });
-
   } catch (error) {
+    console.error("Create user error:", error);
 
-    console.error(
-      "Create user error:",
-      error
-    );
-
-
-    // -------------------------------------------------------
-    // Handle MySQL duplicate-email constraint
-    // -------------------------------------------------------
-
-    if (
-      error.code === "ER_DUP_ENTRY"
-    ) {
+    if (error.code === "ER_DUP_ENTRY") {
       return res.status(409).json({
         success: false,
         message:
@@ -329,49 +343,367 @@ const createUser = async (req, res) => {
       });
     }
 
-
     return res.status(500).json({
       success: false,
       message:
-        "Unable to create administrator.",
+        "Unable to create user.",
     });
   }
 };
 
 
 // =========================================================
-// PATCH /api/users/:id/status
-// Activate / deactivate administrator
+// PATCH /api/users/me
 //
-// ONLY Main Administrator
+// Edit currently logged-in user's profile.
+//
+// SUPER ADMIN:
+//   name
+//   email
+//   password
+//   role
+//
+// REGULAR USER:
+//   name
+//   email
+//   password
+//
+// Regular users cannot modify their role or status.
 // =========================================================
 
-const updateUserStatus = async (
+const updateMyProfile = async (
   req,
   res
 ) => {
   try {
-
-    // -------------------------------------------------------
-    // Permission check
-    // -------------------------------------------------------
-
-    if (!ensureSuperAdmin(req, res)) {
+    if (!ensureAuthenticated(req, res)) {
       return;
     }
 
-
-    const userId =
-      Number(req.params.id);
+    const currentAdminId =
+      Number(req.admin.id);
 
     const {
-      is_active,
+      name,
+      email,
+      password,
+      role,
     } = req.body;
 
 
     // -------------------------------------------------------
-    // Validate administrator ID
+    // Validate name
     // -------------------------------------------------------
+
+    if (
+      typeof name !== "string" ||
+      name.trim().length < 2
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Name must contain at least 2 characters.",
+      });
+    }
+
+    const cleanName =
+      name.trim();
+
+
+    if (cleanName.length > 100) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Name must not exceed 100 characters.",
+      });
+    }
+
+
+    // -------------------------------------------------------
+    // Validate email
+    // -------------------------------------------------------
+
+    if (
+      typeof email !== "string" ||
+      !email.trim()
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "A valid email address is required.",
+      });
+    }
+
+    const cleanEmail =
+      email.trim().toLowerCase();
+
+
+    if (cleanEmail.length > 191) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Email address is too long.",
+      });
+    }
+
+
+    // -------------------------------------------------------
+    // Check email ownership
+    // -------------------------------------------------------
+
+    const [existingUsers] =
+      await pool.execute(
+        `
+          SELECT id
+          FROM admins
+          WHERE email = ?
+            AND id <> ?
+          LIMIT 1
+        `,
+        [
+          cleanEmail,
+          currentAdminId,
+        ]
+      );
+
+
+    if (existingUsers.length > 0) {
+      return res.status(409).json({
+        success: false,
+        message:
+          "This email address is already in use.",
+      });
+    }
+
+
+    // -------------------------------------------------------
+    // Determine whether password is changing
+    // -------------------------------------------------------
+
+    let passwordHash = null;
+
+    if (
+      typeof password === "string" &&
+      password.length > 0
+    ) {
+      if (password.length < 8) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Password must contain at least 8 characters.",
+        });
+      }
+
+      passwordHash =
+        await bcrypt.hash(
+          password,
+          12
+        );
+    }
+
+
+    // -------------------------------------------------------
+    // SUPER ADMIN
+    // Can change own role.
+    // -------------------------------------------------------
+
+    if (
+      req.admin.role === "super_admin"
+    ) {
+      if (
+        typeof role !== "string" ||
+        !role.trim()
+      ) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Role is required.",
+        });
+      }
+
+      const cleanRole =
+        role.trim();
+
+      if (cleanRole.length > 50) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Role must not exceed 50 characters.",
+        });
+      }
+
+      // The current super admin may keep
+      // or change their own role.
+      //
+      // However, if they change it away from
+      // super_admin, they will lose super-admin
+      // access on the next authenticated request.
+
+      const finalRole =
+        cleanRole;
+
+
+      if (passwordHash) {
+        await pool.execute(
+          `
+            UPDATE admins
+            SET
+              name = ?,
+              email = ?,
+              password_hash = ?,
+              role = ?
+            WHERE id = ?
+          `,
+          [
+            cleanName,
+            cleanEmail,
+            passwordHash,
+            finalRole,
+            currentAdminId,
+          ]
+        );
+      } else {
+        await pool.execute(
+          `
+            UPDATE admins
+            SET
+              name = ?,
+              email = ?,
+              role = ?
+            WHERE id = ?
+          `,
+          [
+            cleanName,
+            cleanEmail,
+            finalRole,
+            currentAdminId,
+          ]
+        );
+      }
+    }
+
+    // -------------------------------------------------------
+    // REGULAR USER
+    // Role is NEVER changed from their own profile.
+    // -------------------------------------------------------
+
+    else {
+      if (passwordHash) {
+        await pool.execute(
+          `
+            UPDATE admins
+            SET
+              name = ?,
+              email = ?,
+              password_hash = ?
+            WHERE id = ?
+          `,
+          [
+            cleanName,
+            cleanEmail,
+            passwordHash,
+            currentAdminId,
+          ]
+        );
+      } else {
+        await pool.execute(
+          `
+            UPDATE admins
+            SET
+              name = ?,
+              email = ?
+            WHERE id = ?
+          `,
+          [
+            cleanName,
+            cleanEmail,
+            currentAdminId,
+          ]
+        );
+      }
+    }
+
+
+    // -------------------------------------------------------
+    // Get updated safe profile
+    // -------------------------------------------------------
+
+    const [updatedUsers] =
+      await pool.execute(
+        `
+          SELECT
+            id,
+            name,
+            email,
+            role,
+            is_active
+          FROM admins
+          WHERE id = ?
+          LIMIT 1
+        `,
+        [currentAdminId]
+      );
+
+
+    const updatedUser =
+      updatedUsers[0];
+
+
+    return res.status(200).json({
+      success: true,
+      message:
+        "Profile updated successfully.",
+      user: updatedUser,
+    });
+  } catch (error) {
+    console.error(
+      "Update own profile error:",
+      error
+    );
+
+    if (error.code === "ER_DUP_ENTRY") {
+      return res.status(409).json({
+        success: false,
+        message:
+          "This email address is already in use.",
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      message:
+        "Unable to update your profile.",
+    });
+  }
+};
+
+
+// =========================================================
+// PATCH /api/users/:id
+//
+// SUPER ADMIN ONLY
+//
+// Can edit:
+//   name
+//   email
+//   password
+//   role
+//
+// Status is deliberately handled by its own endpoint.
+// =========================================================
+
+const updateUser = async (
+  req,
+  res
+) => {
+  try {
+    if (!ensureSuperAdmin(req, res)) {
+      return;
+    }
+
+    const userId =
+      Number(req.params.id);
+
 
     if (
       !Number.isInteger(userId) ||
@@ -385,9 +717,314 @@ const updateUserStatus = async (
     }
 
 
+    const {
+      name,
+      email,
+      password,
+      role,
+    } = req.body;
+
+
+    if (
+      typeof name !== "string" ||
+      typeof email !== "string" ||
+      typeof role !== "string"
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Name, email, and role are required.",
+      });
+    }
+
+
+    const cleanName =
+      name.trim();
+
+    const cleanEmail =
+      email.trim().toLowerCase();
+
+    const cleanRole =
+      role.trim();
+
+
+    if (cleanName.length < 2) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Name must contain at least 2 characters.",
+      });
+    }
+
+
+    if (cleanName.length > 100) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Name must not exceed 100 characters.",
+      });
+    }
+
+
+    if (!cleanEmail) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "A valid email address is required.",
+      });
+    }
+
+
+    if (!cleanRole) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Role is required.",
+      });
+    }
+
+
+    if (cleanRole.length > 50) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Role must not exceed 50 characters.",
+      });
+    }
+
+
     // -------------------------------------------------------
-    // Validate status
+    // Find target
     // -------------------------------------------------------
+
+    const [targetUsers] =
+      await pool.execute(
+        `
+          SELECT
+            id,
+            name,
+            email,
+            role,
+            is_active
+          FROM admins
+          WHERE id = ?
+          LIMIT 1
+        `,
+        [userId]
+      );
+
+
+    if (targetUsers.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message:
+          "User not found.",
+      });
+    }
+
+
+    const targetUser =
+      targetUsers[0];
+
+
+    // -------------------------------------------------------
+    // Prevent changing the super-admin role of another
+    // account through this endpoint.
+    //
+    // The main super admin can edit their OWN role through
+    // /api/users/me.
+    // -------------------------------------------------------
+
+    if (
+      targetUser.role === "super_admin" &&
+      userId !== Number(req.admin.id)
+    ) {
+      return res.status(403).json({
+        success: false,
+        message:
+          "The Main Administrator account can only be edited from its own profile.",
+      });
+    }
+
+
+    // -------------------------------------------------------
+    // Prevent creating another super_admin
+    // through normal user management.
+    // -------------------------------------------------------
+
+    if (
+      cleanRole.toLowerCase() ===
+      "super_admin"
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "The super administrator role cannot be assigned to another account.",
+      });
+    }
+
+
+    // -------------------------------------------------------
+    // Check duplicate email
+    // -------------------------------------------------------
+
+    const [existingUsers] =
+      await pool.execute(
+        `
+          SELECT id
+          FROM admins
+          WHERE email = ?
+            AND id <> ?
+          LIMIT 1
+        `,
+        [
+          cleanEmail,
+          userId,
+        ]
+      );
+
+
+    if (existingUsers.length > 0) {
+      return res.status(409).json({
+        success: false,
+        message:
+          "This email address is already in use.",
+      });
+    }
+
+
+    // -------------------------------------------------------
+    // Password
+    // -------------------------------------------------------
+
+    let passwordHash = null;
+
+    if (
+      typeof password === "string" &&
+      password.length > 0
+    ) {
+      if (password.length < 8) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "Password must contain at least 8 characters.",
+        });
+      }
+
+      passwordHash =
+        await bcrypt.hash(
+          password,
+          12
+        );
+    }
+
+
+    // -------------------------------------------------------
+    // Update
+    // -------------------------------------------------------
+
+    if (passwordHash) {
+      await pool.execute(
+        `
+          UPDATE admins
+          SET
+            name = ?,
+            email = ?,
+            password_hash = ?,
+            role = ?
+          WHERE id = ?
+        `,
+        [
+          cleanName,
+          cleanEmail,
+          passwordHash,
+          cleanRole,
+          userId,
+        ]
+      );
+    } else {
+      await pool.execute(
+        `
+          UPDATE admins
+          SET
+            name = ?,
+            email = ?,
+            role = ?
+          WHERE id = ?
+        `,
+        [
+          cleanName,
+          cleanEmail,
+          cleanRole,
+          userId,
+        ]
+      );
+    }
+
+
+    return res.status(200).json({
+      success: true,
+      message:
+        "User information updated successfully.",
+    });
+  } catch (error) {
+    console.error(
+      "Update user error:",
+      error
+    );
+
+    if (error.code === "ER_DUP_ENTRY") {
+      return res.status(409).json({
+        success: false,
+        message:
+          "This email address is already in use.",
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      message:
+        "Unable to update user information.",
+    });
+  }
+};
+
+
+// =========================================================
+// PATCH /api/users/:id/status
+// Activate / deactivate user
+//
+// ONLY SUPER ADMIN
+// =========================================================
+
+const updateUserStatus = async (
+  req,
+  res
+) => {
+  try {
+    if (!ensureSuperAdmin(req, res)) {
+      return;
+    }
+
+    const userId =
+      Number(req.params.id);
+
+    const {
+      is_active,
+    } = req.body;
+
+
+    if (
+      !Number.isInteger(userId) ||
+      userId <= 0
+    ) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Invalid user ID.",
+      });
+    }
+
 
     if (
       is_active !== 0 &&
@@ -419,7 +1056,7 @@ const updateUserStatus = async (
 
 
     // -------------------------------------------------------
-    // Get target administrator
+    // Find target
     // -------------------------------------------------------
 
     const [targetUsers] =
@@ -440,7 +1077,7 @@ const updateUserStatus = async (
       return res.status(404).json({
         success: false,
         message:
-          "Administrator not found.",
+          "User not found.",
       });
     }
 
@@ -450,13 +1087,7 @@ const updateUserStatus = async (
 
 
     // -------------------------------------------------------
-    // IMPORTANT:
-    //
-    // A Main Administrator cannot be managed through this
-    // regular administrator-management action.
-    //
-    // This protects the Main Administrator account from
-    // accidental or unauthorized deactivation.
+    // Never deactivate super admin
     // -------------------------------------------------------
 
     if (
@@ -470,10 +1101,6 @@ const updateUserStatus = async (
     }
 
 
-    // -------------------------------------------------------
-    // Normalize status
-    // -------------------------------------------------------
-
     const activeValue =
       is_active === true ||
       is_active === 1
@@ -481,17 +1108,13 @@ const updateUserStatus = async (
         : 0;
 
 
-    // -------------------------------------------------------
-    // Update account
-    // -------------------------------------------------------
-
     const [result] =
       await pool.execute(
         `
           UPDATE admins
           SET is_active = ?
           WHERE id = ?
-            AND role = 'admin'
+            AND role <> 'super_admin'
         `,
         [
           activeValue,
@@ -506,7 +1129,7 @@ const updateUserStatus = async (
       return res.status(404).json({
         success: false,
         message:
-          "Administrator not found.",
+          "User not found.",
       });
     }
 
@@ -516,22 +1139,19 @@ const updateUserStatus = async (
 
       message:
         activeValue === 1
-          ? "Administrator activated successfully."
-          : "Administrator deactivated successfully.",
+          ? "User activated successfully."
+          : "User deactivated successfully.",
     });
-
   } catch (error) {
-
     console.error(
       "Update user status error:",
       error
     );
 
-
     return res.status(500).json({
       success: false,
       message:
-        "Unable to update administrator status.",
+        "Unable to update account status.",
     });
   }
 };
@@ -539,9 +1159,9 @@ const updateUserStatus = async (
 
 // =========================================================
 // DELETE /api/users/:id
-// Delete administrator
+// Delete user
 //
-// ONLY Main Administrator
+// ONLY SUPER ADMIN
 // =========================================================
 
 const deleteUser = async (
@@ -549,23 +1169,13 @@ const deleteUser = async (
   res
 ) => {
   try {
-
-    // -------------------------------------------------------
-    // Permission check
-    // -------------------------------------------------------
-
     if (!ensureSuperAdmin(req, res)) {
       return;
     }
 
-
     const userId =
       Number(req.params.id);
 
-
-    // -------------------------------------------------------
-    // Validate administrator ID
-    // -------------------------------------------------------
 
     if (
       !Number.isInteger(userId) ||
@@ -574,7 +1184,7 @@ const deleteUser = async (
       return res.status(400).json({
         success: false,
         message:
-          "Invalid administrator ID.",
+          "Invalid user ID.",
       });
     }
 
@@ -595,7 +1205,7 @@ const deleteUser = async (
 
 
     // -------------------------------------------------------
-    // Get target administrator
+    // Find target
     // -------------------------------------------------------
 
     const [targetUsers] =
@@ -612,13 +1222,11 @@ const deleteUser = async (
       );
 
 
-    if (
-      targetUsers.length === 0
-    ) {
+    if (targetUsers.length === 0) {
       return res.status(404).json({
         success: false,
         message:
-          "Administrator not found.",
+          "User not found.",
       });
     }
 
@@ -628,7 +1236,7 @@ const deleteUser = async (
 
 
     // -------------------------------------------------------
-    // NEVER allow deletion of Main Administrator
+    // Never delete super admin
     // -------------------------------------------------------
 
     if (
@@ -643,7 +1251,7 @@ const deleteUser = async (
 
 
     // -------------------------------------------------------
-    // Delete ONLY regular administrators
+    // Delete user
     // -------------------------------------------------------
 
     const [result] =
@@ -651,7 +1259,7 @@ const deleteUser = async (
         `
           DELETE FROM admins
           WHERE id = ?
-            AND role = 'admin'
+            AND role <> 'super_admin'
         `,
         [userId]
       );
@@ -663,30 +1271,26 @@ const deleteUser = async (
       return res.status(404).json({
         success: false,
         message:
-          "Administrator not found.",
+          "User not found.",
       });
     }
 
 
     return res.status(200).json({
       success: true,
-
       message:
-        "Administrator deleted successfully.",
+        "User deleted successfully.",
     });
-
   } catch (error) {
-
     console.error(
       "Delete user error:",
       error
     );
 
-
     return res.status(500).json({
       success: false,
       message:
-        "Unable to delete administrator.",
+        "Unable to delete user.",
     });
   }
 };
@@ -699,6 +1303,8 @@ const deleteUser = async (
 module.exports = {
   getUsers,
   createUser,
+  updateMyProfile,
+  updateUser,
   updateUserStatus,
   deleteUser,
 };

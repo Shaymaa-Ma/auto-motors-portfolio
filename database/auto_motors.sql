@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1:3306
--- Generation Time: Sep 23, 2026 at 09:28 AM
+-- Generation Time: Sep 29, 2026 at 11:21 AM
 -- Server version: 8.4.7
 -- PHP Version: 8.3.28
 
@@ -71,24 +71,21 @@ CREATE TABLE IF NOT EXISTS `admins` (
   `name` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
   `email` varchar(191) COLLATE utf8mb4_unicode_ci NOT NULL,
   `password_hash` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `role` enum('admin','super_admin') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'admin',
+  `role` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'Employee',
   `is_active` tinyint(1) NOT NULL DEFAULT '1',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `failed_login_attempts` int NOT NULL DEFAULT '0',
-  `login_blocked_until` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `email` (`email`),
-  UNIQUE KEY `unique_admin_email` (`email`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  UNIQUE KEY `email` (`email`)
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `admins`
 --
 
-INSERT INTO `admins` (`id`, `name`, `email`, `password_hash`, `role`, `is_active`, `created_at`, `updated_at`, `failed_login_attempts`, `login_blocked_until`) VALUES
-(1, 'Admin Management', 'Motorsauto166@gmail.com', '$2b$10$dchX1ti7IktyrzPlrzHECeNKQiIwa88NWfGNnycofrkYweFq0fWU2', 'super_admin', 1, '2026-09-08 13:56:39', '2026-09-23 09:06:46', 1, NULL),
-(3, 'Shaymaa Mashaal', 'shaimaamashaal73@gmail.com', '$2b$12$gV/rJULZ2zlRC8lwWD63A.YZMC0J/6EcA9YoZf7jWXVKd0sKOm8ES', 'admin', 1, '2026-09-16 08:47:06', '2026-09-23 07:18:53', 1, NULL);
+INSERT INTO `admins` (`id`, `name`, `email`, `password_hash`, `role`, `is_active`, `created_at`, `updated_at`) VALUES
+(1, 'Admin Management', 'motorsauto166@gmail.com', '$2b$10$dchX1ti7IktyrzPlrzHECeNKQiIwa88NWfGNnycofrkYweFq0fWU2', 'super_admin', 1, '2026-09-08 13:56:39', '2026-09-29 10:03:38'),
+(4, 'Shaymaa Mashaal', 'shaimaamashaal73@gmail.com', '$2b$12$PUPhpweqiwLMUMHTgbqlJ.t9CQvm1D7IeMFOoFIYldpNL9PDAJKZy', 'Employee', 1, '2026-09-29 09:54:19', '2026-09-29 10:01:35');
 
 -- --------------------------------------------------------
 
@@ -272,12 +269,12 @@ CREATE TABLE IF NOT EXISTS `gallery` (
 --
 
 INSERT INTO `gallery` (`id`, `section_title_fr`, `section_title_en`, `section_subtitle_fr`, `section_subtitle_en`, `title_fr`, `title_en`, `description_fr`, `description_en`, `image`, `display_order`, `is_active`, `created_at`, `updated_at`) VALUES
-(1, 'Découvrez notre activité', 'Discover Our Business', 'Un aperçu de notre entreprise, de nos produits et de notre activité', 'An overview of our company, products and activities', 'Notre entreprise', 'Our Company', 'Découvrez l’environnement et les installations d’AUTO MOTORS SARL.', 'Discover the environment and facilities of AUTO MOTORS SARL.', 'gallery/company.jpg', 1, 1, '2026-09-05 07:20:28', '2026-09-22 17:21:31'),
-(2, 'Découvrez notre activité', 'Discover Our Business', 'Un aperçu de notre entreprise, de nos produits et de notre activité', 'An overview of our company, products and activities', 'Nos produits', 'Our Products', 'Une sélection de produits automobiles.', 'A selection of automotive products.', 'gallery/products.jpg', 2, 1, '2026-09-05 07:20:28', '2026-09-22 17:21:31'),
-(3, 'Découvrez notre activité', 'Discover Our Business', 'Un aperçu de notre entreprise, de nos produits et de notre activité', 'An overview of our company, products and activities', 'Notre équipe', 'Our Team', 'Une équipe dédiée au service de nos clients.', 'A team dedicated to serving our customers.', 'gallery/team.jpg', 3, 1, '2026-09-05 07:20:28', '2026-09-22 17:21:31'),
-(4, 'Découvrez notre activité', 'Discover Our Business', 'Un aperçu de notre entreprise, de nos produits et de notre activité', 'An overview of our company, products and activities', 'Notre espace de travail', 'Our Workplace', 'Un environnement organisé pour assurer un service fiable.', 'An organized environment designed to provide reliable service.', 'gallery/workplace.jpg', 4, 1, '2026-09-05 07:20:28', '2026-09-22 17:21:31'),
-(5, 'Découvrez notre activité', 'Discover Our Business', 'Un aperçu de notre entreprise, de nos produits et de notre activité', 'An overview of our company, products and activities', 'Distribution', 'Distribution', 'Distribution de nos produits selon les besoins de nos clients.', 'Distribution of our products according to our customers’ needs.', 'gallery/distribution.jpg', 5, 1, '2026-09-05 07:20:28', '2026-09-22 17:21:31'),
-(6, 'Découvrez notre activité', 'Discover Our Business', 'Un aperçu de notre entreprise, de nos produits et de notre activité', 'An overview of our company, products and activities', 'Pièces automobiles', 'Automotive Parts', 'Différentes pièces et équipements automobiles.', 'Different automotive parts and equipment.', 'gallery/spare-parts.jpg', 6, 1, '2026-09-05 07:20:28', '2026-09-22 17:21:31');
+(1, 'Découvrez notre activité', 'Discover Our Business', 'Un aperçu de notre entreprise, de nos produits et de notre activité', 'An overview of our company, products and activities', 'Notre entreprise', 'Our Company', 'Découvrez l’environnement et les installations d’AUTO MOTORS SARL.', 'Discover the environment and facilities of AUTO MOTORS SARL.', 'gallery/company.jpg', 1, 1, '2026-09-05 07:20:28', '2026-09-23 10:33:48'),
+(2, 'Découvrez notre activité', 'Discover Our Business', 'Un aperçu de notre entreprise, de nos produits et de notre activité', 'An overview of our company, products and activities', 'Nos produits', 'Our Products', 'Une sélection de produits automobiles.', 'A selection of automotive products.', 'gallery/products-1.jpg', 2, 1, '2026-09-05 07:20:28', '2026-09-23 10:33:48'),
+(3, 'Découvrez notre activité', 'Discover Our Business', 'Un aperçu de notre entreprise, de nos produits et de notre activité', 'An overview of our company, products and activities', 'Notre équipe', 'Our Team', 'Une équipe dédiée au service de nos clients.', 'A team dedicated to serving our customers.', 'gallery/team.jpg', 3, 1, '2026-09-05 07:20:28', '2026-09-23 10:33:48'),
+(4, 'Découvrez notre activité', 'Discover Our Business', 'Un aperçu de notre entreprise, de nos produits et de notre activité', 'An overview of our company, products and activities', 'Notre espace de travail', 'Our Workplace', 'Un environnement organisé pour assurer un service fiable.', 'An organized environment designed to provide reliable service.', 'gallery/workplace.jpg', 4, 1, '2026-09-05 07:20:28', '2026-09-23 10:33:48'),
+(5, 'Découvrez notre activité', 'Discover Our Business', 'Un aperçu de notre entreprise, de nos produits et de notre activité', 'An overview of our company, products and activities', 'Distribution', 'Distribution', 'Distribution de nos produits selon les besoins de nos clients.', 'Distribution of our products according to our customers’ needs.', 'gallery/distribution.jpg', 5, 1, '2026-09-05 07:20:28', '2026-09-23 10:33:48'),
+(6, 'Découvrez notre activité', 'Discover Our Business', 'Un aperçu de notre entreprise, de nos produits et de notre activité', 'An overview of our company, products and activities', 'Pièces automobiles', 'Automotive Parts', 'Différentes pièces et équipements automobiles.', 'Different automotive parts and equipment.', 'gallery/spare-parts-1.jpg', 6, 1, '2026-09-05 07:20:28', '2026-09-23 10:33:48');
 
 -- --------------------------------------------------------
 
@@ -310,7 +307,7 @@ CREATE TABLE IF NOT EXISTS `hero` (
 --
 
 INSERT INTO `hero` (`id`, `title_fr`, `title_en`, `subtitle_fr`, `subtitle_en`, `description_fr`, `description_en`, `primary_button_fr`, `primary_button_en`, `secondary_button_fr`, `secondary_button_en`, `background_image_desktop`, `created_at`, `updated_at`, `background_image_mobile`) VALUES
-(1, 'AUTO MOTORS SARL', 'AUTO MOTORS SARL', 'Votre partenaire en pièces automobiles', 'Your Automotive Parts Partner', 'Des produits de qualité, des prix compétitifs et un service fiable pour répondre aux besoins des particuliers et des professionnels.', 'Quality products, competitive prices and reliable service to meet the needs of individuals and professionals.', 'Découvrir nos produits', 'Explore Our Products', 'Nous contacter', 'Contact Us', 'hero/hero-main-desktop.jpg', '2026-09-05 07:20:28', '2026-09-23 08:49:19', 'hero/hero-main-mobile.png');
+(1, 'AUTO MOTORS SARL', 'AUTO MOTORS SARL', 'Votre partenaire en pièces automobiles', 'Your Automotive Parts Partner', 'Des produits de qualité, des prix compétitifs et un service fiable pour répondre aux besoins des particuliers et des professionnels.', 'Quality products, competitive prices and reliable service to meet the needs of individuals and professionals.', 'Découvrir nos produits', 'Explore Our Products', 'Nous contacter', 'Contact Us', 'hero/hero-main-desktop.jpg', '2026-09-05 07:20:28', '2026-09-23 09:58:08', 'hero/hero-main-mobile.png');
 
 -- --------------------------------------------------------
 
@@ -497,20 +494,20 @@ CREATE TABLE IF NOT EXISTS `vehicles` (
   PRIMARY KEY (`id`),
   KEY `idx_vehicles_order` (`display_order`,`id`),
   KEY `idx_vehicles_active_order` (`is_active`,`display_order`,`id`)
-) ENGINE=MyISAM AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `vehicles`
 --
 
 INSERT INTO `vehicles` (`id`, `section_title_fr`, `section_title_en`, `section_subtitle_fr`, `section_subtitle_en`, `type_fr`, `type_en`, `name_fr`, `name_en`, `description_fr`, `description_en`, `image`, `display_order`, `is_active`, `created_at`, `updated_at`, `icon`) VALUES
-(1, 'Des solutions pour différents types de véhicules', 'Solutions for Different Types of Vehicles', 'Des produits adaptés aux véhicules légers et poids lourds', 'Products suitable for light and heavy-duty vehicles', 'Camionnette', 'Light Truck', 'Kia', 'Kia', 'Produits adaptés aux véhicules utilitaires Kia.', 'Products suitable for Kia light commercial vehicles.', 'vehicles/kia.jpg', 1, 1, '2026-09-05 07:20:28', '2026-09-23 08:53:00', 'bi-truck'),
-(2, 'Des solutions pour différents types de véhicules', 'Solutions for Different Types of Vehicles', 'Des produits adaptés aux véhicules légers et poids lourds', 'Products suitable for light and heavy-duty vehicles', 'Camionnette', 'Light Truck', 'Hyundai', 'Hyundai', 'Produits adaptés aux véhicules utilitaires Hyundai.', 'Products suitable for Hyundai light commercial vehicles.', 'vehicles/hyundai.jpg', 2, 1, '2026-09-05 07:20:28', '2026-09-22 19:00:15', 'bi-truck'),
-(3, 'Des solutions pour différents types de véhicules', 'Solutions for Different Types of Vehicles', 'Des produits adaptés aux véhicules légers et poids lourds', 'Products suitable for light and heavy-duty vehicles', 'Camionnette', 'Light Truck', 'Canter', 'Canter', 'Produits adaptés aux véhicules Canter.', 'Products suitable for Canter vehicles.', 'vehicles/canter.jpg', 3, 1, '2026-09-05 07:20:28', '2026-09-22 19:00:15', 'bi-truck'),
-(4, 'Des solutions pour différents types de véhicules', 'Solutions for Different Types of Vehicles', 'Des produits adaptés aux véhicules légers et poids lourds', 'Products suitable for light and heavy-duty vehicles', 'Poids lourds', 'Heavy Duty', 'Mercedes', 'Mercedes', 'Produits adaptés aux véhicules lourds Mercedes.', 'Products suitable for Mercedes heavy-duty vehicles.', 'vehicles/mercedes.jpg', 4, 1, '2026-09-05 07:20:28', '2026-09-22 19:00:15', 'bi-truck'),
-(5, 'Des solutions pour différents types de véhicules', 'Solutions for Different Types of Vehicles', 'Des produits adaptés aux véhicules légers et poids lourds', 'Products suitable for light and heavy-duty vehicles', 'Poids lourds', 'Heavy Duty', 'Sinotruk', 'Sinotruk', 'Produits adaptés aux véhicules lourds Sinotruk.', 'Products suitable for Sinotruk heavy-duty vehicles.', 'vehicles/sinotruk.jpg', 5, 1, '2026-09-05 07:20:28', '2026-09-22 19:00:15', 'bi-truck'),
-(6, 'Des solutions pour différents types de véhicules', 'Solutions for Different Types of Vehicles', 'Des produits adaptés aux véhicules légers et poids lourds', 'Products suitable for light and heavy-duty vehicles', 'Poids lourds', 'Heavy Duty', 'DAF', 'DAF', 'Produits adaptés aux véhicules lourds DAF.', 'Products suitable for DAF heavy-duty vehicles.', 'vehicles/daf.jpg', 6, 1, '2026-09-05 07:20:28', '2026-09-22 19:00:15', 'bi-truck'),
-(7, 'Des solutions pour différents types de véhicules', 'Solutions for Different Types of Vehicles', 'Des produits adaptés aux véhicules légers et poids lourds', 'Products suitable for light and heavy-duty vehicles', 'Poids lourds', 'Heavy Duty', 'Renault', 'Renault', 'Produits adaptés aux véhicules lourds Renault.', 'Products suitable for Renault heavy-duty vehicles.', 'vehicles/renault.jpg', 7, 1, '2026-09-05 07:20:28', '2026-09-22 19:00:15', 'bi-truck');
+(1, 'Des solutions pour différents types de véhicules', 'Solutions for Different Types of Vehicles', 'Des produits adaptés aux véhicules légers et poids lourds', 'Products suitable for light and heavy-duty vehicles', 'Camionnette', 'Light Truck', 'Kia', 'Kia', 'Produits adaptés aux véhicules utilitaires Kia.', 'Products suitable for Kia light commercial vehicles.', 'vehicles/kia.jpg', 1, 1, '2026-09-05 07:20:28', '2026-09-29 10:54:14', 'bi-truck'),
+(2, 'Des solutions pour différents types de véhicules', 'Solutions for Different Types of Vehicles', 'Des produits adaptés aux véhicules légers et poids lourds', 'Products suitable for light and heavy-duty vehicles', 'Camionnette', 'Light Truck', 'Hyundai', 'Hyundai', 'Produits adaptés aux véhicules utilitaires Hyundai.', 'Products suitable for Hyundai light commercial vehicles.', 'vehicles/hyundai.jpg', 2, 1, '2026-09-05 07:20:28', '2026-09-29 10:54:14', 'bi-truck'),
+(3, 'Des solutions pour différents types de véhicules', 'Solutions for Different Types of Vehicles', 'Des produits adaptés aux véhicules légers et poids lourds', 'Products suitable for light and heavy-duty vehicles', 'Camionnette', 'Light Truck', 'Canter', 'Canter', 'Produits adaptés aux véhicules Canter.', 'Products suitable for Canter vehicles.', 'vehicles/canter.jpg', 3, 1, '2026-09-05 07:20:28', '2026-09-29 10:54:14', 'bi-truck'),
+(4, 'Des solutions pour différents types de véhicules', 'Solutions for Different Types of Vehicles', 'Des produits adaptés aux véhicules légers et poids lourds', 'Products suitable for light and heavy-duty vehicles', 'Poids lourds', 'Heavy Duty', 'Mercedes', 'Mercedes', 'Produits adaptés aux véhicules lourds Mercedes.', 'Products suitable for Mercedes heavy-duty vehicles.', 'vehicles/mercedes.jpg', 4, 1, '2026-09-05 07:20:28', '2026-09-29 10:54:14', 'bi-truck'),
+(5, 'Des solutions pour différents types de véhicules', 'Solutions for Different Types of Vehicles', 'Des produits adaptés aux véhicules légers et poids lourds', 'Products suitable for light and heavy-duty vehicles', 'Poids lourds', 'Heavy Duty', 'Sinotruk', 'Sinotruk', 'Produits adaptés aux véhicules lourds Sinotruk.', 'Products suitable for Sinotruk heavy-duty vehicles.', 'vehicles/sinotruk.jpg', 5, 1, '2026-09-05 07:20:28', '2026-09-29 10:54:14', 'bi-truck'),
+(6, 'Des solutions pour différents types de véhicules', 'Solutions for Different Types of Vehicles', 'Des produits adaptés aux véhicules légers et poids lourds', 'Products suitable for light and heavy-duty vehicles', 'Poids lourds', 'Heavy Duty', 'DAF', 'DAF', 'Produits adaptés aux véhicules lourds DAF.', 'Products suitable for DAF heavy-duty vehicles.', 'vehicles/daf.jpg', 6, 1, '2026-09-05 07:20:28', '2026-09-29 10:54:14', 'bi-truck'),
+(7, 'Des solutions pour différents types de véhicules', 'Solutions for Different Types of Vehicles', 'Des produits adaptés aux véhicules légers et poids lourds', 'Products suitable for light and heavy-duty vehicles', 'Poids lourds', 'Heavy Duty', 'Renault', 'Renault', 'Produits adaptés aux véhicules lourds Renault.', 'Products suitable for Renault heavy-duty vehicles.', 'vehicles/renault.jpg', 7, 1, '2026-09-05 07:20:28', '2026-09-29 10:54:14', 'bi-truck');
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

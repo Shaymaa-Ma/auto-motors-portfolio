@@ -780,14 +780,6 @@ const Services = () => {
           </p>
         </div>
 
-        <button
-          type="button"
-          className="admin-primary-button"
-          onClick={handleAdd}
-        >
-          <i className="bi bi-plus-lg" />
-          Add Service
-        </button>
       </div>
 
       {/* Success message */}
@@ -976,6 +968,25 @@ const Services = () => {
           </div>
         </div>
       </section>
+
+      {/* Services table actions */}
+<div
+  style={{
+    display: "flex",
+    justifyContent: "flex-end",
+    marginTop: "24px",
+    marginBottom: "16px",
+  }}
+>
+  <button
+    type="button"
+    className="admin-primary-button"
+    onClick={handleAdd}
+  >
+    <i className="bi bi-plus-lg" />
+    Add Service
+  </button>
+</div>
 
       {/* Services table */}
       <DataTable

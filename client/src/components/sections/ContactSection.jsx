@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useLanguage } from "../../context/LanguageContext";
@@ -50,7 +49,9 @@ const ContactSection = () => {
   */
 
   const getLocalizedValue = (field) => {
-    if (!contact) return "";
+    if (!contact) {
+      return "";
+    }
 
     return contact[`${field}_${language}`] || "";
   };
@@ -67,7 +68,7 @@ const ContactSection = () => {
 
   const callButton =
     getLocalizedValue("call_button") ||
-    (language === "fr" ? "Nous appeler" : "Call us");
+    (language === "fr" ? "Nous contacter" : "Contact us");
 
   const followTitle =
     getLocalizedValue("follow_title") ||
@@ -131,6 +132,66 @@ const ContactSection = () => {
 
   const deliveryAvailable =
     Number(contact.delivery_available) === 1;
+
+  /*
+  |--------------------------------------------------------------------------
+  | WHATSAPP URL
+  |
+  | Phone numbers are stored in the database using Côte d'Ivoire's
+  | local format.
+  |
+  | Example:
+  |
+  | 0749616161
+  |
+  | WhatsApp requires the international format:
+  |
+  | 2250749616161
+  |
+  | The database value is NOT modified.
+  |
+  | This helper is used for:
+  | - Main contact button
+  | - Phone 1
+  | - Phone 2
+  | - Phone 3
+  |--------------------------------------------------------------------------
+  */
+
+  const getWhatsAppUrl = (phone) => {
+    if (!phone) {
+      return "#";
+    }
+
+    /*
+     * Remove spaces, +, parentheses, dashes, etc.
+     *
+     * Example:
+     * "+225 07 49 61 61 61"
+     *
+     * becomes:
+     * "2250749616161"
+     */
+    let cleanPhone = String(phone).replace(/\D/g, "");
+
+    /*
+     * Convert Côte d'Ivoire local format.
+     *
+     * Example:
+     * 0749616161
+     *      ↓
+     * 2250749616161
+     */
+    if (cleanPhone.startsWith("0")) {
+      cleanPhone = `225${cleanPhone}`;
+    }
+
+    /*
+     * If the number is already in international format,
+     * it remains unchanged.
+     */
+    return `https://wa.me/${cleanPhone}`;
+  };
 
   /*
   |--------------------------------------------------------------------------
@@ -330,12 +391,16 @@ const ContactSection = () => {
               <p>{introDescription}</p>
             )}
 
-            {/* Call button */}
+            {/* ============================================================
+                MAIN WHATSAPP CONTACT BUTTON
+                ============================================================ */}
 
             {company.phone_1 && (
               <motion.a
-                href={`tel:${company.phone_1}`}
+                href={getWhatsAppUrl(company.phone_1)}
                 className="contact__call"
+                target="_blank"
+                rel="noopener noreferrer"
                 whileHover={{
                   x: 5,
                 }}
@@ -346,9 +411,14 @@ const ContactSection = () => {
                   duration: 0.2,
                   ease: "easeOut",
                 }}
+                aria-label={
+                  language === "fr"
+                    ? "Nous contacter sur WhatsApp"
+                    : "Contact us on WhatsApp"
+                }
               >
                 <motion.i
-                  className="bi bi-telephone"
+                  className="bi bi-whatsapp"
                   aria-hidden="true"
                   whileHover={{
                     scale: 1.1,
@@ -429,7 +499,7 @@ const ContactSection = () => {
                     variants={iconVariants}
                   >
                     <motion.i
-                      className="bi bi-telephone"
+                      className="bi bi-whatsapp"
                       aria-hidden="true"
                       whileHover={{
                         scale: 1.08,
@@ -447,8 +517,15 @@ const ContactSection = () => {
                     <div className="contact__values">
                       {phones.map((phone) => (
                         <a
-                          href={`tel:${phone}`}
+                          href={getWhatsAppUrl(phone)}
+                          target="_blank"
+                          rel="noopener noreferrer"
                           key={phone}
+                          aria-label={
+                            language === "fr"
+                              ? `Contacter ${phone} sur WhatsApp`
+                              : `Contact ${phone} on WhatsApp`
+                          }
                         >
                           {phone}
                         </a>

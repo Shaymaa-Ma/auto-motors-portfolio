@@ -49,32 +49,61 @@ export const authApi = {
 // =========================================================
 // USERS API (Administrator management)
 // =========================================================
+// =========================================================
+// USERS API (Administrator management)
+// =========================================================
 export const usersApi = {
-  // Get all administrators
   getAll: async () => {
     const response = await axiosClient.get("/users");
     return response.data;
   },
 
-  // Create administrator
-  create: async (userData) => {
-    const response = await axiosClient.post("/users", userData);
+  create: async (data) => {
+    const response = await axiosClient.post(
+      "/users",
+      data
+    );
+
     return response.data;
   },
 
-  // Activate / deactivate administrator
-  updateStatus: async (id, is_active) => {
-    const response = await axiosClient.patch(`/users/${id}/status`, { is_active });
+  updateMyProfile: async (data) => {
+    const response = await axiosClient.patch(
+      "/users/me",
+      data
+    );
+
     return response.data;
   },
 
-  // Delete administrator
+  update: async (id, data) => {
+    const response = await axiosClient.patch(
+      `/users/${id}`,
+      data
+    );
+
+    return response.data;
+  },
+
+  updateStatus: async (id, isActive) => {
+    const response = await axiosClient.patch(
+      `/users/${id}/status`,
+      {
+        is_active: isActive,
+      }
+    );
+
+    return response.data;
+  },
+
   delete: async (id) => {
-    const response = await axiosClient.delete(`/users/${id}`);
+    const response = await axiosClient.delete(
+      `/users/${id}`
+    );
+
     return response.data;
   },
 };
-
 
 
 
@@ -254,98 +283,262 @@ export const productsApi = {
 
 
 
+
 // =========================================================
 // VEHICLES API
 // =========================================================
+
 export const vehiclesApi = {
-  // ---------------------------------------------------------
+
+  // =======================================================
   // PUBLIC
-  // ---------------------------------------------------------
+  // =======================================================
+
   get: async () => {
-    const response = await axiosClient.get("/vehicles");
+    const response =
+      await axiosClient.get(
+        "/vehicles"
+      );
+
     return response.data;
   },
 
-  getOne: async (id) => {
+  getOne: async (
+    id
+  ) => {
     if (!id) {
-      throw new Error("Vehicle ID is required.");
+      throw new Error(
+        "Vehicle ID is required."
+      );
     }
-    const response = await axiosClient.get(`/vehicles/${id}`);
+
+    const response =
+      await axiosClient.get(
+        `/vehicles/${id}`
+      );
+
     return response.data;
   },
 
-  // ---------------------------------------------------------
-  // ADMIN
-  // ---------------------------------------------------------
-  getAll: async (page = 1, limit = 10) => {
-    const response = await axiosClient.get("/vehicles/admin", {
-      params: { page, limit },
-    });
+
+  // =======================================================
+  // ADMIN - READ
+  // =======================================================
+
+  getAll: async (
+    page = 1,
+    limit = 10
+  ) => {
+    const response =
+      await axiosClient.get(
+        "/vehicles/admin",
+        {
+          params: {
+            page,
+            limit,
+          },
+        }
+      );
+
     return response.data;
   },
 
-  getAdminOne: async (id) => {
+  getAdminOne: async (
+    id
+  ) => {
     if (!id) {
-      throw new Error("Vehicle ID is required.");
+      throw new Error(
+        "Vehicle ID is required."
+      );
     }
-    const response = await axiosClient.get(`/vehicles/admin/${id}`);
+
+    const response =
+      await axiosClient.get(
+        `/vehicles/admin/${id}`
+      );
+
     return response.data;
   },
 
-  // Update vehicle
-  update: async (id, formData) => {
+
+  // =======================================================
+  // ADMIN - CREATE
+  // =======================================================
+
+  create: async (
+    formData
+  ) => {
+    if (
+      !(formData instanceof FormData)
+    ) {
+      throw new Error(
+        "Vehicle creation data must be FormData."
+      );
+    }
+
+    const response =
+      await axiosClient.post(
+        "/vehicles",
+        formData,
+        {
+          headers: {
+            "Content-Type":
+              "multipart/form-data",
+          },
+        }
+      );
+
+    return response.data;
+  },
+
+
+  // =======================================================
+  // ADMIN - UPDATE
+  // =======================================================
+
+  update: async (
+    id,
+    formData
+  ) => {
     if (!id) {
-      throw new Error("Vehicle ID is required.");
-    }
-    if (!(formData instanceof FormData)) {
-      throw new Error("Vehicle update data must be FormData.");
+      throw new Error(
+        "Vehicle ID is required."
+      );
     }
 
-    // IMPORTANT:
-    // Do NOT manually set Content-Type.
-    // Axios/browser automatically creates: multipart/form-data; boundary=...
-    const response = await axiosClient.put(`/vehicles/${id}`, formData);
+    if (
+      !(formData instanceof FormData)
+    ) {
+      throw new Error(
+        "Vehicle update data must be FormData."
+      );
+    }
+
+    const response =
+      await axiosClient.put(
+        `/vehicles/${id}`,
+        formData,
+        {
+          headers: {
+            "Content-Type":
+              "multipart/form-data",
+          },
+        }
+      );
+
     return response.data;
   },
 
-  // Update section
-  updateSection: async (sectionData) => {
-    const response = await axiosClient.put("/vehicles/section", sectionData);
+
+  // =======================================================
+  // ADMIN - SECTION
+  // =======================================================
+
+  updateSection: async (
+    sectionData
+  ) => {
+    if (
+      !(sectionData instanceof FormData)
+    ) {
+      throw new Error(
+        "Vehicles section data must be FormData."
+      );
+    }
+
+    const response =
+      await axiosClient.put(
+        "/vehicles/section",
+        sectionData,
+        {
+          headers: {
+            "Content-Type":
+              "multipart/form-data",
+          },
+        }
+      );
+
     return response.data;
   },
 
-  // Reorder
-  reorder: async (id, display_order) => {
+
+  // =======================================================
+  // ADMIN - REORDER
+  // =======================================================
+
+  reorder: async (
+    id,
+    display_order
+  ) => {
     if (!id) {
-      throw new Error("Vehicle ID is required.");
+      throw new Error(
+        "Vehicle ID is required."
+      );
     }
 
-    const order = Number(display_order);
-    if (!Number.isFinite(order)) {
-      throw new Error("A valid display order is required.");
+    const order =
+      Number(
+        display_order
+      );
+
+    if (
+      !Number.isFinite(order) ||
+      order < 1
+    ) {
+      throw new Error(
+        "A valid display order is required."
+      );
     }
 
-    const response = await axiosClient.put(`/vehicles/${id}/order`, {
-      display_order: order,
-    });
+    const response =
+      await axiosClient.put(
+        `/vehicles/${id}/order`,
+        {
+          display_order:
+            order,
+        }
+      );
+
     return response.data;
   },
 
-  // Normalize orders
-  normalizeOrders: async () => {
-    const response = await axiosClient.post("/vehicles/normalize-orders");
-    return response.data;
-  },
 
-  // Delete
-  remove: async (id) => {
+  // =======================================================
+  // ADMIN - NORMALIZE
+  // =======================================================
+
+  normalizeOrders:
+    async () => {
+      const response =
+        await axiosClient.post(
+          "/vehicles/normalize-orders"
+        );
+
+      return response.data;
+    },
+
+
+  // =======================================================
+  // ADMIN - DELETE
+  // =======================================================
+
+  remove: async (
+    id
+  ) => {
     if (!id) {
-      throw new Error("Vehicle ID is required.");
+      throw new Error(
+        "Vehicle ID is required."
+      );
     }
-    const response = await axiosClient.delete(`/vehicles/${id}`);
+
+    const response =
+      await axiosClient.delete(
+        `/vehicles/${id}`
+      );
+
     return response.data;
   },
 };
+
 
 
 

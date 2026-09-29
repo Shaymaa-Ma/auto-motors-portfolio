@@ -203,7 +203,7 @@ const SocialLinks = () => {
       setTotalItems(
         Number(
           responseData?.totalItems ??
-            0
+          0
         )
       );
 
@@ -212,7 +212,7 @@ const SocialLinks = () => {
           1,
           Number(
             responseData?.totalPages ??
-              1
+            1
           )
         )
       );
@@ -220,7 +220,7 @@ const SocialLinks = () => {
       const returnedPage =
         Number(
           responseData?.page ??
-            page
+          page
         );
 
       setCurrentPage(
@@ -259,7 +259,7 @@ const SocialLinks = () => {
 
       setError(
         err?.response?.data?.message ||
-          "Failed to load social links."
+        "Failed to load social links."
       );
     } finally {
       setLoading(false);
@@ -487,7 +487,7 @@ const SocialLinks = () => {
         const oldOrder =
           Number(
             editingSocialLink.original_display_order ??
-              editingSocialLink.display_order
+            editingSocialLink.display_order
           ) || 1;
 
         const newOrder =
@@ -546,7 +546,7 @@ const SocialLinks = () => {
 
       setFormError(
         err?.response?.data?.message ||
-          "Failed to save social link."
+        "Failed to save social link."
       );
     } finally {
       setSaving(false);
@@ -605,7 +605,7 @@ const SocialLinks = () => {
 
         setError(
           err?.response?.data?.message ||
-            "Failed to save section content."
+          "Failed to save section content."
         );
       } finally {
         setSectionSaving(false);
@@ -660,7 +660,7 @@ const SocialLinks = () => {
 
         setError(
           err?.response?.data?.message ||
-            "Failed to update social link status."
+          "Failed to update social link status."
         );
       }
     };
@@ -735,7 +735,7 @@ const SocialLinks = () => {
 
       setError(
         err?.response?.data?.message ||
-          "Failed to delete social link."
+        "Failed to delete social link."
       );
     } finally {
       setDeleting(false);
@@ -759,10 +759,9 @@ const SocialLinks = () => {
           <div className="admin-social-platform-cell">
             <div className="admin-social-icon">
               <i
-                className={`bi ${
-                  socialLink?.icon ||
+                className={`bi ${socialLink?.icon ||
                   "bi-link-45deg"
-                }`}
+                  }`}
               />
             </div>
 
@@ -790,10 +789,9 @@ const SocialLinks = () => {
         ) => (
           <div className="admin-social-icon-preview">
             <i
-              className={`bi ${
-                value ||
+              className={`bi ${value ||
                 "bi-link-45deg"
-              }`}
+                }`}
             />
           </div>
         ),
@@ -850,12 +848,11 @@ const SocialLinks = () => {
         ) => (
           <button
             type="button"
-            className={`admin-status-button ${
-              Number(value) ===
-              1
+            className={`admin-status-button ${Number(value) ===
+                1
                 ? "active"
                 : "inactive"
-            }`}
+              }`}
             onClick={() =>
               handleToggleStatus(
                 socialLink
@@ -863,7 +860,7 @@ const SocialLinks = () => {
             }
             title={
               Number(value) ===
-              1
+                1
                 ? "Deactivate"
                 : "Activate"
             }
@@ -871,7 +868,7 @@ const SocialLinks = () => {
             <span className="admin-status-dot" />
 
             {Number(value) ===
-            1
+              1
               ? "Active"
               : "Inactive"}
           </button>
@@ -907,15 +904,6 @@ const SocialLinks = () => {
           </p>
         </div>
 
-        <button
-          type="button"
-          className="admin-primary-button"
-          onClick={handleAdd}
-        >
-          <i className="bi bi-plus-lg" />
-
-          Add Social Link
-        </button>
       </div>
 
       {/* Success message */}
@@ -1090,14 +1078,32 @@ const SocialLinks = () => {
             <p>
               {loading
                 ? "Loading social links..."
-                : `${totalItems} ${
-                    totalItems === 1
-                      ? "social link"
-                      : "social links"
-                  } configured`}
+                : `${totalItems} ${totalItems === 1
+                  ? "social link"
+                  : "social links"
+                } configured`}
             </p>
           </div>
         </div>
+
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "flex-end",
+            marginTop: "24px",
+            marginBottom: "16px",
+          }}
+        >
+          <button
+            type="button"
+            className="admin-primary-button"
+            onClick={handleAdd}
+          >
+            <i className="bi bi-plus-lg" />
+            Add Social Link
+          </button>
+        </div>
+
 
         <DataTable
           columns={columns}

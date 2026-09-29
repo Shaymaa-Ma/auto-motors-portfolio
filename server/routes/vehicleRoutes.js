@@ -3,34 +3,28 @@ const express = require("express");
 const {
   getVehicles,
   getVehicleById,
-
+  createVehicle,
   getAdminVehicles,
   getAdminVehicleById,
-
   updateVehicle,
   updateVehicleSection,
-
   reorderVehicle,
   normalizeVehicleOrders,
-
   deleteVehicle,
 } = require("../controllers/vehicleController");
 
-const authenticateAdmin = require(
-  "../middleware/authMiddleware"
-);
+const authenticateAdmin = require("../middleware/authMiddleware");
 
 const {
   createImageUpload,
-} = require(
-  "../middleware/uploadMiddleware"
-);
+} = require("../middleware/uploadMiddleware");
 
 const router = express.Router();
 
-// ==========================================================================
-// UPLOAD
-// ==========================================================================
+
+// =========================================================
+// VEHICLE IMAGE UPLOAD
+// =========================================================
 
 const vehicleUpload =
   createImageUpload(
@@ -38,75 +32,95 @@ const vehicleUpload =
     "vehicle"
   );
 
-// ==========================================================================
-// ADMIN ROUTES
-// IMPORTANT: Keep these BEFORE /:id
-// ==========================================================================
 
-// Get paginated vehicles for Admin
-// GET /api/vehicles/admin?page=1&limit=10
+// =========================================================
+// ADMIN ROUTES
+// =========================================================
+
+// Get paginated vehicles
 router.get(
   "/admin",
   authenticateAdmin,
   getAdminVehicles
 );
 
-// Get one vehicle for Admin
-// GET /api/vehicles/admin/:id
+// Get one vehicle for admin
 router.get(
   "/admin/:id",
   authenticateAdmin,
   getAdminVehicleById
 );
 
-// Update shared Vehicles section content
-// PUT /api/vehicles/section
+
+// =========================================================
+// ADMIN - SHARED VEHICLES SECTION
+// =========================================================
+
+// Update shared Vehicles section
+// No image is uploaded here.
+// Multer parses the multipart/form-data fields.
 router.put(
   "/section",
   authenticateAdmin,
+  vehicleUpload.none(),
   updateVehicleSection
 );
 
+
+// =========================================================
+// ADMIN - CREATE
+// =========================================================
+
+// Create vehicle
+router.post(
+  "/",
+  authenticateAdmin,
+  vehicleUpload.single("image"),
+  createVehicle
+);
+
+
+// =========================================================
+// ADMIN - REORDER
+// =========================================================
+
 // Reorder vehicle
-// PUT /api/vehicles/:id/order
 router.put(
   "/:id/order",
   authenticateAdmin,
   reorderVehicle
 );
 
-// Normalize all vehicle orders
-// POST /api/vehicles/normalize-orders
+// Normalize vehicle orders
 router.post(
   "/normalize-orders",
   authenticateAdmin,
   normalizeVehicleOrders
 );
 
-// ==========================================================================
+
+// =========================================================
 // PUBLIC ROUTES
-// ==========================================================================
+// =========================================================
 
 // Get active vehicles
-// GET /api/vehicles
 router.get(
   "/",
   getVehicles
 );
 
 // Get one active vehicle
-// GET /api/vehicles/:id
 router.get(
   "/:id",
   getVehicleById
 );
 
-// ==========================================================================
-// ADMIN UPDATE / DELETE
-// ==========================================================================
+
+// =========================================================
+// ADMIN - UPDATE / DELETE
+// =========================================================
 
 // Update vehicle
-// PUT /api/vehicles/:id
 router.put(
   "/:id",
   authenticateAdmin,
@@ -115,11 +129,11 @@ router.put(
 );
 
 // Delete vehicle
-// DELETE /api/vehicles/:id
 router.delete(
   "/:id",
   authenticateAdmin,
   deleteVehicle
 );
+
 
 module.exports = router;

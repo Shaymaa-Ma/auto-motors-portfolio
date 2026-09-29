@@ -172,7 +172,7 @@ const Categories = () => {
 
         setError(
           err?.response?.data?.message ||
-            "Failed to load categories."
+          "Failed to load categories."
         );
       } finally {
         setLoading(false);
@@ -239,7 +239,7 @@ const Categories = () => {
 
         [name]:
           type ===
-          "checkbox"
+            "checkbox"
             ? checked
               ? 1
               : 0
@@ -493,7 +493,7 @@ const Categories = () => {
 
       setFormError(
         err?.response?.data?.message ||
-          "Failed to save category."
+        "Failed to save category."
       );
     } finally {
       setSaving(false);
@@ -581,7 +581,7 @@ const Categories = () => {
 
         setError(
           err?.response?.data?.message ||
-            "Failed to save Categories section content."
+          "Failed to save Categories section content."
         );
       } finally {
         setSectionSaving(false);
@@ -631,7 +631,7 @@ const Categories = () => {
 
         setError(
           err?.response?.data?.message ||
-            "Failed to update category status."
+          "Failed to update category status."
         );
       }
     };
@@ -693,11 +693,10 @@ const Categories = () => {
         ) => (
           <button
             type="button"
-            className={`admin-status-button ${
-              Number(value) === 1
-                ? "active"
-                : "inactive"
-            }`}
+            className={`admin-status-button ${Number(value) === 1
+              ? "active"
+              : "inactive"
+              }`}
             onClick={() =>
               handleToggleStatus(
                 row
@@ -707,7 +706,7 @@ const Categories = () => {
             <span className="admin-status-dot" />
 
             {Number(value) ===
-            1
+              1
               ? "Active"
               : "Inactive"}
           </button>
@@ -741,14 +740,6 @@ const Categories = () => {
           </p>
         </div>
 
-        <button
-          type="button"
-          className="admin-primary-button"
-          onClick={handleAdd}
-        >
-          <i className="bi bi-plus-lg" />
-          Add Category
-        </button>
       </div>
 
       {/* Success message */}
@@ -940,6 +931,27 @@ const Categories = () => {
           </div>
         </div>
       </section>
+
+
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "flex-end",
+          marginTop: "24px",
+          marginBottom: "16px",
+        }}
+      >
+        <button
+          type="button"
+          className="admin-primary-button"
+          onClick={handleAdd}
+        >
+          <i className="bi bi-plus-lg" />
+          Add Category
+        </button>
+      </div>
+
+
 
       {/* Categories table */}
 

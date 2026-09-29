@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLanguage } from "../../context/LanguageContext";
@@ -41,6 +40,8 @@ const Navbar = () => {
 
   /* ==========================================================================
      SCROLLED NAVBAR
+
+     Adds the scrolled class after the user moves down the page.
      ========================================================================== */
 
   useEffect(() => {
@@ -63,14 +64,15 @@ const Navbar = () => {
      ACTIVE SECTION
 
      Detects which section is currently underneath the navbar.
-     This works when the user scrolls manually.
      ========================================================================== */
 
   useEffect(() => {
     const handleActiveSection = () => {
       const sections = document.querySelectorAll("section[id]");
 
-      if (!sections.length) return;
+      if (!sections.length) {
+        return;
+      }
 
       /*
        * The active point is slightly below the fixed navbar.
@@ -111,6 +113,8 @@ const Navbar = () => {
 
   /* ==========================================================================
      MOBILE MENU BODY LOCK
+
+     Prevents the page from scrolling while the mobile drawer is open.
      ========================================================================== */
 
   useEffect(() => {
@@ -152,6 +156,57 @@ const Navbar = () => {
   const logoUrl = company?.logo
     ? getImageUrl(company.logo)
     : "";
+
+  /* ==========================================================================
+     WHATSAPP CONTACT
+
+     The phone number is stored in the database using Côte d'Ivoire's
+     local format, for example:
+
+       0749616161
+
+     WhatsApp requires the international format:
+
+       2250749616161
+
+     Therefore:
+
+       0749616161
+            ↓
+       2250749616161
+            ↓
+       https://wa.me/2250749616161
+
+     We keep the database value unchanged and convert it only here.
+     ========================================================================== */
+
+  const getWhatsAppUrl = (phone) => {
+    if (!phone) {
+      return "#";
+    }
+
+    /*
+     * Remove spaces, +, parentheses, dashes, etc.
+     */
+    let cleanPhone = String(phone).replace(/\D/g, "");
+
+    /*
+     * Convert Côte d'Ivoire local format to international format.
+     *
+     * Example:
+     * 0749616161 → 2250749616161
+     */
+    if (cleanPhone.startsWith("0")) {
+      cleanPhone = `225${cleanPhone}`;
+    }
+
+    /*
+     * If the number is already stored with 225, leave it unchanged.
+     */
+    return `https://wa.me/${cleanPhone}`;
+  };
+
+  const whatsappUrl = getWhatsAppUrl(company?.phone_1);
 
   /* ==========================================================================
      NAVIGATION
@@ -211,7 +266,9 @@ const Navbar = () => {
      ========================================================================== */
 
   const switchLanguage = (selectedLanguage) => {
-    if (language === selectedLanguage) return;
+    if (language === selectedLanguage) {
+      return;
+    }
 
     toggleLanguage();
   };
@@ -222,6 +279,10 @@ const Navbar = () => {
 
   return (
     <>
+      {/* ======================================================================
+          DESKTOP / MAIN NAVBAR
+          ====================================================================== */}
+
       <motion.header
         className={`navbar ${
           scrolled ? "navbar--scrolled" : ""
@@ -252,7 +313,8 @@ const Navbar = () => {
               handleNavigationClick("home")
             }
             aria-label={
-              company?.company_name || "AUTO MOTORS SARL"
+              company?.company_name ||
+              "AUTO MOTORS SARL"
             }
           >
             {logoUrl ? (
@@ -286,6 +348,7 @@ const Navbar = () => {
           >
             {navigation.map((item) => {
               const sectionId = item.href.substring(1);
+
               const isActive =
                 activeSection === sectionId;
 
@@ -317,7 +380,9 @@ const Navbar = () => {
 
           <div className="navbar__desktop-actions">
 
-            {/* Language Switcher */}
+            {/* ================================================================
+                LANGUAGE SWITCHER
+                ================================================================ */}
 
             <div
               className="navbar__language"
@@ -340,9 +405,13 @@ const Navbar = () => {
                     ? "navbar__language-option--active"
                     : ""
                 }`}
-                onClick={() => switchLanguage("fr")}
+                onClick={() =>
+                  switchLanguage("fr")
+                }
                 aria-label="Français"
-                aria-pressed={language === "fr"}
+                aria-pressed={
+                  language === "fr"
+                }
               >
                 FR
               </button>
@@ -361,21 +430,31 @@ const Navbar = () => {
                     ? "navbar__language-option--active"
                     : ""
                 }`}
-                onClick={() => switchLanguage("en")}
+                onClick={() =>
+                  switchLanguage("en")
+                }
                 aria-label="English"
-                aria-pressed={language === "en"}
+                aria-pressed={
+                  language === "en"
+                }
               >
                 EN
               </button>
             </div>
 
-            {/* Contact */}
+            {/* ================================================================
+                WHATSAPP CONTACT
+                ================================================================ */}
 
             <a
-              href="#contact"
+              href={whatsappUrl}
               className="navbar__contact"
-              onClick={() =>
-                setActiveSection("contact")
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={
+                language === "fr"
+                  ? "Nous contacter sur WhatsApp"
+                  : "Contact us on WhatsApp"
               }
             >
               <span>
@@ -385,10 +464,11 @@ const Navbar = () => {
               </span>
 
               <i
-                className="bi bi-arrow-up-right"
+                className="bi bi-whatsapp"
                 aria-hidden="true"
               ></i>
             </a>
+
           </div>
 
           {/* ==================================================================
@@ -410,6 +490,7 @@ const Navbar = () => {
             <span></span>
             <span></span>
           </button>
+
         </div>
       </motion.header>
 
@@ -463,9 +544,10 @@ const Navbar = () => {
               ease: [0.22, 1, 0.36, 1],
             }}
           >
-            {/* ====================================================================
+
+            {/* ==================================================================
                DRAWER HEADER
-               ==================================================================== */}
+               ================================================================== */}
 
             <div className="navbar__drawer-header">
 
@@ -505,13 +587,14 @@ const Navbar = () => {
                   aria-hidden="true"
                 ></i>
               </button>
+
             </div>
 
             <div className="navbar__drawer-divider"></div>
 
-            {/* ====================================================================
+            {/* ==================================================================
                MOBILE NAVIGATION
-               ==================================================================== */}
+               ================================================================== */}
 
             <nav
               className="navbar__mobile-nav"
@@ -522,7 +605,9 @@ const Navbar = () => {
               }
             >
               {navigation.map((item, index) => {
-                const sectionId = item.href.substring(1);
+                const sectionId =
+                  item.href.substring(1);
+
                 const isActive =
                   activeSection === sectionId;
 
@@ -536,17 +621,26 @@ const Navbar = () => {
                         : ""
                     }`}
                     onClick={() =>
-                      handleNavigationClick(sectionId)
+                      handleNavigationClick(
+                        sectionId
+                      )
                     }
                     aria-current={
-                      isActive ? "page" : undefined
+                      isActive
+                        ? "page"
+                        : undefined
                     }
                   >
                     <span className="navbar__mobile-number">
-                      {String(index + 1).padStart(2, "0")}
+                      {String(index + 1).padStart(
+                        2,
+                        "0"
+                      )}
                     </span>
 
-                    <span>{item.label}</span>
+                    <span>
+                      {item.label}
+                    </span>
 
                     <i
                       className="bi bi-arrow-right"
@@ -557,13 +651,15 @@ const Navbar = () => {
               })}
             </nav>
 
-            {/* ====================================================================
+            {/* ==================================================================
                DRAWER BOTTOM
-               ==================================================================== */}
+               ================================================================== */}
 
             <div className="navbar__drawer-bottom">
 
-              {/* Language Switcher */}
+              {/* ================================================================
+                  LANGUAGE SWITCHER
+                  ================================================================ */}
 
               <div
                 className="navbar__drawer-language"
@@ -599,7 +695,9 @@ const Navbar = () => {
                       closeMenu();
                     }}
                     aria-label="Français"
-                    aria-pressed={language === "fr"}
+                    aria-pressed={
+                      language === "fr"
+                    }
                   >
                     FR
                   </button>
@@ -620,7 +718,9 @@ const Navbar = () => {
                       closeMenu();
                     }}
                     aria-label="English"
-                    aria-pressed={language === "en"}
+                    aria-pressed={
+                      language === "en"
+                    }
                   >
                     EN
                   </button>
@@ -628,15 +728,21 @@ const Navbar = () => {
                 </div>
               </div>
 
-              {/* Contact */}
+              {/* ================================================================
+                  WHATSAPP CONTACT
+                  ================================================================ */}
 
               <a
-                href="#contact"
+                href={whatsappUrl}
                 className="navbar__drawer-contact"
-                onClick={() => {
-                  setActiveSection("contact");
-                  closeMenu();
-                }}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={
+                  language === "fr"
+                    ? "Nous contacter sur WhatsApp"
+                    : "Contact us on WhatsApp"
+                }
+                onClick={closeMenu}
               >
                 <span>
                   {language === "fr"
@@ -645,7 +751,7 @@ const Navbar = () => {
                 </span>
 
                 <i
-                  className="bi bi-arrow-up-right"
+                  className="bi bi-whatsapp"
                   aria-hidden="true"
                 ></i>
               </a>

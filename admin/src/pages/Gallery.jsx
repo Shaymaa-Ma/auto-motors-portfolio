@@ -253,7 +253,7 @@ const Gallery = () => {
 
       setError(
         err?.response?.data?.message ||
-          "Failed to load gallery."
+        "Failed to load gallery."
       );
 
       return {
@@ -555,7 +555,7 @@ const Gallery = () => {
 
         setError(
           err?.response?.data?.message ||
-            "Failed to save Gallery section content."
+          "Failed to save Gallery section content."
         );
       } finally {
         setSectionSaving(
@@ -652,9 +652,9 @@ const Gallery = () => {
           ),
           editingItem
             ? Math.max(
-                totalItems,
-                1
-              )
+              totalItems,
+              1
+            )
             : totalItems + 1
         );
 
@@ -690,8 +690,8 @@ const Gallery = () => {
         String(
           editingItem
             ? Number(
-                editingItem.display_order
-              ) || 1
+              editingItem.display_order
+            ) || 1
             : totalItems + 1
         )
       );
@@ -813,7 +813,7 @@ const Gallery = () => {
 
       setFormError(
         err?.response?.data?.message ||
-          "Failed to save gallery item."
+        "Failed to save gallery item."
       );
     } finally {
       setSaving(false);
@@ -875,7 +875,7 @@ const Gallery = () => {
 
         setError(
           err?.response?.data?.message ||
-            "Failed to update gallery status."
+          "Failed to update gallery status."
         );
       }
     };
@@ -1020,7 +1020,7 @@ const Gallery = () => {
 
         setError(
           err?.response?.data?.message ||
-            "Failed to delete gallery item."
+          "Failed to delete gallery item."
         );
       } finally {
         setDeleting(false);
@@ -1149,11 +1149,10 @@ const Gallery = () => {
       ) => (
         <button
           type="button"
-          className={`admin-status-button ${
-            Number(value) === 1
+          className={`admin-status-button ${Number(value) === 1
               ? "active"
               : "inactive"
-          }`}
+            }`}
           onClick={() =>
             handleToggleStatus(
               row
@@ -1198,21 +1197,6 @@ const Gallery = () => {
           </p>
         </div>
 
-        <button
-          type="button"
-          className="admin-primary-button"
-          onClick={
-            handleAdd
-          }
-          disabled={loading}
-        >
-          <i
-            className="bi bi-plus-lg"
-            aria-hidden="true"
-          />
-
-          Add Gallery Item
-        </button>
       </div>
 
       {/* ===================================================
@@ -1428,6 +1412,26 @@ const Gallery = () => {
           </div>
         )}
       </form>
+
+
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "flex-end",
+          marginTop: "24px",
+          marginBottom: "16px",
+        }}
+      >
+        <button
+          type="button"
+          className="admin-primary-button"
+          onClick={handleAdd}
+        >
+          <i className="bi bi-plus-lg" />
+          Add Gallery
+        </button>
+      </div>
+
 
       {/* ===================================================
           GALLERY TABLE
@@ -1699,9 +1703,9 @@ const Gallery = () => {
                 max={
                   editingItem
                     ? Math.max(
-                        totalItems,
-                        1
-                      )
+                      totalItems,
+                      1
+                    )
                     : totalItems + 1
                 }
                 value={
@@ -1762,11 +1766,10 @@ const Gallery = () => {
         title="Delete Gallery Item"
         message={
           deletingItem
-            ? `Are you sure you want to delete "${
-                deletingItem.title_en ||
-                deletingItem.title_fr ||
-                "this gallery item"
-              }"? This action cannot be undone.`
+            ? `Are you sure you want to delete "${deletingItem.title_en ||
+            deletingItem.title_fr ||
+            "this gallery item"
+            }"? This action cannot be undone.`
             : "Are you sure you want to delete this gallery item?"
         }
         confirmText="Delete Gallery"

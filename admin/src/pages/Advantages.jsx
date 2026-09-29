@@ -1107,8 +1107,8 @@ const Advantages = () => {
         <button
           type="button"
           className={`admin-status-button ${Number(value) === 1
-              ? "active"
-              : "inactive"
+            ? "active"
+            : "inactive"
             }`}
           onClick={() =>
             handleToggleStatus(
@@ -1151,14 +1151,6 @@ const Advantages = () => {
           </p>
         </div>
 
-        <button
-          type="button"
-          className="admin-primary-button"
-          onClick={handleAdd}
-        >
-          <i className="bi bi-plus-lg" />
-          Add Advantage
-        </button>
       </div>
 
       {/* Success message */}
@@ -1350,6 +1342,24 @@ const Advantages = () => {
           </div>
         )}
       </form>
+
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "flex-end",
+          marginTop: "24px",
+          marginBottom: "16px",
+        }}
+      >
+        <button
+          type="button"
+          className="admin-primary-button"
+          onClick={handleAdd}
+        >
+          <i className="bi bi-plus-lg" />
+          Add Advantage
+        </button>
+      </div>
 
       {/* Advantages table */}
       <DataTable
