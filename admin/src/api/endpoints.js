@@ -2,219 +2,134 @@ import axiosClient from "./axiosClient";
 
 
 // =========================================================
-// AUTH API
+// TABLE OF CONTENTS
+// =========================================================
+//
+// ACCOUNTS & DASHBOARD
+//   1. authApi
+//   2. usersApi
+//   3. dashboardApi
+//
+// SINGLE-RECORD CONTENT
+//   4. companyApi
+//   5. heroApi
+//   6. aboutApi
+//   7. contactApi
+//
+// LIST CONTENT
+//   8.  servicesApi
+//   9.  categoriesApi
+//   10. productsApi
+//   11. vehiclesApi
+//   12. advantagesApi
+//   13. faqsApi
+//   14. galleryApi
+//   15. socialLinksApi
+//
 // =========================================================
 
+
+
+
+
+// #########################################################
+// ACCOUNTS & DASHBOARD
+// #########################################################
+
+
+// =========================================================
+// 1. AUTH API
+// =========================================================
 export const authApi = {
-
-  // -------------------------------------------------------
   // Login administrator
-  // -------------------------------------------------------
-
   login: async (email, password) => {
-
-    const response =
-      await axiosClient.post(
-        "/auth/login",
-        {
-          email,
-          password,
-        }
-      );
-
+    const response = await axiosClient.post("/auth/login", {
+      email,
+      password,
+    });
     return response.data;
   },
 
-
-  // -------------------------------------------------------
   // Initial administrator registration
-  // -------------------------------------------------------
-
-  register: async (
-    name,
-    email,
-    password,
-    confirmPassword,
-    setupKey
-  ) => {
-
-    const response =
-      await axiosClient.post(
-        "/auth/register",
-        {
-          name,
-          email,
-          password,
-          confirmPassword,
-          setupKey,
-        }
-      );
-
+  register: async (name, email, password, confirmPassword, setupKey) => {
+    const response = await axiosClient.post("/auth/register", {
+      name,
+      email,
+      password,
+      confirmPassword,
+      setupKey,
+    });
     return response.data;
   },
 
-
-  // -------------------------------------------------------
   // Check whether initial registration is available
-  // -------------------------------------------------------
-
   registrationStatus: async () => {
-
-    const response =
-      await axiosClient.get(
-        "/auth/registration-status"
-      );
-
+    const response = await axiosClient.get("/auth/registration-status");
     return response.data;
   },
 
-
-  // -------------------------------------------------------
   // Get current administrator
-  // -------------------------------------------------------
-
   me: async () => {
-
-    const response =
-      await axiosClient.get(
-        "/auth/me"
-      );
-
+    const response = await axiosClient.get("/auth/me");
     return response.data;
   },
 
-
-  // -------------------------------------------------------
   // Logout
-  // -------------------------------------------------------
-
   logout: async () => {
-
-    const response =
-      await axiosClient.post(
-        "/auth/logout"
-      );
-
+    const response = await axiosClient.post("/auth/logout");
     return response.data;
   },
 };
 
 
 // =========================================================
-// USERS API
-// Administrator management
+// 2. USERS API (administrator management)
 // =========================================================
-
 export const usersApi = {
-
-  // -------------------------------------------------------
   // Get all administrators
-  // -------------------------------------------------------
-
   getAll: async () => {
-
-    const response =
-      await axiosClient.get(
-        "/users"
-      );
-
+    const response = await axiosClient.get("/users");
     return response.data;
   },
 
-
-  // -------------------------------------------------------
   // Create administrator
-  // -------------------------------------------------------
-
   create: async (data) => {
-
-    const response =
-      await axiosClient.post(
-        "/users",
-        data
-      );
-
+    const response = await axiosClient.post("/users", data);
     return response.data;
   },
 
-
-  // -------------------------------------------------------
   // Update current administrator profile
-  //
   // The frontend should NOT send the role here.
   // The backend keeps the existing role.
-  // -------------------------------------------------------
-
   updateMyProfile: async (data) => {
-
-    const response =
-      await axiosClient.patch(
-        "/users/me",
-        data
-      );
-
+    const response = await axiosClient.patch("/users/me", data);
     return response.data;
   },
 
-
-  // -------------------------------------------------------
   // Update another administrator
-  // -------------------------------------------------------
-
   update: async (id, data) => {
-
-    const response =
-      await axiosClient.patch(
-        `/users/${id}`,
-        data
-      );
-
+    const response = await axiosClient.patch(`/users/${id}`, data);
     return response.data;
   },
 
-
-  // -------------------------------------------------------
   // Activate / deactivate administrator
-  // -------------------------------------------------------
-
-  updateStatus: async (
-    id,
-    isActive
-  ) => {
-
-    const response =
-      await axiosClient.patch(
-        `/users/${id}/status`,
-        {
-          is_active: isActive,
-        }
-      );
-
+  updateStatus: async (id, isActive) => {
+    const response = await axiosClient.patch(`/users/${id}/status`, {
+      is_active: isActive,
+    });
     return response.data;
   },
 
-
-  // -------------------------------------------------------
   // Delete administrator
-  // -------------------------------------------------------
-
   delete: async (id) => {
-
-    const response =
-      await axiosClient.delete(
-        `/users/${id}`
-      );
-
+    const response = await axiosClient.delete(`/users/${id}`);
     return response.data;
   },
 };
 
 
-
-
-
 // =========================================================
-// DASHBOARD API
+// 3. DASHBOARD API
 // =========================================================
 export const dashboardApi = {
   getStats: async () => {
@@ -227,8 +142,33 @@ export const dashboardApi = {
 
 
 
+// #########################################################
+// SINGLE-RECORD CONTENT
+// #########################################################
+
+
 // =========================================================
-// HERO API
+// 4. COMPANY API
+// =========================================================
+export const companyApi = {
+  // Get company information
+  get: async () => {
+    const response = await axiosClient.get("/company");
+    return response.data;
+  },
+
+  // Update company information
+  update: async (formData) => {
+    const response = await axiosClient.put("/company", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return response.data;
+  },
+};
+
+
+// =========================================================
+// 5. HERO API
 // =========================================================
 export const heroApi = {
   get: async () => {
@@ -245,11 +185,8 @@ export const heroApi = {
 };
 
 
-
-
-
 // =========================================================
-// ABOUT API
+// 6. ABOUT API
 // =========================================================
 export const aboutApi = {
   get: async () => {
@@ -266,28 +203,59 @@ export const aboutApi = {
 };
 
 
+// =========================================================
+// 7. CONTACT API
+// =========================================================
+export const contactApi = {
+  // Get contact section content
+  get: async () => {
+    const response = await axiosClient.get("/contact");
+    return response.data;
+  },
 
+  // Update contact section content
+  update: async (data) => {
+    const response = await axiosClient.put("/contact", data);
+    return response.data;
+  },
+};
+
+
+
+
+
+// #########################################################
+// LIST CONTENT
+// #########################################################
 
 
 // =========================================================
-// SERVICES API
+// 8. SERVICES API
 // =========================================================
 export const servicesApi = {
+  // ---------------------------------------------------------
+  // PUBLIC
+  // ---------------------------------------------------------
+
   // Get active services for the client
   get: async () => {
     const response = await axiosClient.get("/services");
     return response.data;
   },
 
-  // Get paginated services for Admin
-  getAll: async (params) => {
-    const response = await axiosClient.get("/services/admin", { params });
-    return response.data;
-  },
-
   // Get one service
   getOne: async (id) => {
     const response = await axiosClient.get(`/services/${id}`);
+    return response.data;
+  },
+
+  // ---------------------------------------------------------
+  // ADMIN
+  // ---------------------------------------------------------
+
+  // Get paginated services for Admin
+  getAll: async (params) => {
+    const response = await axiosClient.get("/services/admin", { params });
     return response.data;
   },
 
@@ -303,12 +271,6 @@ export const servicesApi = {
     return response.data;
   },
 
-  // Delete a service
-  remove: async (id) => {
-    const response = await axiosClient.delete(`/services/${id}`);
-    return response.data;
-  },
-
   // Reorder a service
   reorder: async (id, display_order) => {
     const response = await axiosClient.put(`/services/${id}/order`, { display_order });
@@ -320,16 +282,90 @@ export const servicesApi = {
     const response = await axiosClient.post("/services/normalize-orders");
     return response.data;
   },
+
+  // Delete a service
+  remove: async (id) => {
+    const response = await axiosClient.delete(`/services/${id}`);
+    return response.data;
+  },
 };
 
 
+// =========================================================
+// 9. CATEGORIES API
+// =========================================================
+export const categoriesApi = {
+  // ---------------------------------------------------------
+  // PUBLIC
+  // ---------------------------------------------------------
 
+  get: async () => {
+    const response = await axiosClient.get("/categories");
+    return response.data;
+  },
+
+  getOne: async (id) => {
+    const response = await axiosClient.get(`/categories/${id}`);
+    return response.data;
+  },
+
+  // ---------------------------------------------------------
+  // ADMIN
+  // ---------------------------------------------------------
+
+  getAll: async (params) => {
+    const response = await axiosClient.get("/categories/admin", { params });
+    return response.data;
+  },
+
+  getAdminOne: async (id) => {
+    const response = await axiosClient.get(`/categories/admin/${id}`);
+    return response.data;
+  },
+
+  create: async (data) => {
+    const response = await axiosClient.post("/categories", data);
+    return response.data;
+  },
+
+  update: async (id, data) => {
+    const response = await axiosClient.put(`/categories/${id}`, data);
+    return response.data;
+  },
+
+  // Update shared section content
+  updateSection: async (data) => {
+    const response = await axiosClient.put("/categories/section", data);
+    return response.data;
+  },
+
+  reorder: async (id, display_order) => {
+    const response = await axiosClient.put(`/categories/${id}/order`, {
+      display_order,
+    });
+    return response.data;
+  },
+
+  normalizeOrders: async () => {
+    const response = await axiosClient.post("/categories/normalize-orders");
+    return response.data;
+  },
+
+  remove: async (id) => {
+    const response = await axiosClient.delete(`/categories/${id}`);
+    return response.data;
+  },
+};
 
 
 // =========================================================
-// PRODUCTS API
+// 10. PRODUCTS API
 // =========================================================
 export const productsApi = {
+  // ---------------------------------------------------------
+  // PUBLIC
+  // ---------------------------------------------------------
+
   get: async (params) => {
     const response = await axiosClient.get("/products", { params });
     return response.data;
@@ -339,6 +375,10 @@ export const productsApi = {
     const response = await axiosClient.get(`/products/${id}`);
     return response.data;
   },
+
+  // ---------------------------------------------------------
+  // ADMIN
+  // ---------------------------------------------------------
 
   getAll: async (params) => {
     const response = await axiosClient.get("/products/admin", { params });
@@ -385,372 +425,148 @@ export const productsApi = {
 };
 
 
-
-
-
-
 // =========================================================
-// VEHICLES API
+// 11. VEHICLES API
 // =========================================================
-
 export const vehiclesApi = {
-
-  // =======================================================
+  // ---------------------------------------------------------
   // PUBLIC
-  // =======================================================
+  // ---------------------------------------------------------
 
   get: async () => {
-    const response =
-      await axiosClient.get(
-        "/vehicles"
-      );
-
+    const response = await axiosClient.get("/vehicles");
     return response.data;
   },
 
-  getOne: async (
-    id
-  ) => {
-    if (!id) {
-      throw new Error(
-        "Vehicle ID is required."
-      );
-    }
-
-    const response =
-      await axiosClient.get(
-        `/vehicles/${id}`
-      );
-
-    return response.data;
-  },
-
-
-  // =======================================================
-  // ADMIN - READ
-  // =======================================================
-
-  getAll: async (
-    page = 1,
-    limit = 10
-  ) => {
-    const response =
-      await axiosClient.get(
-        "/vehicles/admin",
-        {
-          params: {
-            page,
-            limit,
-          },
-        }
-      );
-
-    return response.data;
-  },
-
-  getAdminOne: async (
-    id
-  ) => {
-    if (!id) {
-      throw new Error(
-        "Vehicle ID is required."
-      );
-    }
-
-    const response =
-      await axiosClient.get(
-        `/vehicles/admin/${id}`
-      );
-
-    return response.data;
-  },
-
-
-  // =======================================================
-  // ADMIN - CREATE
-  // =======================================================
-
-  create: async (
-    formData
-  ) => {
-    if (
-      !(formData instanceof FormData)
-    ) {
-      throw new Error(
-        "Vehicle creation data must be FormData."
-      );
-    }
-
-    const response =
-      await axiosClient.post(
-        "/vehicles",
-        formData,
-        {
-          headers: {
-            "Content-Type":
-              "multipart/form-data",
-          },
-        }
-      );
-
-    return response.data;
-  },
-
-
-  // =======================================================
-  // ADMIN - UPDATE
-  // =======================================================
-
-  update: async (
-    id,
-    formData
-  ) => {
-    if (!id) {
-      throw new Error(
-        "Vehicle ID is required."
-      );
-    }
-
-    if (
-      !(formData instanceof FormData)
-    ) {
-      throw new Error(
-        "Vehicle update data must be FormData."
-      );
-    }
-
-    const response =
-      await axiosClient.put(
-        `/vehicles/${id}`,
-        formData,
-        {
-          headers: {
-            "Content-Type":
-              "multipart/form-data",
-          },
-        }
-      );
-
-    return response.data;
-  },
-
-
-  // =======================================================
-  // ADMIN - SECTION
-  // =======================================================
-
-  updateSection: async (
-    sectionData
-  ) => {
-    if (
-      !(sectionData instanceof FormData)
-    ) {
-      throw new Error(
-        "Vehicles section data must be FormData."
-      );
-    }
-
-    const response =
-      await axiosClient.put(
-        "/vehicles/section",
-        sectionData,
-        {
-          headers: {
-            "Content-Type":
-              "multipart/form-data",
-          },
-        }
-      );
-
-    return response.data;
-  },
-
-
-  // =======================================================
-  // ADMIN - REORDER
-  // =======================================================
-
-  reorder: async (
-    id,
-    display_order
-  ) => {
-    if (!id) {
-      throw new Error(
-        "Vehicle ID is required."
-      );
-    }
-
-    const order =
-      Number(
-        display_order
-      );
-
-    if (
-      !Number.isFinite(order) ||
-      order < 1
-    ) {
-      throw new Error(
-        "A valid display order is required."
-      );
-    }
-
-    const response =
-      await axiosClient.put(
-        `/vehicles/${id}/order`,
-        {
-          display_order:
-            order,
-        }
-      );
-
-    return response.data;
-  },
-
-
-  // =======================================================
-  // ADMIN - NORMALIZE
-  // =======================================================
-
-  normalizeOrders:
-    async () => {
-      const response =
-        await axiosClient.post(
-          "/vehicles/normalize-orders"
-        );
-
-      return response.data;
-    },
-
-
-  // =======================================================
-  // ADMIN - DELETE
-  // =======================================================
-
-  remove: async (
-    id
-  ) => {
-    if (!id) {
-      throw new Error(
-        "Vehicle ID is required."
-      );
-    }
-
-    const response =
-      await axiosClient.delete(
-        `/vehicles/${id}`
-      );
-
-    return response.data;
-  },
-};
-
-
-
-
-
-
-// =========================================================
-// GALLERY API
-// =========================================================
-export const galleryApi = {
-  // PUBLIC - get active gallery
-  get: async () => {
-    const response = await axiosClient.get("/gallery");
-    return response.data;
-  },
-
-  // PUBLIC - get one active gallery item
   getOne: async (id) => {
     if (!id) {
-      throw new Error("Gallery item ID is required.");
+      throw new Error("Vehicle ID is required.");
     }
-    const response = await axiosClient.get(`/gallery/${id}`);
+
+    const response = await axiosClient.get(`/vehicles/${id}`);
     return response.data;
   },
 
-  // ADMIN - get paginated gallery
+  // ---------------------------------------------------------
+  // ADMIN - READ
+  // ---------------------------------------------------------
+
   getAll: async (page = 1, limit = 10) => {
-    const response = await axiosClient.get("/gallery/admin", {
+    const response = await axiosClient.get("/vehicles/admin", {
       params: { page, limit },
     });
     return response.data;
   },
 
-  // ADMIN - get one gallery item
   getAdminOne: async (id) => {
     if (!id) {
-      throw new Error("Gallery item ID is required.");
+      throw new Error("Vehicle ID is required.");
     }
-    const response = await axiosClient.get(`/gallery/admin/${id}`);
+
+    const response = await axiosClient.get(`/vehicles/admin/${id}`);
     return response.data;
   },
 
-  // ADMIN - update section content
-  updateSection: async (formData) => {
-    const response = await axiosClient.put("/gallery/section", formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
-    return response.data;
-  },
+  // ---------------------------------------------------------
+  // ADMIN - CREATE / UPDATE
+  // ---------------------------------------------------------
 
-  // ADMIN - create gallery item
   create: async (formData) => {
-    const response = await axiosClient.post("/gallery", formData, {
+    if (!(formData instanceof FormData)) {
+      throw new Error("Vehicle creation data must be FormData.");
+    }
+
+    const response = await axiosClient.post("/vehicles", formData, {
       headers: { "Content-Type": "multipart/form-data" },
     });
     return response.data;
   },
 
-  // ADMIN - update gallery item
   update: async (id, formData) => {
     if (!id) {
-      throw new Error("Gallery item ID is required.");
+      throw new Error("Vehicle ID is required.");
     }
-    const response = await axiosClient.put(`/gallery/${id}`, formData, {
+
+    if (!(formData instanceof FormData)) {
+      throw new Error("Vehicle update data must be FormData.");
+    }
+
+    const response = await axiosClient.put(`/vehicles/${id}`, formData, {
       headers: { "Content-Type": "multipart/form-data" },
     });
     return response.data;
   },
 
-  // ADMIN - reorder gallery item
+  // Update shared section content
+  updateSection: async (sectionData) => {
+    if (!(sectionData instanceof FormData)) {
+      throw new Error("Vehicles section data must be FormData.");
+    }
+
+    const response = await axiosClient.put("/vehicles/section", sectionData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return response.data;
+  },
+
+  // ---------------------------------------------------------
+  // ADMIN - ORDER
+  // ---------------------------------------------------------
+
   reorder: async (id, display_order) => {
     if (!id) {
-      throw new Error("Gallery item ID is required.");
+      throw new Error("Vehicle ID is required.");
     }
-    const response = await axiosClient.put(`/gallery/${id}/order`, { display_order });
+
+    const order = Number(display_order);
+
+    if (!Number.isFinite(order) || order < 1) {
+      throw new Error("A valid display order is required.");
+    }
+
+    const response = await axiosClient.put(`/vehicles/${id}/order`, {
+      display_order: order,
+    });
     return response.data;
   },
 
-  // ADMIN - normalize orders
   normalizeOrders: async () => {
-    const response = await axiosClient.post("/gallery/normalize-orders");
+    const response = await axiosClient.post("/vehicles/normalize-orders");
     return response.data;
   },
 
-  // ADMIN - delete gallery item
+  // ---------------------------------------------------------
+  // ADMIN - DELETE
+  // ---------------------------------------------------------
+
   remove: async (id) => {
     if (!id) {
-      throw new Error("Gallery item ID is required.");
+      throw new Error("Vehicle ID is required.");
     }
-    const response = await axiosClient.delete(`/gallery/${id}`);
+
+    const response = await axiosClient.delete(`/vehicles/${id}`);
     return response.data;
   },
 };
 
 
-
-
-
-
 // =========================================================
-// ADVANTAGES API
+// 12. ADVANTAGES API
 // =========================================================
 export const advantagesApi = {
+  // ---------------------------------------------------------
+  // PUBLIC
+  // ---------------------------------------------------------
+
   // Get advantages for the client
   get: async () => {
     const response = await axiosClient.get("/advantages");
     return response.data;
   },
+
+  // ---------------------------------------------------------
+  // ADMIN
+  // ---------------------------------------------------------
 
   // Get paginated advantages for Admin
   getAll: async (page = 1, limit = 10) => {
@@ -810,12 +626,8 @@ export const advantagesApi = {
 };
 
 
-
-
-
-
 // =========================================================
-// FAQS API
+// 13. FAQS API
 // =========================================================
 export const faqsApi = {
   // ---------------------------------------------------------
@@ -899,160 +711,105 @@ export const faqsApi = {
 };
 
 
-
-
-
-
-
 // =========================================================
-// COMPANY API
+// 14. GALLERY API
 // =========================================================
-export const companyApi = {
-  // Get company information
+export const galleryApi = {
+  // ---------------------------------------------------------
+  // PUBLIC
+  // ---------------------------------------------------------
+
+  // Get active gallery
   get: async () => {
-    const response = await axiosClient.get("/company");
+    const response = await axiosClient.get("/gallery");
     return response.data;
   },
 
-  // Update company information
-  update: async (formData) => {
-    const response = await axiosClient.put("/company", formData, {
+  // Get one active gallery item
+  getOne: async (id) => {
+    if (!id) {
+      throw new Error("Gallery item ID is required.");
+    }
+    const response = await axiosClient.get(`/gallery/${id}`);
+    return response.data;
+  },
+
+  // ---------------------------------------------------------
+  // ADMIN
+  // ---------------------------------------------------------
+
+  // Get paginated gallery
+  getAll: async (page = 1, limit = 10) => {
+    const response = await axiosClient.get("/gallery/admin", {
+      params: { page, limit },
+    });
+    return response.data;
+  },
+
+  // Get one gallery item
+  getAdminOne: async (id) => {
+    if (!id) {
+      throw new Error("Gallery item ID is required.");
+    }
+    const response = await axiosClient.get(`/gallery/admin/${id}`);
+    return response.data;
+  },
+
+  // Create gallery item
+  create: async (formData) => {
+    const response = await axiosClient.post("/gallery", formData, {
       headers: { "Content-Type": "multipart/form-data" },
     });
     return response.data;
   },
-};
 
-
-
-
-
-
-// =========================================================
-// CONTACT API
-// =========================================================
-export const contactApi = {
-  // Get contact section content
-  get: async () => {
-    const response = await axiosClient.get("/contact");
+  // Update gallery item
+  update: async (id, formData) => {
+    if (!id) {
+      throw new Error("Gallery item ID is required.");
+    }
+    const response = await axiosClient.put(`/gallery/${id}`, formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
     return response.data;
   },
 
-  // Update contact section content
-  update: async (data) => {
-    const response = await axiosClient.put("/contact", data);
-    return response.data;
-  },
-};
-
-
-
-
-
-// =========================================================
-// CATEGORIES API
-// =========================================================
-export const categoriesApi = {
-  get: async () => {
-    const response = await axiosClient.get(
-      "/categories"
-    );
-
+  // Update section content
+  updateSection: async (formData) => {
+    const response = await axiosClient.put("/gallery/section", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
     return response.data;
   },
 
-  getOne: async (id) => {
-    const response = await axiosClient.get(
-      `/categories/${id}`
-    );
-
+  // Reorder gallery item
+  reorder: async (id, display_order) => {
+    if (!id) {
+      throw new Error("Gallery item ID is required.");
+    }
+    const response = await axiosClient.put(`/gallery/${id}/order`, { display_order });
     return response.data;
   },
 
-  getAll: async (params) => {
-    const response = await axiosClient.get(
-      "/categories/admin",
-      {
-        params,
-      }
-    );
-
-    return response.data;
-  },
-
-  getAdminOne: async (id) => {
-    const response = await axiosClient.get(
-      `/categories/admin/${id}`
-    );
-
-    return response.data;
-  },
-
-  create: async (data) => {
-    const response = await axiosClient.post(
-      "/categories",
-      data
-    );
-
-    return response.data;
-  },
-
-  update: async (id, data) => {
-    const response = await axiosClient.put(
-      `/categories/${id}`,
-      data
-    );
-
-    return response.data;
-  },
-
-  updateSection: async (data) => {
-    const response = await axiosClient.put(
-      "/categories/section",
-      data
-    );
-
-    return response.data;
-  },
-
-  reorder: async (
-    id,
-    display_order
-  ) => {
-    const response = await axiosClient.put(
-      `/categories/${id}/order`,
-      {
-        display_order,
-      }
-    );
-
-    return response.data;
-  },
-
+  // Normalize orders
   normalizeOrders: async () => {
-    const response = await axiosClient.post(
-      "/categories/normalize-orders"
-    );
-
+    const response = await axiosClient.post("/gallery/normalize-orders");
     return response.data;
   },
 
+  // Delete gallery item
   remove: async (id) => {
-    const response = await axiosClient.delete(
-      `/categories/${id}`
-    );
-
+    if (!id) {
+      throw new Error("Gallery item ID is required.");
+    }
+    const response = await axiosClient.delete(`/gallery/${id}`);
     return response.data;
   },
 };
 
 
-
-
-
-
 // =========================================================
-// SOCIAL LINKS API
+// 15. SOCIAL LINKS API
 // =========================================================
 export const socialLinksApi = {
   // ---------------------------------------------------------

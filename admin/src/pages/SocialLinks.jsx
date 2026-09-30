@@ -1100,7 +1100,7 @@ const SocialLinks = () => {
             onClick={handleAdd}
           >
             <i className="bi bi-plus-lg" />
-            Add Social Link
+           Add Social Link
           </button>
         </div>
 
