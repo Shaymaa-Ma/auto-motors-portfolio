@@ -13,6 +13,10 @@ const {
 
 const authMiddleware = require("../middleware/authMiddleware");
 
+const {
+  cacheMiddleware,
+} = require("../middleware/cache");
+
 const router =
   express.Router();
 
@@ -23,6 +27,7 @@ const router =
 // Get active services for client
 router.get(
   "/",
+  cacheMiddleware(),
   getServices
 );
 

@@ -7,6 +7,10 @@ const {
   sendError,
 } = require("../utils/response");
 
+const {
+  clearCache,
+} = require("../middleware/cache");
+
 // ============================================================
 // GET EXISTING HERO RECORD
 // ============================================================
@@ -196,6 +200,10 @@ const updateHero = async (req, res) => {
 
         hero.id,
       ]
+    );
+
+    clearCache(
+      "/api/hero"
     );
 
     // --------------------------------------------------------

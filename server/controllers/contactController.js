@@ -1,10 +1,13 @@
-
 const db = require("../config/db");
 
 const {
   sendSuccess,
   sendError,
 } = require("../utils/response");
+
+const {
+  clearCache,
+} = require("../middleware/cache");
 
 /*
 |--------------------------------------------------------------------------
@@ -269,6 +272,10 @@ const updateContact = async (req, res) => {
         WHERE id = ?
       `,
       values
+    );
+
+    clearCache(
+      "/api/contact"
     );
 
     /*

@@ -5,6 +5,10 @@ const {
   sendError,
 } = require("../utils/response");
 
+const {
+  clearCache,
+} = require("../middleware/cache");
+
 // =========================================================
 // PUBLIC
 // =========================================================
@@ -418,6 +422,10 @@ const reorderFaq =
         );
       }
 
+      clearCache(
+        "/api/faqs"
+      );
+
       // -----------------------------------------------------
       // Return updated FAQ
       // -----------------------------------------------------
@@ -497,6 +505,10 @@ const normalizeFaqOrders =
           ]
         );
       }
+
+      clearCache(
+        "/api/faqs"
+      );
 
       return sendSuccess(
         res,
@@ -616,6 +628,10 @@ const createFaq =
               : 1,
           ]
         );
+
+      clearCache(
+        "/api/faqs"
+      );
 
       // -----------------------------------------------------
       // Get newly created FAQ
@@ -773,6 +789,10 @@ const updateFaq =
         ]
       );
 
+      clearCache(
+        "/api/faqs"
+      );
+
       // -----------------------------------------------------
       // Get updated FAQ
       // -----------------------------------------------------
@@ -859,6 +879,10 @@ const deleteFaq =
           WHERE id = ?
         `,
         [id]
+      );
+
+      clearCache(
+        "/api/faqs"
       );
 
       return sendSuccess(

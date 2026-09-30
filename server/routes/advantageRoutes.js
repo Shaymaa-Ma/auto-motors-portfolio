@@ -15,6 +15,10 @@ const {
 const authMiddleware =
   require("../middleware/authMiddleware");
 
+const {
+  cacheMiddleware,
+} = require("../middleware/cache");
+
 const router = express.Router();
 
 // ============================================================
@@ -63,6 +67,7 @@ router.post(
 // GET /api/advantages
 router.get(
   "/",
+  cacheMiddleware(),
   getAdvantages
 );
 
@@ -70,6 +75,7 @@ router.get(
 // GET /api/advantages/:id
 router.get(
   "/:id",
+  cacheMiddleware(),
   getAdvantageById
 );
 

@@ -18,6 +18,10 @@ const {
 const authMiddleware =
   require("../middleware/authMiddleware");
 
+const {
+  cacheMiddleware,
+} = require("../middleware/cache");
+
 const router =
   express.Router();
 
@@ -60,12 +64,14 @@ router.post(
 // Get active FAQs for client
 router.get(
   "/",
+  cacheMiddleware(),
   getFaqs
 );
 
 // Get one active FAQ for client
 router.get(
   "/:id",
+  cacheMiddleware(),
   getFaqById
 );
 

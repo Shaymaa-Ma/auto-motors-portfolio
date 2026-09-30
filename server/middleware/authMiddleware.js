@@ -1,116 +1,270 @@
+// ============================================================
+// AUTHENTICATION MIDDLEWARE
+// ============================================================
+//
+// This middleware protects private API routes.
+//
+// It performs several checks:
+//
+// 1. Does the request contain the admin JWT cookie?
+// 2. Is the JWT cryptographically valid?
+// 3. Has the JWT expired?
+// 4. Does the administrator still exist?
+// 5. Is the administrator still active?
+//
+// IMPORTANT:
+//
+// The JWT identifies the administrator.
+//
+// MySQL remains the source of truth for:
+//
+// - email
+// - role
+// - active/disabled status
+//
+// This means disabling an account or changing its role takes
+// effect without waiting for the old JWT to expire.
+// ============================================================
 
-// Protect admin-only routes by checking the login token,
-// verifying the admin's identity, and making sure the account
-// still exists and is active before allowing the request to continue.
+const jwt =
+  require("jsonwebtoken");
 
-const jwt = require("jsonwebtoken");
-const pool = require("../config/db");
+const pool =
+  require("../config/db");
 
 
-// Check whether the current request comes from a valid admin
-const authMiddleware = async (req, res, next) => {
-  try {
+// ============================================================
+// AUTH MIDDLEWARE
+// ============================================================
 
-    // Get the JWT that was saved in the admin's cookie after login
-    const token = req.cookies?.admin_token;
+const authMiddleware =
+  async (req, res, next) => {
 
-    // If there is no token, the user is not logged in
-    if (!token) {
+    try {
+
+      // ======================================================
+      // GET JWT FROM HTTP-ONLY COOKIE
+      // ======================================================
+
+      const token =
+        req.cookies?.admin_token;
+
+
+      // No cookie means there is no authenticated session.
+      if (!token) {
+        return res.status(401).json({
+          success: false,
+
+          message:
+            "Authentication required.",
+        });
+      }
+
+
+      // ======================================================
+      // VERIFY JWT
+      // ======================================================
+      //
+      // jwt.verify() checks:
+      //
+      // - signature
+      // - expiration
+      // - token integrity
+      //
+      // If someone modifies the token, verification fails.
+      // ======================================================
+
+      const decoded =
+        jwt.verify(
+          token,
+          process.env.JWT_SECRET
+        );
+
+
+      // ======================================================
+      // VALIDATE JWT PAYLOAD
+      // ======================================================
+      //
+      // We only expect an administrator ID.
+      //
+      // Never blindly trust arbitrary values from a JWT.
+      // ======================================================
+
+      if (
+        !decoded ||
+        !Number.isInteger(decoded.id)
+      ) {
+
+        res.clearCookie(
+          "admin_token",
+          {
+            path: "/",
+          }
+        );
+
+
+        return res.status(401).json({
+          success: false,
+
+          message:
+            "Invalid or expired authentication.",
+        });
+      }
+
+
+      // ======================================================
+      // LOAD CURRENT ADMIN FROM DATABASE
+      // ======================================================
+      //
+      // This is extremely important.
+      //
+      // We do NOT trust an old role stored in the JWT.
+      //
+      // Instead:
+      //
+      // JWT
+      //   ↓
+      // admin ID
+      //   ↓
+      // MySQL
+      //   ↓
+      // current account state
+      // ======================================================
+
+      const [admins] =
+        await pool.execute(
+          `
+            SELECT
+              id,
+              email,
+              role,
+              is_active
+            FROM admins
+            WHERE id = ?
+            LIMIT 1
+          `,
+          [decoded.id]
+        );
+
+
+      // ======================================================
+      // ADMIN NO LONGER EXISTS
+      // ======================================================
+
+      if (
+        admins.length === 0
+      ) {
+
+        res.clearCookie(
+          "admin_token",
+          {
+            path: "/",
+          }
+        );
+
+
+        return res.status(401).json({
+          success: false,
+
+          message:
+            "Invalid or expired authentication.",
+        });
+      }
+
+
+      const admin =
+        admins[0];
+
+
+      // ======================================================
+      // ADMIN ACCOUNT DISABLED
+      // ======================================================
+
+      if (!admin.is_active) {
+
+        res.clearCookie(
+          "admin_token",
+          {
+            path: "/",
+          }
+        );
+
+
+        return res.status(403).json({
+          success: false,
+
+          message:
+            "This administrator account is disabled.",
+        });
+      }
+
+
+      // ======================================================
+      // STORE CURRENT ADMIN ON REQUEST
+      // ======================================================
+      //
+      // Every protected controller can now use:
+      //
+      // req.admin.id
+      // req.admin.email
+      // req.admin.role
+      //
+      // These values come from the CURRENT database record,
+      // not from an old JWT payload.
+      // ======================================================
+
+      req.admin = {
+        id: admin.id,
+        email: admin.email,
+        role: admin.role,
+      };
+
+
+      // ======================================================
+      // AUTHENTICATION SUCCESSFUL
+      // ======================================================
+
+      next();
+
+    } catch (error) {
+
+      // ======================================================
+      // JWT ERRORS
+      // ======================================================
+      //
+      // Examples:
+      //
+      // TokenExpiredError
+      // JsonWebTokenError
+      // NotBeforeError
+      //
+      // We intentionally return one generic response so we
+      // don't reveal unnecessary information.
+      // ======================================================
+
+      console.error(
+        "Authentication error:",
+        error.message
+      );
+
+
+      res.clearCookie(
+        "admin_token",
+        {
+          path: "/",
+        }
+      );
+
+
       return res.status(401).json({
         success: false,
-        message: "Authentication required.",
+
+        message:
+          "Invalid or expired authentication.",
       });
     }
+  };
 
 
-    // Verify that the token was created by our server
-    // and that it has not expired or been modified
-    const decoded = jwt.verify(
-      token,
-      process.env.JWT_SECRET
-    );
-
-
-    // Don't rely only on the information inside the JWT.
-    // Check the admin in the database as well, so changes
-    // such as disabling an account take effect immediately.
-    const [admins] = await pool.execute(
-      `
-        SELECT
-          id,
-          email,
-          role,
-          is_active
-        FROM admins
-        WHERE id = ?
-        LIMIT 1
-      `,
-      [decoded.id]
-    );
-
-
-    // The admin may have been deleted after the token was created
-    if (admins.length === 0) {
-
-      // Remove the old cookie because it is no longer valid
-      res.clearCookie("admin_token", {
-        path: "/",
-      });
-
-      return res.status(401).json({
-        success: false,
-        message: "Invalid or expired authentication.",
-      });
-    }
-
-
-    const admin = admins[0];
-
-
-    // An admin can be disabled without deleting the account.
-    // In that case, immediately stop access and remove the cookie.
-    if (!admin.is_active) {
-
-      res.clearCookie("admin_token", {
-        path: "/",
-      });
-
-      return res.status(403).json({
-        success: false,
-        message: "This administrator account is disabled.",
-      });
-    }
-
-
-    // Use the current values from the database instead of
-    // trusting old role/email information stored in the JWT.
-    // This means changes made by another admin take effect
-    // without requiring the user to log in again.
-    req.admin = {
-      id: admin.id,
-      email: admin.email,
-      role: admin.role,
-    };
-
-
-    // Everything looks good, so let the request continue
-    next();
-
-  } catch (error) {
-
-    // JWT errors can happen when the token is invalid,
-    // expired, or has been changed.
-    console.error(
-      "Authentication error:",
-      error.message
-    );
-
-    return res.status(401).json({
-      success: false,
-      message: "Invalid or expired authentication.",
-    });
-  }
-};
-
-
-module.exports = authMiddleware;
+module.exports =
+  authMiddleware;

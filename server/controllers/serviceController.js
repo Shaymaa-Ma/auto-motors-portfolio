@@ -5,6 +5,10 @@ const {
   sendError,
 } = require("../utils/response");
 
+const {
+  clearCache,
+} = require("../middleware/cache");
+
 /* =========================================================
    PUBLIC
 ========================================================= */
@@ -245,6 +249,10 @@ const createService = async (
         ]
       );
 
+    clearCache(
+      "/api/services"
+    );
+
     const [rows] =
       await db.query(
         `
@@ -405,6 +413,10 @@ const updateService = async (
       ]
     );
 
+    clearCache(
+      "/api/services"
+    );
+
     const [rows] =
       await db.query(
         `
@@ -475,6 +487,10 @@ const deleteService = async (
         WHERE id = ?
       `,
       [id]
+    );
+
+    clearCache(
+      "/api/services"
     );
 
     return sendSuccess(
@@ -652,6 +668,10 @@ const reorderService = async (
       );
     }
 
+    clearCache(
+      "/api/services"
+    );
+
     const [updatedRows] =
       await db.query(
         `
@@ -741,6 +761,10 @@ const normalizeServiceOrders =
           ]
         );
       }
+
+      clearCache(
+        "/api/services"
+      );
 
       const [updatedRows] =
         await db.query(

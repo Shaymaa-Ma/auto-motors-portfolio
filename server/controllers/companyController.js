@@ -7,6 +7,10 @@ const {
   sendError,
 } = require("../utils/response");
 
+const {
+  clearCache,
+} = require("../middleware/cache");
+
 // =========================================================
 // Get the existing Company information
 // =========================================================
@@ -176,6 +180,10 @@ const updateCompany = async (
 
         company.id,
       ]
+    );
+
+    clearCache(
+      "/api/company"
     );
 
     // Get the updated Company information

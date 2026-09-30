@@ -20,6 +20,10 @@ const {
   createImageUpload,
 } = require("../middleware/uploadMiddleware");
 
+const {
+  cacheMiddleware,
+} = require("../middleware/cache");
+
 const router = express.Router();
 
 // Reusable product image upload
@@ -32,6 +36,7 @@ const uploadProductImage =
 // Get active products
 router.get(
   "/",
+  cacheMiddleware(),
   getProducts
 );
 
@@ -52,6 +57,7 @@ router.get(
 // Get one active product
 router.get(
   "/:id",
+  cacheMiddleware(),
   getProductById
 );
 
@@ -91,4 +97,5 @@ router.post(
   authenticateAdmin,
   normalizeProductOrders
 );
+
 module.exports = router;

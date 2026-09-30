@@ -7,6 +7,10 @@ const {
   sendError,
 } = require("../utils/response");
 
+const {
+  clearCache,
+} = require("../middleware/cache");
+
 // =========================================================
 // GET ALL ACTIVE GALLERY ITEMS
 // GET /api/gallery
@@ -348,6 +352,10 @@ const createGalleryItem = async (
         ]
       );
 
+    clearCache(
+      "/api/gallery"
+    );
+
     // -------------------------------------------------------
     // Get created item
     // -------------------------------------------------------
@@ -475,6 +483,10 @@ const updateGallerySection = async (
         section_subtitle_en?.trim() ||
           null,
       ]
+    );
+
+    clearCache(
+      "/api/gallery"
     );
 
     // -------------------------------------------------------
@@ -663,6 +675,10 @@ const updateGalleryItem = async (
         active,
         id,
       ]
+    );
+
+    clearCache(
+      "/api/gallery"
     );
 
     // -------------------------------------------------------
@@ -928,6 +944,10 @@ const reorderGalleryItem = async (
       );
     }
 
+    clearCache(
+      "/api/gallery"
+    );
+
     // -------------------------------------------------------
     // Return reordered gallery
     // -------------------------------------------------------
@@ -990,6 +1010,10 @@ const normalizeGalleryOrders = async (
         ]
       );
     }
+
+    clearCache(
+      "/api/gallery"
+    );
 
     return sendSuccess(
       res,
@@ -1057,6 +1081,10 @@ const deleteGalleryItem = async (
       `DELETE FROM gallery
        WHERE id = ?`,
       [id]
+    );
+
+    clearCache(
+      "/api/gallery"
     );
 
     // -------------------------------------------------------

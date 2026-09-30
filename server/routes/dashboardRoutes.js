@@ -1,3 +1,9 @@
+/*
+No cacheMiddleware() here
+cache should be focused on public GET endpoints
+that repeatedly fetch the same public data
+*/
+
 const express = require("express");
 
 const {

@@ -2,6 +2,10 @@ const db = require("../config/db");
 const path = require("path");
 const fs = require("fs");
 
+const {
+  clearCache,
+} = require("../middleware/cache");
+
 // =========================================================
 // CONSTANTS
 // =========================================================
@@ -748,6 +752,10 @@ const createVehicle = async (
         ]
       );
 
+    clearCache(
+      "/api/vehicles"
+    );
+
 
     // =====================================================
     // GET CREATED VEHICLE
@@ -914,6 +922,10 @@ const updateVehicleSection = async (
         subtitleEn,
         sectionIcon,
       ]
+    );
+
+    clearCache(
+      "/api/vehicles"
     );
 
 
@@ -1250,6 +1262,10 @@ const updateVehicle = async (
       ]
     );
 
+    clearCache(
+      "/api/vehicles"
+    );
+
 
     // =====================================================
     // DELETE OLD IMAGE AFTER SUCCESSFUL UPDATE
@@ -1472,6 +1488,10 @@ const reorderVehicle = async (
       ]
     );
 
+    clearCache(
+      "/api/vehicles"
+    );
+
     return res.status(200).json({
       success: true,
       message:
@@ -1529,6 +1549,10 @@ const normalizeVehicleOrders =
           ]
         );
       }
+
+      clearCache(
+        "/api/vehicles"
+      );
 
       return res.status(200).json({
         success: true,
@@ -1647,6 +1671,10 @@ const deleteVehicle = async (
         ]
       );
     }
+
+    clearCache(
+      "/api/vehicles"
+    );
 
     return res.status(200).json({
       success: true,

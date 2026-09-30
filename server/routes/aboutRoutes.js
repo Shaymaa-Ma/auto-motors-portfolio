@@ -11,6 +11,10 @@ const {
   createImageUpload,
 } = require("../middleware/uploadMiddleware");
 
+const {
+  cacheMiddleware,
+} = require("../middleware/cache");
+
 const router = express.Router();
 
 // Configure About image upload
@@ -23,6 +27,7 @@ const aboutUpload =
 // Get About content
 router.get(
   "/",
+  cacheMiddleware(),
   getAbout
 );
 

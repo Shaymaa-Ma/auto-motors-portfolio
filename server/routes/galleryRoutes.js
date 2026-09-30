@@ -20,6 +20,10 @@ const {
   createImageUpload,
 } = require("../middleware/uploadMiddleware");
 
+const {
+  cacheMiddleware,
+} = require("../middleware/cache");
+
 const router = express.Router();
 
 // =========================================================
@@ -94,12 +98,14 @@ router.post(
 // Get all ACTIVE gallery items
 router.get(
   "/",
+  cacheMiddleware(),
   getGallery
 );
 
 // Get ONE active gallery item
 router.get(
   "/:id",
+  cacheMiddleware(),
   getGalleryItemById
 );
 

@@ -7,6 +7,10 @@ const {
   sendError,
 } = require("../utils/response");
 
+const {
+  clearCache,
+} = require("../middleware/cache");
+
 // Get all active products
 // GET /api/products
 // Public
@@ -432,6 +436,11 @@ const createProduct = async (
         ]
       );
 
+    // Invalidate cached public products
+    clearCache(
+      "/api/products"
+    );
+
     // Get the newly created product
     const [rows] =
       await db.query(
@@ -620,6 +629,11 @@ const updateProduct = async (
       ]
     );
 
+    // Invalidate cached public products
+    clearCache(
+      "/api/products"
+    );
+
     // Get the updated product
     const [rows] =
       await db.query(
@@ -720,6 +734,11 @@ const deleteProduct = async (
         WHERE id = ?
       `,
       [id]
+    );
+
+    // Invalidate cached public products
+    clearCache(
+      "/api/products"
     );
 
     return sendSuccess(
@@ -937,6 +956,11 @@ const reorderProduct = async (
       ]
     );
 
+    // Invalidate cached public products
+    clearCache(
+      "/api/products"
+    );
+
     return sendSuccess(
       res,
       {
@@ -1031,6 +1055,11 @@ const normalizeProductOrders =
               ]
             )
         )
+      );
+
+      // Invalidate cached public products
+      clearCache(
+        "/api/products"
       );
 
       return sendSuccess(

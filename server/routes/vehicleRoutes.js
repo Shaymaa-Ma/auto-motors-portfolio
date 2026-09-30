@@ -19,6 +19,10 @@ const {
   createImageUpload,
 } = require("../middleware/uploadMiddleware");
 
+const {
+  cacheMiddleware,
+} = require("../middleware/cache");
+
 const router = express.Router();
 
 
@@ -106,12 +110,14 @@ router.post(
 // Get active vehicles
 router.get(
   "/",
+  cacheMiddleware(),
   getVehicles
 );
 
 // Get one active vehicle
 router.get(
   "/:id",
+  cacheMiddleware(),
   getVehicleById
 );
 

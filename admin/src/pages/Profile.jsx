@@ -17,6 +17,62 @@ const INITIAL_FORM = {
 
 
 // =========================================================
+// PASSWORD VALIDATION
+// =========================================================
+//
+// This validation provides immediate feedback in the UI.
+//
+// The backend MUST perform the same validation again.
+// Frontend validation is only for user experience and
+// cannot be considered a security boundary.
+//
+// bcrypt is currently used by the backend, so passwords
+// are limited to 72 characters to avoid bcrypt's input
+// length limitation.
+//
+// =========================================================
+
+const validatePassword = (password) => {
+  if (!password) {
+    return "";
+  }
+
+
+  if (password.length < 12) {
+    return "Password must contain at least 12 characters.";
+  }
+
+
+  if (password.length > 72) {
+    return "Password must not exceed 72 characters.";
+  }
+
+
+  if (!/[a-z]/.test(password)) {
+    return "Password must contain at least one lowercase letter.";
+  }
+
+
+  if (!/[A-Z]/.test(password)) {
+    return "Password must contain at least one uppercase letter.";
+  }
+
+
+  if (!/[0-9]/.test(password)) {
+    return "Password must contain at least one number.";
+  }
+
+
+  if (!/[^A-Za-z0-9]/.test(password)) {
+    return "Password must contain at least one special character.";
+  }
+
+
+  return "";
+};
+
+
+// =========================================================
 // PROFILE COMPONENT
 // =========================================================
 
@@ -41,9 +97,11 @@ const Profile = () => {
       return "Super Admin";
     }
 
+
     if (!role) {
       return "Employee";
     }
+
 
     return role;
   };
@@ -299,6 +357,7 @@ const Profile = () => {
 
     setEditingProfile(true);
 
+
     // Close other forms if necessary.
     setShowAddForm(false);
     setEditingUser(null);
@@ -380,15 +439,21 @@ const Profile = () => {
     }
 
 
-    if (
-      password &&
-      password.length < 8
-    ) {
-      setError(
-        "Password must contain at least 8 characters."
-      );
+    // -------------------------------------------------------
+    // Validate the password only when the user enters a new
+    // password.
+    // -------------------------------------------------------
 
-      return;
+    if (password) {
+      const passwordError =
+        validatePassword(password);
+
+
+      if (passwordError) {
+        setError(passwordError);
+
+        return;
+      }
     }
 
 
@@ -401,29 +466,28 @@ const Profile = () => {
 
 
       /*
-       * IMPORTANT:
+       * The role is intentionally NOT sent here.
        *
-       * Your backend currently requires the role field.
+       * The authenticated user's role is controlled by the
+       * backend and cannot be changed through /me.
        *
-       * The Super Admin cannot edit their own role,
-       * but we send the existing role value exactly as
-       * stored in the database.
+       * For example:
        *
-       * Example:
+       * super_admin remains super_admin.
        *
-       * super_admin -> Super Admin in the UI
-       * super_admin -> super_admin in the API
+       * Employee remains Employee.
+       *
+       * Manager remains Manager.
        */
 
       const data = {
         name,
         email,
-        role: profileForm.role,
       };
 
 
       // -----------------------------------------------------
-      // Password is only sent when entered.
+      // Password is only sent when a new password was entered.
       // -----------------------------------------------------
 
       if (password) {
@@ -461,6 +525,10 @@ const Profile = () => {
       /*
        * Reload the page so AuthContext gets the latest
        * account information from the database.
+       *
+       * If the password was changed, the backend issues a
+       * fresh authentication cookie for the current session.
+       * Other older sessions are invalidated by auth_version.
        */
 
       window.location.reload();
@@ -520,7 +588,7 @@ const Profile = () => {
       formData.password;
 
     const role =
-      formData.role.trim();
+      "Employee";
 
 
     // =======================================================
@@ -550,10 +618,16 @@ const Profile = () => {
     }
 
 
-    if (password.length < 8) {
-      setError(
-        "Password must contain at least 8 characters."
-      );
+    // -------------------------------------------------------
+    // Strong password validation.
+    // -------------------------------------------------------
+
+    const passwordError =
+      validatePassword(password);
+
+
+    if (passwordError) {
+      setError(passwordError);
 
       return;
     }
@@ -564,7 +638,9 @@ const Profile = () => {
     // -------------------------------------------------------
 
     if (
-      role.toLowerCase() ===
+      role
+        .toLowerCase()
+        .replace(/[\s-]+/g, "_") ===
       "super_admin"
     ) {
       setError(
@@ -695,7 +771,7 @@ const Profile = () => {
       name: user.name || "",
       email: user.email || "",
       password: "",
-      role: user.role || "Employee",
+      role: "Employee",
     });
 
 
@@ -768,8 +844,7 @@ const Profile = () => {
     const password =
       editUserForm.password;
 
-    const role =
-      editUserForm.role.trim();
+
 
 
     // =======================================================
@@ -778,11 +853,10 @@ const Profile = () => {
 
     if (
       !name ||
-      !email ||
-      !role
+      !email
     ) {
       setError(
-        "Name, email, and role are required."
+        "Name and email are required."
       );
 
       return;
@@ -798,31 +872,21 @@ const Profile = () => {
     }
 
 
-    if (
-      password &&
-      password.length < 8
-    ) {
-      setError(
-        "Password must contain at least 8 characters."
-      );
-
-      return;
-    }
-
-
     // -------------------------------------------------------
-    // super_admin remains reserved.
+    // Password is optional when editing an existing user.
+    // If entered, it must satisfy the strong password policy.
     // -------------------------------------------------------
 
-    if (
-      role.toLowerCase() ===
-      "super_admin"
-    ) {
-      setError(
-        "The super_admin role is reserved for the Super Admin."
-      );
+    if (password) {
+      const passwordError =
+        validatePassword(password);
 
-      return;
+
+      if (passwordError) {
+        setError(passwordError);
+
+        return;
+      }
     }
 
 
@@ -837,7 +901,6 @@ const Profile = () => {
       const data = {
         name,
         email,
-        role,
       };
 
 
@@ -1207,7 +1270,7 @@ const Profile = () => {
 
       {/* =====================================================
           PAGE HEADER
-      ===================================================== */}
+          ===================================================== */}
 
       <div className="admin-page-header">
 
@@ -1234,7 +1297,7 @@ const Profile = () => {
 
       {/* =====================================================
           ERROR ALERT
-      ===================================================== */}
+          ===================================================== */}
 
       {error && (
         <div
@@ -1275,7 +1338,7 @@ const Profile = () => {
 
       {/* =====================================================
           SUCCESS ALERT
-      ===================================================== */}
+          ===================================================== */}
 
       {success && (
         <div
@@ -1316,7 +1379,7 @@ const Profile = () => {
 
       {/* =====================================================
           MY PROFILE
-      ===================================================== */}
+          ===================================================== */}
 
       <section className="profile-card">
 
@@ -1376,7 +1439,7 @@ const Profile = () => {
         {/* ===================================================
             EDIT PROFILE
             SAME DESIGN AS EDIT Employee
-        =================================================== */}
+            =================================================== */}
 
         {editingProfile ? (
 
@@ -1510,7 +1573,8 @@ const Profile = () => {
                         savingProfile
                       }
                       autoComplete="new-password"
-                      minLength={8}
+                      minLength={12}
+                      maxLength={72}
                     />
 
 
@@ -1564,7 +1628,6 @@ const Profile = () => {
 
                   <input
                     id="profile-role"
-                    name="role"
                     type="text"
                     value={
                       getRoleLabel(
@@ -1766,7 +1829,7 @@ const Profile = () => {
 
       {/* =====================================================
           SECURITY
-      ===================================================== */}
+          ===================================================== */}
 
       <section className="profile-security-card">
 
@@ -1800,7 +1863,7 @@ const Profile = () => {
       {/* =====================================================
           ADMINISTRATOR MANAGEMENT
           SUPER ADMIN ONLY
-      ===================================================== */}
+          ===================================================== */}
 
       {isSuperAdmin && (
         <section className="users-card">
@@ -1808,7 +1871,7 @@ const Profile = () => {
 
           {/* =================================================
               MANAGEMENT HEADER
-          ================================================= */}
+              ================================================= */}
 
           <div className="users-card-header">
 
@@ -1863,7 +1926,7 @@ const Profile = () => {
 
           {/* =================================================
               CREATE USER FORM
-          ================================================= */}
+              ================================================= */}
 
           {showAddForm && (
             <div className="user-form-card">
@@ -1987,10 +2050,11 @@ const Profile = () => {
                         onChange={
                           handleChange
                         }
-                        placeholder="Minimum 8 characters"
+                        placeholder="Minimum 12 characters"
                         disabled={saving}
                         autoComplete="new-password"
-                        minLength={8}
+                        minLength={12}
+                        maxLength={72}
                         required
                       />
 
@@ -2043,16 +2107,9 @@ const Profile = () => {
                       id="profile-user-role"
                       name="role"
                       type="text"
-                      value={
-                        formData.role
-                      }
-                      onChange={
-                        handleChange
-                      }
-                      placeholder="Enter role"
-                      disabled={saving}
-                      maxLength={50}
-                      required
+                      value="Employee"
+                      disabled
+                      readOnly
                     />
 
                   </div>
@@ -2121,7 +2178,7 @@ const Profile = () => {
 
           {/* =================================================
               EDIT USER FORM
-          ================================================= */}
+              ================================================= */}
 
           {editingUser && (
             <div className="user-form-card">
@@ -2248,7 +2305,8 @@ const Profile = () => {
                         placeholder="Leave blank to keep current password"
                         disabled={saving}
                         autoComplete="new-password"
-                        minLength={8}
+                        minLength={12}
+                        maxLength={72}
                       />
 
 
@@ -2300,16 +2358,9 @@ const Profile = () => {
                       id="edit-user-role"
                       name="role"
                       type="text"
-                      value={
-                        editUserForm.role
-                      }
-                      onChange={
-                        handleEditUserChange
-                      }
-                      placeholder="Enter role"
-                      disabled={saving}
-                      maxLength={50}
-                      required
+                      value="Employee"
+                      disabled
+                      readOnly
                     />
 
                   </div>
@@ -2377,7 +2428,7 @@ const Profile = () => {
 
           {/* =================================================
               ADMINISTRATORS
-          ================================================= */}
+              ================================================= */}
 
           {loadingUsers ? (
 
@@ -2751,6 +2802,7 @@ const Profile = () => {
                       </tr>
                     );
                   })}
+
 
                 </tbody>
 

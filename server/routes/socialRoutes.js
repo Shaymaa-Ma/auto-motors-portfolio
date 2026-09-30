@@ -22,6 +22,10 @@ const authenticateAdmin = require(
   "../middleware/authMiddleware"
 );
 
+const {
+  cacheMiddleware,
+} = require("../middleware/cache");
+
 const router = express.Router();
 
 // ==========================================================================
@@ -77,6 +81,7 @@ router.post(
 // GET /api/social-links
 router.get(
   "/",
+  cacheMiddleware(),
   getSocialLinks
 );
 
@@ -84,6 +89,7 @@ router.get(
 // GET /api/social-links/:id
 router.get(
   "/:id",
+  cacheMiddleware(),
   getSocialLinkById
 );
 

@@ -1,15 +1,69 @@
+/*
+Main Administrator / super_admin:
+
+Name       → editable
+Email      → editable
+Password   → editable
+Role       → permanently super_admin
+Status     → cannot deactivate
+Account    → cannot delete
+
+Users created by the Super Admin:
+
+Name       → editable
+Email      → editable
+Password   → editable
+Role       → permanently Employee
+Status     → editable
+Account    → deletable
+
+IMPORTANT SECURITY RULE:
+
+The backend NEVER trusts the frontend to decide who is a
+super_admin.
+
+Even if somebody manually sends:
+
+{
+  "role": "super_admin"
+}
+
+the backend rejects it.
+
+The database remains the source of truth for the current
+administrator role and account status.
+*/
+
+
 const bcrypt = require("bcryptjs");
-const pool = require("../config/db");
+
+const pool =
+  require("../config/db");
+
+const {
+  validatePassword,
+} = require("../utils/passwordPolicy");
+
 
 // =========================================================
-// HELPERS
+// EMAIL VALIDATION
+// =========================================================
+
+const EMAIL_REGEX =
+  /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+
+// =========================================================
+// CHECK AUTHENTICATION
 // =========================================================
 
 const ensureAuthenticated = (req, res) => {
+
   if (!req.admin) {
     res.status(401).json({
       success: false,
-      message: "Authentication required.",
+      message:
+        "Authentication required.",
     });
 
     return false;
@@ -24,11 +78,15 @@ const ensureAuthenticated = (req, res) => {
 // =========================================================
 
 const ensureSuperAdmin = (req, res) => {
+
   if (!ensureAuthenticated(req, res)) {
     return false;
   }
 
-  if (req.admin.role !== "super_admin") {
+
+  if (
+    req.admin.role !== "super_admin"
+  ) {
     res.status(403).json({
       success: false,
       message:
@@ -38,53 +96,64 @@ const ensureSuperAdmin = (req, res) => {
     return false;
   }
 
+
   return true;
 };
 
 
 // =========================================================
-// VALIDATE ROLE
+// VALIDATE USER ROLE
 // =========================================================
 //
-// Custom roles are allowed.
-//
-// IMPORTANT:
-// A newly created account cannot be given super_admin
-// privileges through the management form.
-//
+// Kept for protection against the reserved super_admin role.
+// Regular users created/managed by this controller are always
+// assigned Employee.
 // =========================================================
 
 const validateUserRole = (role) => {
+
   if (typeof role !== "string") {
     return {
       valid: false,
-      message: "Role is required.",
+      message:
+        "Role is required.",
     };
   }
 
-  const cleanRole = role.trim();
+
+  const cleanRole =
+    role.trim();
+
 
   if (!cleanRole) {
     return {
       valid: false,
-      message: "Role is required.",
+      message:
+        "Role is required.",
     };
   }
+
 
   if (cleanRole.length > 50) {
     return {
       valid: false,
-      message: "Role must not exceed 50 characters.",
+      message:
+        "Role must not exceed 50 characters.",
     };
   }
 
-  if (cleanRole.toLowerCase() === "super_admin") {
+
+  if (
+    cleanRole.toLowerCase() ===
+    "super_admin"
+  ) {
     return {
       valid: false,
       message:
-        "The super administrator role cannot be assigned to another account.",
+        "The Super Admin role is reserved for the Main Administrator.",
     };
   }
+
 
   return {
     valid: true,
@@ -94,103 +163,117 @@ const validateUserRole = (role) => {
 
 
 // =========================================================
-// GET /api/users
-// Get all administrators
-//
-// ONLY SUPER ADMIN
+// GET ALL USERS
 // =========================================================
 
 const getUsers = async (req, res) => {
+
   try {
+
     if (!ensureSuperAdmin(req, res)) {
       return;
     }
 
-    const [users] = await pool.execute(`
-      SELECT
-        id,
-        name,
-        email,
-        role,
-        is_active,
-        created_at,
-        updated_at
-      FROM admins
-      ORDER BY
-        CASE
-          WHEN role = 'super_admin' THEN 0
-          ELSE 1
-        END,
-        id DESC
-    `);
+
+    const [users] =
+      await pool.execute(
+        `
+          SELECT
+            id,
+            name,
+            email,
+            role,
+            is_active,
+            created_at,
+            updated_at
+          FROM admins
+          ORDER BY
+            CASE
+              WHEN role = 'super_admin' THEN 0
+              ELSE 1
+            END,
+            id DESC
+        `
+      );
+
 
     return res.status(200).json({
       success: true,
       users,
     });
+
   } catch (error) {
-    console.error("Get users error:", error);
+
+    console.error(
+      "Get users error:",
+      error
+    );
+
 
     return res.status(500).json({
       success: false,
-      message: "Unable to retrieve administrators.",
+      message:
+        "Unable to retrieve administrators.",
     });
   }
 };
 
 
 // =========================================================
-// POST /api/users
-// Create user
+// CREATE USER
+// =========================================================
 //
-// ONLY SUPER ADMIN
+// Only the Super Admin can create users.
+//
+// IMPORTANT:
+// The role is NOT accepted from req.body.
+//
+// Every newly created regular account is ALWAYS Employee.
 // =========================================================
 
 const createUser = async (req, res) => {
+
   try {
+
     if (!ensureSuperAdmin(req, res)) {
       return;
     }
+
 
     const {
       name,
       email,
       password,
-      role,
     } = req.body;
 
 
-    // -------------------------------------------------------
-    // Validate required fields
-    // -------------------------------------------------------
+    // =======================================================
+    // REQUIRED FIELDS
+    // =======================================================
 
     if (
       typeof name !== "string" ||
       typeof email !== "string" ||
-      typeof password !== "string" ||
-      typeof role !== "string"
+      typeof password !== "string"
     ) {
       return res.status(400).json({
         success: false,
         message:
-          "Name, email, password, and role are required.",
+          "Name, email, and password are required.",
       });
     }
 
 
-    // -------------------------------------------------------
-    // Clean input
-    // -------------------------------------------------------
-
-    const cleanName = name.trim();
+    const cleanName =
+      name.trim();
 
     const cleanEmail =
       email.trim().toLowerCase();
 
 
-    // -------------------------------------------------------
-    // Validate name
-    // -------------------------------------------------------
+    // =======================================================
+    // VALIDATE NAME
+    // =======================================================
 
     if (cleanName.length < 2) {
       return res.status(400).json({
@@ -199,6 +282,7 @@ const createUser = async (req, res) => {
           "Name must contain at least 2 characters.",
       });
     }
+
 
     if (cleanName.length > 100) {
       return res.status(400).json({
@@ -209,13 +293,14 @@ const createUser = async (req, res) => {
     }
 
 
-    // -------------------------------------------------------
-    // Validate email
-    // -------------------------------------------------------
+    // =======================================================
+    // VALIDATE EMAIL
+    // =======================================================
 
     if (
       cleanEmail.length === 0 ||
-      cleanEmail.length > 191
+      cleanEmail.length > 191 ||
+      !EMAIL_REGEX.test(cleanEmail)
     ) {
       return res.status(400).json({
         success: false,
@@ -225,40 +310,45 @@ const createUser = async (req, res) => {
     }
 
 
-    // -------------------------------------------------------
-    // Validate password
-    // -------------------------------------------------------
+    // =======================================================
+    // VALIDATE PASSWORD
+    // =======================================================
 
-    if (password.length < 8) {
+    const passwordValidation =
+      validatePassword(password);
+
+
+    if (!passwordValidation.valid) {
       return res.status(400).json({
         success: false,
         message:
-          "Password must contain at least 8 characters.",
+          passwordValidation.message,
       });
     }
 
 
-    // -------------------------------------------------------
-    // Validate role
-    // -------------------------------------------------------
-
-    const roleValidation =
-      validateUserRole(role);
-
-    if (!roleValidation.valid) {
-      return res.status(400).json({
-        success: false,
-        message: roleValidation.message,
-      });
-    }
+    // =======================================================
+    // FIXED EMPLOYEE ROLE
+    // =======================================================
+    //
+    // Do NOT read role from req.body.
+    //
+    // This guarantees that even if somebody sends:
+    //
+    // {
+    //   "role": "super_admin"
+    // }
+    //
+    // the backend still creates Employee.
+    // =======================================================
 
     const userRole =
-      roleValidation.role;
+      "Employee";
 
 
-    // -------------------------------------------------------
-    // Check existing email
-    // -------------------------------------------------------
+    // =======================================================
+    // CHECK DUPLICATE EMAIL
+    // =======================================================
 
     const [existingUsers] =
       await pool.execute(
@@ -281,9 +371,9 @@ const createUser = async (req, res) => {
     }
 
 
-    // -------------------------------------------------------
-    // Hash password
-    // -------------------------------------------------------
+    // =======================================================
+    // HASH PASSWORD
+    // =======================================================
 
     const passwordHash =
       await bcrypt.hash(
@@ -292,9 +382,9 @@ const createUser = async (req, res) => {
       );
 
 
-    // -------------------------------------------------------
-    // Create account
-    // -------------------------------------------------------
+    // =======================================================
+    // CREATE USER
+    // =======================================================
 
     const [result] =
       await pool.execute(
@@ -325,23 +415,42 @@ const createUser = async (req, res) => {
         "User created successfully.",
 
       user: {
-        id: result.insertId,
-        name: cleanName,
-        email: cleanEmail,
-        role: userRole,
-        is_active: 1,
+        id:
+          result.insertId,
+
+        name:
+          cleanName,
+
+        email:
+          cleanEmail,
+
+        role:
+          userRole,
+
+        is_active:
+          1,
       },
     });
-  } catch (error) {
-    console.error("Create user error:", error);
 
-    if (error.code === "ER_DUP_ENTRY") {
+  } catch (error) {
+
+    console.error(
+      "Create user error:",
+      error
+    );
+
+
+    if (
+      error.code ===
+      "ER_DUP_ENTRY"
+    ) {
       return res.status(409).json({
         success: false,
         message:
           "An administrator with this email already exists.",
       });
     }
+
 
     return res.status(500).json({
       success: false,
@@ -353,47 +462,31 @@ const createUser = async (req, res) => {
 
 
 // =========================================================
-// PATCH /api/users/me
+// UPDATE MY PROFILE
+// =========================================================
 //
-// Edit currently logged-in user's profile.
-//
-// SUPER ADMIN:
-//   name
-//   email
-//   password
-//   role
-//
-// REGULAR USER:
-//   name
-//   email
-//   password
-//
-// Regular users cannot modify their role or status.
+// Role is NEVER accepted from the request.
 // =========================================================
 
-const updateMyProfile = async (
-  req,
-  res
-) => {
+const updateMyProfile = async (req, res) => {
+
   try {
+
     if (!ensureAuthenticated(req, res)) {
       return;
     }
 
+
     const currentAdminId =
       Number(req.admin.id);
+
 
     const {
       name,
       email,
       password,
-      role,
     } = req.body;
 
-
-    // -------------------------------------------------------
-    // Validate name
-    // -------------------------------------------------------
 
     if (
       typeof name !== "string" ||
@@ -405,6 +498,7 @@ const updateMyProfile = async (
           "Name must contain at least 2 characters.",
       });
     }
+
 
     const cleanName =
       name.trim();
@@ -419,10 +513,6 @@ const updateMyProfile = async (
     }
 
 
-    // -------------------------------------------------------
-    // Validate email
-    // -------------------------------------------------------
-
     if (
       typeof email !== "string" ||
       !email.trim()
@@ -434,22 +524,24 @@ const updateMyProfile = async (
       });
     }
 
+
     const cleanEmail =
-      email.trim().toLowerCase();
+      email
+        .trim()
+        .toLowerCase();
 
 
-    if (cleanEmail.length > 191) {
+    if (
+      cleanEmail.length > 191 ||
+      !EMAIL_REGEX.test(cleanEmail)
+    ) {
       return res.status(400).json({
         success: false,
         message:
-          "Email address is too long.",
+          "A valid email address is required.",
       });
     }
 
-
-    // -------------------------------------------------------
-    // Check email ownership
-    // -------------------------------------------------------
 
     const [existingUsers] =
       await pool.execute(
@@ -476,23 +568,26 @@ const updateMyProfile = async (
     }
 
 
-    // -------------------------------------------------------
-    // Determine whether password is changing
-    // -------------------------------------------------------
-
     let passwordHash = null;
+
 
     if (
       typeof password === "string" &&
       password.length > 0
     ) {
-      if (password.length < 8) {
+
+      const passwordValidation =
+        validatePassword(password);
+
+
+      if (!passwordValidation.valid) {
         return res.status(400).json({
           success: false,
           message:
-            "Password must contain at least 8 characters.",
+            passwordValidation.message,
         });
       }
+
 
       passwordHash =
         await bcrypt.hash(
@@ -502,131 +597,43 @@ const updateMyProfile = async (
     }
 
 
-    // -------------------------------------------------------
-    // SUPER ADMIN
-    // Can change own role.
-    // -------------------------------------------------------
+    if (passwordHash) {
 
-    if (
-      req.admin.role === "super_admin"
-    ) {
-      if (
-        typeof role !== "string" ||
-        !role.trim()
-      ) {
-        return res.status(400).json({
-          success: false,
-          message:
-            "Role is required.",
-        });
-      }
+      await pool.execute(
+        `
+          UPDATE admins
+          SET
+            name = ?,
+            email = ?,
+            password_hash = ?
+          WHERE id = ?
+        `,
+        [
+          cleanName,
+          cleanEmail,
+          passwordHash,
+          currentAdminId,
+        ]
+      );
 
-      const cleanRole =
-        role.trim();
+    } else {
 
-      if (cleanRole.length > 50) {
-        return res.status(400).json({
-          success: false,
-          message:
-            "Role must not exceed 50 characters.",
-        });
-      }
-
-      // The current super admin may keep
-      // or change their own role.
-      //
-      // However, if they change it away from
-      // super_admin, they will lose super-admin
-      // access on the next authenticated request.
-
-      const finalRole =
-        cleanRole;
-
-
-      if (passwordHash) {
-        await pool.execute(
-          `
-            UPDATE admins
-            SET
-              name = ?,
-              email = ?,
-              password_hash = ?,
-              role = ?
-            WHERE id = ?
-          `,
-          [
-            cleanName,
-            cleanEmail,
-            passwordHash,
-            finalRole,
-            currentAdminId,
-          ]
-        );
-      } else {
-        await pool.execute(
-          `
-            UPDATE admins
-            SET
-              name = ?,
-              email = ?,
-              role = ?
-            WHERE id = ?
-          `,
-          [
-            cleanName,
-            cleanEmail,
-            finalRole,
-            currentAdminId,
-          ]
-        );
-      }
+      await pool.execute(
+        `
+          UPDATE admins
+          SET
+            name = ?,
+            email = ?
+          WHERE id = ?
+        `,
+        [
+          cleanName,
+          cleanEmail,
+          currentAdminId,
+        ]
+      );
     }
 
-    // -------------------------------------------------------
-    // REGULAR USER
-    // Role is NEVER changed from their own profile.
-    // -------------------------------------------------------
-
-    else {
-      if (passwordHash) {
-        await pool.execute(
-          `
-            UPDATE admins
-            SET
-              name = ?,
-              email = ?,
-              password_hash = ?
-            WHERE id = ?
-          `,
-          [
-            cleanName,
-            cleanEmail,
-            passwordHash,
-            currentAdminId,
-          ]
-        );
-      } else {
-        await pool.execute(
-          `
-            UPDATE admins
-            SET
-              name = ?,
-              email = ?
-            WHERE id = ?
-          `,
-          [
-            cleanName,
-            cleanEmail,
-            currentAdminId,
-          ]
-        );
-      }
-    }
-
-
-    // -------------------------------------------------------
-    // Get updated safe profile
-    // -------------------------------------------------------
 
     const [updatedUsers] =
       await pool.execute(
@@ -645,29 +652,50 @@ const updateMyProfile = async (
       );
 
 
+    if (
+      updatedUsers.length === 0
+    ) {
+      return res.status(404).json({
+        success: false,
+        message:
+          "Administrator account not found.",
+      });
+    }
+
+
     const updatedUser =
       updatedUsers[0];
 
 
     return res.status(200).json({
       success: true,
+
       message:
         "Profile updated successfully.",
-      user: updatedUser,
+
+      user:
+        updatedUser,
     });
+
   } catch (error) {
+
     console.error(
       "Update own profile error:",
       error
     );
 
-    if (error.code === "ER_DUP_ENTRY") {
+
+    if (
+      error.code ===
+      "ER_DUP_ENTRY"
+    ) {
       return res.status(409).json({
         success: false,
         message:
           "This email address is already in use.",
       });
     }
+
 
     return res.status(500).json({
       success: false,
@@ -679,27 +707,26 @@ const updateMyProfile = async (
 
 
 // =========================================================
-// PATCH /api/users/:id
+// UPDATE USER
+// =========================================================
 //
-// SUPER ADMIN ONLY
+// Super Admin can update regular users:
 //
-// Can edit:
-//   name
-//   email
-//   password
-//   role
+// - name
+// - email
+// - password
 //
-// Status is deliberately handled by its own endpoint.
+// Role is permanently Employee.
 // =========================================================
 
-const updateUser = async (
-  req,
-  res
-) => {
+const updateUser = async (req, res) => {
+
   try {
+
     if (!ensureSuperAdmin(req, res)) {
       return;
     }
+
 
     const userId =
       Number(req.params.id);
@@ -721,19 +748,17 @@ const updateUser = async (
       name,
       email,
       password,
-      role,
     } = req.body;
 
 
     if (
       typeof name !== "string" ||
-      typeof email !== "string" ||
-      typeof role !== "string"
+      typeof email !== "string"
     ) {
       return res.status(400).json({
         success: false,
         message:
-          "Name, email, and role are required.",
+          "Name and email are required.",
       });
     }
 
@@ -742,10 +767,9 @@ const updateUser = async (
       name.trim();
 
     const cleanEmail =
-      email.trim().toLowerCase();
-
-    const cleanRole =
-      role.trim();
+      email
+        .trim()
+        .toLowerCase();
 
 
     if (cleanName.length < 2) {
@@ -766,7 +790,11 @@ const updateUser = async (
     }
 
 
-    if (!cleanEmail) {
+    if (
+      !cleanEmail ||
+      cleanEmail.length > 191 ||
+      !EMAIL_REGEX.test(cleanEmail)
+    ) {
       return res.status(400).json({
         success: false,
         message:
@@ -775,27 +803,9 @@ const updateUser = async (
     }
 
 
-    if (!cleanRole) {
-      return res.status(400).json({
-        success: false,
-        message:
-          "Role is required.",
-      });
-    }
-
-
-    if (cleanRole.length > 50) {
-      return res.status(400).json({
-        success: false,
-        message:
-          "Role must not exceed 50 characters.",
-      });
-    }
-
-
-    // -------------------------------------------------------
-    // Find target
-    // -------------------------------------------------------
+    // =======================================================
+    // GET TARGET USER
+    // =======================================================
 
     const [targetUsers] =
       await pool.execute(
@@ -814,7 +824,9 @@ const updateUser = async (
       );
 
 
-    if (targetUsers.length === 0) {
+    if (
+      targetUsers.length === 0
+    ) {
       return res.status(404).json({
         success: false,
         message:
@@ -827,46 +839,41 @@ const updateUser = async (
       targetUsers[0];
 
 
-    // -------------------------------------------------------
-    // Prevent changing the super-admin role of another
-    // account through this endpoint.
-    //
-    // The main super admin can edit their OWN role through
-    // /api/users/me.
-    // -------------------------------------------------------
+    // =======================================================
+    // PROTECT SUPER ADMIN
+    // =======================================================
 
     if (
-      targetUser.role === "super_admin" &&
-      userId !== Number(req.admin.id)
+      targetUser.role ===
+      "super_admin"
     ) {
       return res.status(403).json({
         success: false,
         message:
-          "The Main Administrator account can only be edited from its own profile.",
+          "The Super Admin account can only be edited from its own profile.",
       });
     }
 
 
-    // -------------------------------------------------------
-    // Prevent creating another super_admin
-    // through normal user management.
-    // -------------------------------------------------------
+    // =======================================================
+    // PREVENT SELF-MANAGEMENT
+    // =======================================================
 
     if (
-      cleanRole.toLowerCase() ===
-      "super_admin"
+      userId ===
+      Number(req.admin.id)
     ) {
       return res.status(400).json({
         success: false,
         message:
-          "The super administrator role cannot be assigned to another account.",
+          "Use your profile to update your own account.",
       });
     }
 
 
-    // -------------------------------------------------------
-    // Check duplicate email
-    // -------------------------------------------------------
+    // =======================================================
+    // CHECK DUPLICATE EMAIL
+    // =======================================================
 
     const [existingUsers] =
       await pool.execute(
@@ -884,7 +891,9 @@ const updateUser = async (
       );
 
 
-    if (existingUsers.length > 0) {
+    if (
+      existingUsers.length > 0
+    ) {
       return res.status(409).json({
         success: false,
         message:
@@ -893,23 +902,30 @@ const updateUser = async (
     }
 
 
-    // -------------------------------------------------------
-    // Password
-    // -------------------------------------------------------
+    // =======================================================
+    // PASSWORD IS OPTIONAL
+    // =======================================================
 
     let passwordHash = null;
+
 
     if (
       typeof password === "string" &&
       password.length > 0
     ) {
-      if (password.length < 8) {
+
+      const passwordValidation =
+        validatePassword(password);
+
+
+      if (!passwordValidation.valid) {
         return res.status(400).json({
           success: false,
           message:
-            "Password must contain at least 8 characters.",
+            passwordValidation.message,
         });
       }
+
 
       passwordHash =
         await bcrypt.hash(
@@ -919,11 +935,25 @@ const updateUser = async (
     }
 
 
-    // -------------------------------------------------------
-    // Update
-    // -------------------------------------------------------
+    // =======================================================
+    // FIXED EMPLOYEE ROLE
+    // =======================================================
+    //
+    // Existing regular accounts are forced to Employee.
+    //
+    // req.body.role is completely ignored.
+    // =======================================================
+
+    const employeeRole =
+      "Employee";
+
+
+    // =======================================================
+    // UPDATE REGULAR USER
+    // =======================================================
 
     if (passwordHash) {
+
       await pool.execute(
         `
           UPDATE admins
@@ -933,16 +963,19 @@ const updateUser = async (
             password_hash = ?,
             role = ?
           WHERE id = ?
+            AND role <> 'super_admin'
         `,
         [
           cleanName,
           cleanEmail,
           passwordHash,
-          cleanRole,
+          employeeRole,
           userId,
         ]
       );
+
     } else {
+
       await pool.execute(
         `
           UPDATE admins
@@ -951,11 +984,12 @@ const updateUser = async (
             email = ?,
             role = ?
           WHERE id = ?
+            AND role <> 'super_admin'
         `,
         [
           cleanName,
           cleanEmail,
-          cleanRole,
+          employeeRole,
           userId,
         ]
       );
@@ -964,22 +998,30 @@ const updateUser = async (
 
     return res.status(200).json({
       success: true,
+
       message:
         "User information updated successfully.",
     });
+
   } catch (error) {
+
     console.error(
       "Update user error:",
       error
     );
 
-    if (error.code === "ER_DUP_ENTRY") {
+
+    if (
+      error.code ===
+      "ER_DUP_ENTRY"
+    ) {
       return res.status(409).json({
         success: false,
         message:
           "This email address is already in use.",
       });
     }
+
 
     return res.status(500).json({
       success: false,
@@ -991,23 +1033,21 @@ const updateUser = async (
 
 
 // =========================================================
-// PATCH /api/users/:id/status
-// Activate / deactivate user
-//
-// ONLY SUPER ADMIN
+// UPDATE USER STATUS
 // =========================================================
 
-const updateUserStatus = async (
-  req,
-  res
-) => {
+const updateUserStatus = async (req, res) => {
+
   try {
+
     if (!ensureSuperAdmin(req, res)) {
       return;
     }
 
+
     const userId =
       Number(req.params.id);
+
 
     const {
       is_active,
@@ -1040,12 +1080,9 @@ const updateUserStatus = async (
     }
 
 
-    // -------------------------------------------------------
-    // Prevent self-deactivation
-    // -------------------------------------------------------
-
     if (
-      userId === Number(req.admin.id)
+      userId ===
+      Number(req.admin.id)
     ) {
       return res.status(400).json({
         success: false,
@@ -1054,10 +1091,6 @@ const updateUserStatus = async (
       });
     }
 
-
-    // -------------------------------------------------------
-    // Find target
-    // -------------------------------------------------------
 
     const [targetUsers] =
       await pool.execute(
@@ -1073,7 +1106,9 @@ const updateUserStatus = async (
       );
 
 
-    if (targetUsers.length === 0) {
+    if (
+      targetUsers.length === 0
+    ) {
       return res.status(404).json({
         success: false,
         message:
@@ -1086,17 +1121,14 @@ const updateUserStatus = async (
       targetUsers[0];
 
 
-    // -------------------------------------------------------
-    // Never deactivate super admin
-    // -------------------------------------------------------
-
     if (
-      targetUser.role === "super_admin"
+      targetUser.role ===
+      "super_admin"
     ) {
       return res.status(403).json({
         success: false,
         message:
-          "The Main Administrator account cannot be deactivated.",
+          "The Super Admin account cannot be deactivated.",
       });
     }
 
@@ -1142,11 +1174,14 @@ const updateUserStatus = async (
           ? "User activated successfully."
           : "User deactivated successfully.",
     });
+
   } catch (error) {
+
     console.error(
       "Update user status error:",
       error
     );
+
 
     return res.status(500).json({
       success: false,
@@ -1158,20 +1193,17 @@ const updateUserStatus = async (
 
 
 // =========================================================
-// DELETE /api/users/:id
-// Delete user
-//
-// ONLY SUPER ADMIN
+// DELETE USER
 // =========================================================
 
-const deleteUser = async (
-  req,
-  res
-) => {
+const deleteUser = async (req, res) => {
+
   try {
+
     if (!ensureSuperAdmin(req, res)) {
       return;
     }
+
 
     const userId =
       Number(req.params.id);
@@ -1189,12 +1221,9 @@ const deleteUser = async (
     }
 
 
-    // -------------------------------------------------------
-    // Prevent self-deletion
-    // -------------------------------------------------------
-
     if (
-      userId === Number(req.admin.id)
+      userId ===
+      Number(req.admin.id)
     ) {
       return res.status(400).json({
         success: false,
@@ -1203,10 +1232,6 @@ const deleteUser = async (
       });
     }
 
-
-    // -------------------------------------------------------
-    // Find target
-    // -------------------------------------------------------
 
     const [targetUsers] =
       await pool.execute(
@@ -1222,7 +1247,9 @@ const deleteUser = async (
       );
 
 
-    if (targetUsers.length === 0) {
+    if (
+      targetUsers.length === 0
+    ) {
       return res.status(404).json({
         success: false,
         message:
@@ -1235,24 +1262,17 @@ const deleteUser = async (
       targetUsers[0];
 
 
-    // -------------------------------------------------------
-    // Never delete super admin
-    // -------------------------------------------------------
-
     if (
-      targetUser.role === "super_admin"
+      targetUser.role ===
+      "super_admin"
     ) {
       return res.status(403).json({
         success: false,
         message:
-          "The Main Administrator account cannot be deleted.",
+          "The Super Admin account cannot be deleted.",
       });
     }
 
-
-    // -------------------------------------------------------
-    // Delete user
-    // -------------------------------------------------------
 
     const [result] =
       await pool.execute(
@@ -1278,14 +1298,18 @@ const deleteUser = async (
 
     return res.status(200).json({
       success: true,
+
       message:
         "User deleted successfully.",
     });
+
   } catch (error) {
+
     console.error(
       "Delete user error:",
       error
     );
+
 
     return res.status(500).json({
       success: false,
@@ -1297,7 +1321,7 @@ const deleteUser = async (
 
 
 // =========================================================
-// EXPORT
+// EXPORTS
 // =========================================================
 
 module.exports = {

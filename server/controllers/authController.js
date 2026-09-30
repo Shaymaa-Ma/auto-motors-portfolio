@@ -1,92 +1,161 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const pool = require("../config/db");
 
-// =========================================================
+const pool =
+  require("../config/db");
+
+
+// ============================================================
 // LOGIN SECURITY SETTINGS
-// =========================================================
+// ============================================================
 
-const MAX_LOGIN_ATTEMPTS =
-  Number(process.env.LOGIN_MAX_ATTEMPTS) || 5;
+const JWT_EXPIRES_IN =
+  process.env.JWT_EXPIRES_IN || "8h";
 
-const LOGIN_BLOCK_MINUTES =
-  Number(process.env.LOGIN_BLOCK_MINUTES) || 10;
+
+// ============================================================
+// EMAIL VALIDATION
+// ============================================================
 
 const EMAIL_REGEX =
   /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 
-// =========================================================
+// ============================================================
 // TIMING-SAFETY DUMMY HASH
-// =========================================================
+// ============================================================
 //
-// bcrypt is still executed when the email does not exist.
-// This helps prevent timing-based email enumeration.
+// If an attacker submits an email that does not exist,
+// we still perform bcrypt.compare().
 //
+// Why?
+//
+// Without this, the following two situations can have
+// noticeably different processing times:
+//
+// Existing email:
+//     database lookup
+//     bcrypt comparison
+//
+// Non-existing email:
+//     database lookup
+//     NO bcrypt comparison
+//
+// An attacker could potentially use timing differences to
+// discover which email addresses exist.
+//
+// The dummy bcrypt hash makes the two paths more similar.
+//
+// This hash does NOT belong to any real account.
+// ============================================================
 
-const DUMMY_HASH = bcrypt.hashSync(
-  "timing-safety-dummy-password",
-  12
-);
+const DUMMY_HASH =
+  bcrypt.hashSync(
+    "timing-safety-dummy-password",
+    12
+  );
 
 
-// =========================================================
+// ============================================================
 // GENERATE JWT
-// =========================================================
+// ============================================================
+//
+// The JWT contains only information needed to identify the
+// authenticated administrator.
+//
+// IMPORTANT:
+//
+// We still query MySQL inside authMiddleware.
+//
+// Therefore the JWT is NOT treated as the permanent source
+// of truth for role/account status.
+//
+// If another administrator disables an account or changes
+// the user's role, the next protected request sees the
+// current database value.
+// ============================================================
 
 const generateToken = (admin) => {
   return jwt.sign(
     {
       id: admin.id,
-      email: admin.email,
-      role: admin.role,
     },
+
     process.env.JWT_SECRET,
+
     {
       expiresIn:
-        process.env.JWT_EXPIRES_IN || "8h",
+        JWT_EXPIRES_IN,
     }
   );
 };
 
 
-// =========================================================
-// COOKIE OPTIONS
-// =========================================================
+// ============================================================
+// AUTH COOKIE OPTIONS
+// ============================================================
+//
+// The JWT is stored in an HttpOnly cookie.
+//
+// JavaScript cannot read an HttpOnly cookie:
+//
+//     document.cookie
+//
+// will NOT expose admin_token.
+//
+// This reduces the ability of client-side JavaScript to steal
+// the authentication token directly.
+//
+// In production:
+//     Secure = true
+//     HTTPS is required.
+//
+// SameSite=None is used because your admin frontend and API
+// may be hosted on different sites/domains.
+// ============================================================
 
-const getCookieOptions = () => ({
-  httpOnly: true,
-
-  secure:
-    process.env.NODE_ENV === "production",
-
-  sameSite:
-    process.env.NODE_ENV === "production"
-      ? "none"
-      : "lax",
-
-  maxAge: 8 * 60 * 60 * 1000,
-
-  path: "/",
-});
+const getCookieOptions = () => {
+  const isProduction =
+    process.env.NODE_ENV ===
+    "production";
 
 
-// =========================================================
+  return {
+    httpOnly: true,
+
+    secure:
+      isProduction,
+
+    sameSite:
+      isProduction
+        ? "none"
+        : "lax",
+
+    maxAge:
+      8 *
+      60 *
+      60 *
+      1000,
+
+    path: "/",
+  };
+};
+
+
+// ============================================================
 // GET CLIENT IP
-// =========================================================
+// ============================================================
 //
-// The rate limiter stores the IP in req.loginClientIp.
+// The IP is already captured by the IP login limiter.
 //
-// This fallback is useful if the controller is called
-// without the limiter for some reason.
+// This helper is useful if you later want security logging.
 //
+// Do not expose the IP to the frontend.
+// ============================================================
 
 const getClientIp = (req) => {
-  if (req.loginClientIp) {
-    return req.loginClientIp;
-  }
-
   return (
+    req.loginClientIp ||
     req.ip ||
     req.socket?.remoteAddress ||
     "unknown"
@@ -94,21 +163,22 @@ const getClientIp = (req) => {
 };
 
 
-// =========================================================
+// ============================================================
 // POST /api/auth/login
-// =========================================================
+// ============================================================
 
 const login = async (req, res) => {
   try {
+
     const {
       email,
       password,
     } = req.body;
 
 
-    // =======================================================
-    // VALIDATE INPUT
-    // =======================================================
+    // ========================================================
+    // BASIC INPUT VALIDATION
+    // ========================================================
 
     if (
       typeof email !== "string" ||
@@ -118,32 +188,44 @@ const login = async (req, res) => {
     ) {
       return res.status(400).json({
         success: false,
+
         message:
           "Email and password are required.",
       });
     }
 
 
+    // Normalize the email before using it for the database
+    // lookup and account-level rate limiter.
     const cleanEmail =
-      email.trim().toLowerCase();
+      email
+        .trim()
+        .toLowerCase();
 
 
-    // =======================================================
+    // ========================================================
     // EMAIL FORMAT
-    // =======================================================
+    // ========================================================
 
-    if (!EMAIL_REGEX.test(cleanEmail)) {
+    if (
+      !EMAIL_REGEX.test(cleanEmail)
+    ) {
       return res.status(401).json({
         success: false,
+
+        // Keep this generic.
+        //
+        // Do not tell the attacker whether the problem was
+        // the email or password.
         message:
           "Invalid email or password.",
       });
     }
 
 
-    // =======================================================
+    // ========================================================
     // FIND ADMIN
-    // =======================================================
+    // ========================================================
 
     const [admins] =
       await pool.execute(
@@ -163,21 +245,18 @@ const login = async (req, res) => {
       );
 
 
-    // =======================================================
+    // ========================================================
     // UNKNOWN EMAIL
-    // =======================================================
+    // ========================================================
     //
-    // IMPORTANT:
+    // Still perform bcrypt work.
     //
-    // There is NO account-level attempt counter anymore.
-    //
-    // The login security system is handled globally by
-    // the IP-based login limiter.
-    //
-    // bcrypt is still executed for timing safety.
-    // =======================================================
+    // This makes email enumeration harder.
+    // ========================================================
 
-    if (admins.length === 0) {
+    if (
+      admins.length === 0
+    ) {
 
       await bcrypt.compare(
         password,
@@ -187,6 +266,7 @@ const login = async (req, res) => {
 
       return res.status(401).json({
         success: false,
+
         message:
           "Invalid email or password.",
       });
@@ -197,22 +277,34 @@ const login = async (req, res) => {
       admins[0];
 
 
-    // =======================================================
-    // CHECK ACCOUNT STATUS
-    // =======================================================
+    // ========================================================
+    // ACCOUNT STATUS
+    // ========================================================
+    //
+    // Do not reveal sensitive account details.
+    //
+    // We can safely tell the legitimate user that the account
+    // is disabled, while the rate limiters continue protecting
+    // the endpoint.
+    // ========================================================
 
     if (!admin.is_active) {
       return res.status(403).json({
         success: false,
+
         message:
           "This administrator account is disabled.",
       });
     }
 
 
-    // =======================================================
-    // CHECK PASSWORD
-    // =======================================================
+    // ========================================================
+    // PASSWORD VERIFICATION
+    // ========================================================
+    //
+    // The database contains a bcrypt hash, never the original
+    // password.
+    // ========================================================
 
     const passwordMatches =
       await bcrypt.compare(
@@ -221,46 +313,53 @@ const login = async (req, res) => {
       );
 
 
-    // =======================================================
+    // ========================================================
     // WRONG PASSWORD
-    // =======================================================
+    // ========================================================
+    //
+    // Return the same generic message used for an unknown
+    // email.
+    //
+    // The login rate-limiters count this failed response.
+    // ========================================================
 
     if (!passwordMatches) {
 
-      // -----------------------------------------------------
-      // IMPORTANT:
+      // This is intentionally not stored in MySQL.
       //
-      // Do NOT increment any database field here.
+      // The three rate-limit layers handle the failed attempt:
       //
-      // The IP-based login limiter handles the failed
-      // attempt counter.
-      // -----------------------------------------------------
+      // Browser
+      // IP
+      // Account
+      //
 
       return res.status(401).json({
         success: false,
+
         message:
           "Invalid email or password.",
       });
     }
 
 
-    // =======================================================
+    // ========================================================
     // SUCCESSFUL LOGIN
-    // =======================================================
+    // ========================================================
     //
-    // The successful response is intentionally 200.
-    //
-    // The IP login limiter uses successful login to reset
-    // the failed-attempt counter for this IP.
-    // =======================================================
+    // A successful 2xx response is automatically removed from
+    // the failed-attempt counters because all login limiters
+    // use skipSuccessfulRequests: true.
+    // ========================================================
+
 
     const token =
       generateToken(admin);
 
 
-    // =======================================================
-    // HTTP-ONLY COOKIE
-    // =======================================================
+    // ========================================================
+    // STORE JWT IN HTTP-ONLY COOKIE
+    // ========================================================
 
     res.cookie(
       "admin_token",
@@ -269,9 +368,20 @@ const login = async (req, res) => {
     );
 
 
-    // =======================================================
+    // ========================================================
     // SUCCESS RESPONSE
-    // =======================================================
+    // ========================================================
+    //
+    // Never return:
+    //
+    // - password
+    // - password_hash
+    // - JWT
+    // - browser ID
+    //
+    // The browser already stores the JWT securely in its
+    // HttpOnly cookie.
+    // ========================================================
 
     return res.status(200).json({
       success: true,
@@ -297,6 +407,7 @@ const login = async (req, res) => {
 
     return res.status(500).json({
       success: false,
+
       message:
         "An error occurred while logging in.",
     });
@@ -304,13 +415,15 @@ const login = async (req, res) => {
 };
 
 
-// =========================================================
+// ============================================================
 // GET /api/auth/me
-// =========================================================
+// ============================================================
 
 const me = async (req, res) => {
   try {
 
+    // authMiddleware already verified the JWT and loaded the
+    // current administrator from the database.
     const adminId =
       req.admin.id;
 
@@ -332,13 +445,16 @@ const me = async (req, res) => {
       );
 
 
-    // =======================================================
-    // ADMIN DOES NOT EXIST
-    // =======================================================
+    // ========================================================
+    // ACCOUNT DOES NOT EXIST
+    // ========================================================
 
-    if (admins.length === 0) {
+    if (
+      admins.length === 0
+    ) {
       return res.status(401).json({
         success: false,
+
         message:
           "Administrator account not found.",
       });
@@ -349,22 +465,23 @@ const me = async (req, res) => {
       admins[0];
 
 
-    // =======================================================
+    // ========================================================
     // ACCOUNT DISABLED
-    // =======================================================
+    // ========================================================
 
     if (!admin.is_active) {
       return res.status(403).json({
         success: false,
+
         message:
           "This administrator account is disabled.",
       });
     }
 
 
-    // =======================================================
+    // ========================================================
     // SUCCESS
-    // =======================================================
+    // ========================================================
 
     return res.status(200).json({
       success: true,
@@ -387,6 +504,7 @@ const me = async (req, res) => {
 
     return res.status(500).json({
       success: false,
+
       message:
         "Unable to retrieve administrator information.",
     });
@@ -394,12 +512,28 @@ const me = async (req, res) => {
 };
 
 
-// =========================================================
+// ============================================================
 // POST /api/auth/logout
-// =========================================================
+// ============================================================
+//
+// Logging out removes the JWT cookie.
+//
+// The Browser ID is intentionally NOT removed.
+//
+// Why?
+//
+// The Browser ID is not an authentication credential.
+// Keeping it means the same browser continues to receive the
+// same login-rate-limit identity after logout.
+// ============================================================
 
 const logout = (req, res) => {
   try {
+
+    const isProduction =
+      process.env.NODE_ENV ===
+      "production";
+
 
     res.clearCookie(
       "admin_token",
@@ -407,12 +541,10 @@ const logout = (req, res) => {
         httpOnly: true,
 
         secure:
-          process.env.NODE_ENV ===
-          "production",
+          isProduction,
 
         sameSite:
-          process.env.NODE_ENV ===
-          "production"
+          isProduction
             ? "none"
             : "lax",
 
@@ -423,6 +555,7 @@ const logout = (req, res) => {
 
     return res.status(200).json({
       success: true,
+
       message:
         "Logout successful.",
     });
@@ -437,6 +570,7 @@ const logout = (req, res) => {
 
     return res.status(500).json({
       success: false,
+
       message:
         "Unable to logout.",
     });
@@ -444,9 +578,9 @@ const logout = (req, res) => {
 };
 
 
-// =========================================================
+// ============================================================
 // EXPORT
-// =========================================================
+// ============================================================
 
 module.exports = {
   login,

@@ -1,109 +1,214 @@
 import axiosClient from "./axiosClient";
 
+
 // =========================================================
 // AUTH API
 // =========================================================
+
 export const authApi = {
+
+  // -------------------------------------------------------
   // Login administrator
+  // -------------------------------------------------------
+
   login: async (email, password) => {
-    const response = await axiosClient.post("/auth/login", { email, password });
+
+    const response =
+      await axiosClient.post(
+        "/auth/login",
+        {
+          email,
+          password,
+        }
+      );
+
     return response.data;
   },
 
+
+  // -------------------------------------------------------
   // Initial administrator registration
-  register: async (name, email, password, confirmPassword, setupKey) => {
-    const response = await axiosClient.post("/auth/register", {
-      name,
-      email,
-      password,
-      confirmPassword,
-      setupKey,
-    });
+  // -------------------------------------------------------
+
+  register: async (
+    name,
+    email,
+    password,
+    confirmPassword,
+    setupKey
+  ) => {
+
+    const response =
+      await axiosClient.post(
+        "/auth/register",
+        {
+          name,
+          email,
+          password,
+          confirmPassword,
+          setupKey,
+        }
+      );
+
     return response.data;
   },
 
+
+  // -------------------------------------------------------
   // Check whether initial registration is available
+  // -------------------------------------------------------
+
   registrationStatus: async () => {
-    const response = await axiosClient.get("/auth/registration-status");
+
+    const response =
+      await axiosClient.get(
+        "/auth/registration-status"
+      );
+
     return response.data;
   },
 
+
+  // -------------------------------------------------------
   // Get current administrator
+  // -------------------------------------------------------
+
   me: async () => {
-    const response = await axiosClient.get("/auth/me");
+
+    const response =
+      await axiosClient.get(
+        "/auth/me"
+      );
+
     return response.data;
   },
 
+
+  // -------------------------------------------------------
   // Logout
+  // -------------------------------------------------------
+
   logout: async () => {
-    const response = await axiosClient.post("/auth/logout");
+
+    const response =
+      await axiosClient.post(
+        "/auth/logout"
+      );
+
     return response.data;
   },
 };
 
 
-
-
-
-
 // =========================================================
-// USERS API (Administrator management)
+// USERS API
+// Administrator management
 // =========================================================
-// =========================================================
-// USERS API (Administrator management)
-// =========================================================
+
 export const usersApi = {
+
+  // -------------------------------------------------------
+  // Get all administrators
+  // -------------------------------------------------------
+
   getAll: async () => {
-    const response = await axiosClient.get("/users");
+
+    const response =
+      await axiosClient.get(
+        "/users"
+      );
+
     return response.data;
   },
+
+
+  // -------------------------------------------------------
+  // Create administrator
+  // -------------------------------------------------------
 
   create: async (data) => {
-    const response = await axiosClient.post(
-      "/users",
-      data
-    );
+
+    const response =
+      await axiosClient.post(
+        "/users",
+        data
+      );
 
     return response.data;
   },
+
+
+  // -------------------------------------------------------
+  // Update current administrator profile
+  //
+  // The frontend should NOT send the role here.
+  // The backend keeps the existing role.
+  // -------------------------------------------------------
 
   updateMyProfile: async (data) => {
-    const response = await axiosClient.patch(
-      "/users/me",
-      data
-    );
+
+    const response =
+      await axiosClient.patch(
+        "/users/me",
+        data
+      );
 
     return response.data;
   },
+
+
+  // -------------------------------------------------------
+  // Update another administrator
+  // -------------------------------------------------------
 
   update: async (id, data) => {
-    const response = await axiosClient.patch(
-      `/users/${id}`,
-      data
-    );
+
+    const response =
+      await axiosClient.patch(
+        `/users/${id}`,
+        data
+      );
 
     return response.data;
   },
 
-  updateStatus: async (id, isActive) => {
-    const response = await axiosClient.patch(
-      `/users/${id}/status`,
-      {
-        is_active: isActive,
-      }
-    );
+
+  // -------------------------------------------------------
+  // Activate / deactivate administrator
+  // -------------------------------------------------------
+
+  updateStatus: async (
+    id,
+    isActive
+  ) => {
+
+    const response =
+      await axiosClient.patch(
+        `/users/${id}/status`,
+        {
+          is_active: isActive,
+        }
+      );
 
     return response.data;
   },
+
+
+  // -------------------------------------------------------
+  // Delete administrator
+  // -------------------------------------------------------
 
   delete: async (id) => {
-    const response = await axiosClient.delete(
-      `/users/${id}`
-    );
+
+    const response =
+      await axiosClient.delete(
+        `/users/${id}`
+      );
 
     return response.data;
   },
 };
+
 
 
 

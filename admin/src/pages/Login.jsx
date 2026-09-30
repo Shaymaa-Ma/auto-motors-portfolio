@@ -6,10 +6,24 @@ import {
 } from "react-router-dom";
 
 import { useAuth } from "../context/AuthContext";
+import companyLogo from "../assets/company-logo.jpg";
 
-
-const MAX_LOGIN_ATTEMPTS = 5;
-
+// =========================================================
+// LOGIN
+// =========================================================
+//
+// The backend is responsible for all login security:
+//
+// 1. Browser ID throttling
+// 2. IP-based throttling
+// 3. Account/email throttling
+// 4. Password verification
+//
+// The frontend only displays the server response and
+// temporarily disables the form when the backend reports
+// that login has been blocked.
+//
+// =========================================================
 
 const Login = () => {
 
@@ -23,6 +37,10 @@ const Login = () => {
   } = useAuth();
 
 
+  // =========================================================
+  // FORM DATA
+  // =========================================================
+
   const [formData, setFormData] =
     useState({
       email: "",
@@ -30,38 +48,40 @@ const Login = () => {
     });
 
 
+  // =========================================================
+  // PASSWORD VISIBILITY
+  // =========================================================
+
   const [showPassword, setShowPassword] =
     useState(false);
 
 
+  // =========================================================
+  // ERROR MESSAGE
+  // =========================================================
+
   const [error, setError] =
     useState("");
 
+
+  // =========================================================
+  // LOADING STATE
+  // =========================================================
 
   const [loading, setLoading] =
     useState(false);
 
 
   // =========================================================
-  // GLOBAL LOGIN FAILURE COUNT
+  // LOGIN BLOCK STATE
   // =========================================================
   //
-  // This is only for the current browser UI.
+  // This is controlled by the backend.
   //
-  // The backend remains the real security layer.
+  // We do NOT maintain a frontend failed-attempt counter
+  // anymore because the backend now has independent limits
+  // for browser, IP address, and account.
   //
-  // Email does NOT matter here.
-  //
-  // =========================================================
-
-  const [
-    failedAttempts,
-    setFailedAttempts,
-  ] = useState(0);
-
-
-  // =========================================================
-  // FORM LOCK
   // =========================================================
 
   const [
@@ -94,7 +114,7 @@ const Login = () => {
   ) => {
 
     // -------------------------------------------------------
-    // Never allow changes while the form is blocked.
+    // Do not allow changes while login is blocked.
     // -------------------------------------------------------
 
     if (loginBlocked) {
@@ -115,6 +135,11 @@ const Login = () => {
       })
     );
 
+
+    // -------------------------------------------------------
+    // Remove the previous error as soon as the user starts
+    // editing the form again.
+    // -------------------------------------------------------
 
     if (error) {
       setError("");
@@ -145,12 +170,19 @@ const Login = () => {
     setError("");
 
 
-    // -------------------------------------------------------
+    // =======================================================
     // CLIENT-SIDE VALIDATION
-    // -------------------------------------------------------
+    // =======================================================
+    //
+    // This is only a usability check.
+    //
+    // The backend remains responsible for the real
+    // authentication and security checks.
+    //
+    // =======================================================
 
     if (
-      !formData.email ||
+      !formData.email.trim() ||
       !formData.password
     ) {
 
@@ -175,16 +207,16 @@ const Login = () => {
 
 
       // =====================================================
-      // SUCCESS
+      // SUCCESSFUL LOGIN
       // =====================================================
 
-      if (response.success) {
+      if (response?.success) {
 
-        // Reset the UI counter.
-
-        setFailedAttempts(0);
+        // The backend has authenticated the user and
+        // created the HttpOnly authentication cookie.
 
         setLoginBlocked(false);
+        setError("");
 
 
         navigate(
@@ -200,11 +232,22 @@ const Login = () => {
 
 
       // =====================================================
-      // SERVER HAS ALREADY BLOCKED THE IP
+      // BACKEND LOGIN BLOCK
+      // =====================================================
+      //
+      // The backend can block the request because of:
+      //
+      // - Browser ID limit
+      // - IP limit
+      // - Account/email limit
+      //
+      // The frontend does not need to know which layer
+      // caused the block.
+      //
       // =====================================================
 
       if (
-        response.loginBlocked === true
+        response?.loginBlocked === true
       ) {
 
         setLoginBlocked(true);
@@ -221,53 +264,11 @@ const Login = () => {
 
 
       // =====================================================
-      // FAILED LOGIN
-      // =====================================================
-
-      const newFailedAttempts =
-        failedAttempts + 1;
-
-
-      setFailedAttempts(
-        newFailedAttempts
-      );
-
-
-      // -----------------------------------------------------
-      // FIFTH FAILED ATTEMPT
-      // -----------------------------------------------------
-      //
-      // The fifth attempt itself is still reported as:
-      //
-      // "Invalid email or password."
-      //
-      // Then the form is immediately disabled.
-      //
-      // -----------------------------------------------------
-
-      if (
-        newFailedAttempts >=
-        MAX_LOGIN_ATTEMPTS
-      ) {
-
-        setLoginBlocked(true);
-
-
-        setError(
-          "Invalid email or password. Login has been temporarily blocked. Please try again in 10 minutes."
-        );
-
-
-        return;
-      }
-
-
-      // =====================================================
-      // ATTEMPTS 1–4
+      // NORMAL LOGIN FAILURE
       // =====================================================
 
       setError(
-        response.message ||
+        response?.message ||
         "Invalid email or password."
       );
 
@@ -277,13 +278,18 @@ const Login = () => {
         error.response?.data;
 
 
-      // -----------------------------------------------------
-      // BACKEND IP BLOCK
-      // -----------------------------------------------------
+      // =====================================================
+      // BACKEND LOGIN BLOCK
+      // =====================================================
+      //
+      // Depending on the API helper, a 429 response may be
+      // delivered through the catch block instead of being
+      // returned normally.
+      //
+      // =====================================================
 
       if (
-        responseData?.loginBlocked ===
-        true
+        responseData?.loginBlocked === true
       ) {
 
         setLoginBlocked(true);
@@ -299,9 +305,9 @@ const Login = () => {
       }
 
 
-      // -----------------------------------------------------
+      // =====================================================
       // NORMAL SERVER ERROR
-      // -----------------------------------------------------
+      // =====================================================
 
       setError(
         responseData?.message ||
@@ -334,14 +340,16 @@ const Login = () => {
 
       <div className="login-card">
 
-        {/* Logo / Icon */}
+        
+
+        {/* Logo Image*/}
 
         <div className="login-logo">
 
-          <i
-            className="bi bi-speedometer2"
-            aria-hidden="true"
-          ></i>
+          <img
+            src={companyLogo}
+            alt="AUTO MOTORS SARL"
+          />
 
         </div>
 
@@ -349,10 +357,6 @@ const Login = () => {
         {/* Header */}
 
         <div className="login-header">
-
-          <span className="login-eyebrow">
-            AUTO MOTORS SARL
-          </span>
 
           <h1>
             Admin Login

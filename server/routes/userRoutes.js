@@ -1,3 +1,5 @@
+//no cache needed here
+
 const express = require("express");
 
 const {
@@ -92,7 +94,8 @@ router.post(
 // - name
 // - email
 // - password
-// - role
+//
+// Role is permanently Employee.
 // =========================================================
 
 router.patch(

@@ -1,4 +1,3 @@
-
 const express = require("express");
 
 const {
@@ -9,6 +8,10 @@ const {
 const authMiddleware = require(
   "../middleware/authMiddleware"
 );
+
+const {
+  cacheMiddleware,
+} = require("../middleware/cache");
 
 const router = express.Router();
 
@@ -22,6 +25,7 @@ const router = express.Router();
 
 router.get(
   "/",
+  cacheMiddleware(),
   getContact
 );
 

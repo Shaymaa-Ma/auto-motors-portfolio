@@ -11,6 +11,10 @@ const {
   createImageUpload,
 } = require("../middleware/uploadMiddleware");
 
+const {
+  cacheMiddleware,
+} = require("../middleware/cache");
+
 const router =
   express.Router();
 
@@ -32,6 +36,7 @@ const companyUpload =
 
 router.get(
   "/",
+  cacheMiddleware(),
   getCompany
 );
 

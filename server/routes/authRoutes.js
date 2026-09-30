@@ -1,3 +1,21 @@
+//no cache needed here
+
+/*
+Your current route only has one login limiter.
+
+Now the login request goes through:
+
+Browser ID
+     ↓
+Browser limiter
+     ↓
+IP limiter
+     ↓
+Account limiter
+     ↓
+Controller
+*/
+
 const express = require("express");
 
 const {
@@ -6,72 +24,94 @@ const {
   logout,
 } = require("../controllers/authController");
 
+
 const authMiddleware =
   require("../middleware/authMiddleware");
 
+
 const {
-  loginLimiter,
+  browserLoginLimiter,
+  ipLoginLimiter,
+  accountLoginLimiter,
 } = require("../middleware/rateLimiter");
+
+
+const {
+  ensureBrowserId,
+} = require("../middleware/browserId");
 
 
 const router =
   express.Router();
 
 
-// =========================================================
-// PUBLIC
-// =========================================================
-
-
-// =========================================================
-// POST /api/auth/login
-// =========================================================
+// ============================================================
+// LOGIN
+// ============================================================
 //
-// Security:
+// Security layers:
 //
-// 1. IP-based failed-login limiter
-// 2. Login controller
+// 1. ensureBrowserId
+//    Identifies the browser using a random HttpOnly cookie.
 //
-// The limiter is deliberately BEFORE the controller.
+// 2. browserLoginLimiter
+//    Strict per-browser failed-login protection.
 //
-// Once the IP is blocked:
+// 3. ipLoginLimiter
+//    Broader network-level protection.
 //
-//      limiter
-//          ↓
-//      429 response
-//          ↓
-//      login controller is NOT executed
+// 4. accountLoginLimiter
+//    Protects the specific email/account.
 //
-// Therefore the email/password is not processed at all
-// while the IP is blocked.
-// =========================================================
+// 5. login controller
+//    Performs validation, bcrypt password verification,
+//    JWT generation, and HttpOnly cookie creation.
+//
+// All four protections must pass before the password is
+// actually processed by the controller.
+// ============================================================
 
 router.post(
   "/login",
-  loginLimiter,
+
+  ensureBrowserId,
+
+  browserLoginLimiter,
+
+  ipLoginLimiter,
+
+  accountLoginLimiter,
+
   login
 );
 
 
-// =========================================================
-// PROTECTED
-// =========================================================
-
-
-// GET /api/auth/me
+// ============================================================
+// GET CURRENT ADMIN
+// ============================================================
+//
+// Requires a valid JWT stored in the HttpOnly admin_token
+// cookie.
+//
 
 router.get(
   "/me",
+
   authMiddleware,
+
   me
 );
 
 
-// POST /api/auth/logout
+// ============================================================
+// LOGOUT
+// ============================================================
 
 router.post(
   "/logout",
+
   authMiddleware,
+
   logout
 );
 

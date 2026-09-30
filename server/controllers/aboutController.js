@@ -1,3 +1,4 @@
+
 const db = require("../config/db");
 const path = require("path");
 const fs = require("fs");
@@ -6,6 +7,21 @@ const {
   sendSuccess,
   sendError,
 } = require("../utils/response");
+
+/*
+Import clearCache.
+Clear /api/about after the database update succeeds 
+and before returning the successful response.
+And after the successful MySQL UPDATE:
+clearCache("/api/about");
+
+GET → cached → Admin updates About → cache cleared → 
+next GET fetches fresh data from MySQL → new response is cached
+*/
+
+const {
+  clearCache,
+} = require("../middleware/cache");
 
 // Get the existing About record
 const getAboutRecord = async () => {
@@ -173,6 +189,9 @@ const updateAbout = async (
         about.id,
       ]
     );
+
+    // Clear the cached About response after a successful update
+    clearCache("/api/about");
 
     // Get the updated About information
     const updatedAbout =

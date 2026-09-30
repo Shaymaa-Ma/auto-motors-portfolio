@@ -1,16 +1,25 @@
+require("dotenv").config();
+
 const express = require("express");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
+const helmet = require("helmet");
 const path = require("path");
 
-require("dotenv").config();
+const { burstLimiter, apiLimiter } = require("./middleware/rateLimiter");
 
 const app = express();
+
+// Only enable when the app runs behind a proxy (Render, Railway, Nginx, Cloudflare...).
+// Set TRUST_PROXY=1 in production .env (2 if there are two proxy layers).
+if (process.env.TRUST_PROXY) {
+  app.set("trust proxy", Number(process.env.TRUST_PROXY));
+}
 
 const PORT = process.env.PORT || 5000;
 
 // =========================================================
-// Routes
+// ROUTES
 // =========================================================
 
 const authRoutes = require("./routes/authRoutes");
@@ -32,7 +41,20 @@ const contactRoutes = require("./routes/contactRoutes");
 
 
 // =========================================================
-// Middleware
+// SECURITY HEADERS
+// =========================================================
+
+app.use(
+  helmet({
+    crossOriginResourcePolicy: {
+      policy: "cross-origin",
+    },
+  })
+);
+
+
+// =========================================================
+// CORS
 // =========================================================
 
 const allowedOrigins = [
@@ -43,8 +65,8 @@ const allowedOrigins = [
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow requests without an Origin header
-      // such as Postman/server-to-server requests.
+      // Allow requests without an Origin header.
+      // Useful for Postman and server-to-server requests.
       if (!origin) {
         return callback(null, true);
       }
@@ -53,28 +75,77 @@ app.use(
         return callback(null, true);
       }
 
+      console.log("Blocked CORS origin:", origin);
+
       return callback(
         new Error("Origin not allowed by CORS")
       );
     },
+
     credentials: true,
   })
 );
 
-app.use(express.json());
+
+// =========================================================
+// REQUEST BODY LIMITS
+// =========================================================
+
+// Prevent extremely large JSON requests from consuming
+// unnecessary server resources.
 app.use(
-  express.urlencoded({
-    extended: true,
+  express.json({
+    limit: "1mb",
   })
 );
 
-// Parse cookies
+app.use(
+  express.urlencoded({
+    extended: true,
+    limit: "1mb",
+  })
+);
+
+
+// =========================================================
+// COOKIE PARSER
+// =========================================================
+
 app.use(cookieParser());
 
+
+// ============================================================
+// GLOBAL API RATE LIMITING
+// ============================================================
+//
+// These protect ALL /api routes.
+//
+// Burst:
+//     100 requests / 10 seconds
+//
+// General:
+//     600 requests / 15 minutes
+//
+// Login has additional, stricter protections inside
+// authRoutes.js.
+// ============================================================
+
+app.use(
+  "/api",
+  burstLimiter
+);
+
+app.use(
+  "/api",
+  apiLimiter
+);
+
+
 // =========================================================
-// Static uploads
+// STATIC UPLOADS
 // =========================================================
 
+// Public images uploaded by the admin panel are served here.
 app.use(
   "/uploads",
   express.static(
@@ -82,39 +153,29 @@ app.use(
   )
 );
 
-// =========================================================
-// API Routes
-// =========================================================
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      if (!origin) {
-        return callback(null, true);
-      }
 
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
+// =========================================================
+// API ROUTES
+// =========================================================
 
-      console.log("Blocked CORS origin:", origin); // temporary
-      return callback(new Error("Origin not allowed by CORS"));
-    },
-    credentials: true,
-  })
-);
 // Authentication
 app.use(
   "/api/auth",
   authRoutes
 );
 
-// User / Administrator Management
+
+// User / Employee Management
 app.use(
   "/api/users",
   userRoutes
 );
 
-// Public + protected content APIs
+
+// =========================================================
+// PUBLIC + PROTECTED CONTENT APIs
+// =========================================================
+
 app.use(
   "/api/company",
   companyRoutes
@@ -170,6 +231,7 @@ app.use(
   socialRoutes
 );
 
+
 // Contact
 app.use(
   "/api/contact",
@@ -183,8 +245,23 @@ app.use(
   dashboardRoutes
 );
 
+
 // =========================================================
-// Test route
+// API 404 HANDLER
+// =========================================================
+
+// If someone requests an API endpoint that doesn't exist,
+// return JSON instead of an HTML error page.
+app.use("/api", (req, res) => {
+  res.status(404).json({
+    success: false,
+    message: "API endpoint not found",
+  });
+});
+
+
+// =========================================================
+// ROOT TEST ROUTE
 // =========================================================
 
 app.get("/", (req, res) => {
@@ -194,8 +271,40 @@ app.get("/", (req, res) => {
   });
 });
 
+
 // =========================================================
-// Start server
+// GLOBAL ERROR HANDLER
+// =========================================================
+
+app.use((err, req, res, next) => {
+  console.error("Server error:", err);
+
+  // CORS errors
+  if (err.message === "Origin not allowed by CORS") {
+    return res.status(403).json({
+      success: false,
+      message: "Request origin not allowed.",
+    });
+  }
+
+  // Rate-limit errors
+  if (err.status === 429) {
+    return res.status(429).json({
+      success: false,
+      message: "Too many requests. Please try again later.",
+    });
+  }
+
+  // Do not expose internal error details to clients.
+  return res.status(500).json({
+    success: false,
+    message: "Internal server error.",
+  });
+});
+
+
+// =========================================================
+// START SERVER
 // =========================================================
 
 app.listen(PORT, () => {

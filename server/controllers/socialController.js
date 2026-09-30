@@ -5,6 +5,10 @@ const {
   sendError,
 } = require("../utils/response");
 
+const {
+  clearCache,
+} = require("../middleware/cache");
+
 // ==========================================================================
 // PUBLIC
 // ==========================================================================
@@ -336,6 +340,10 @@ const createSocialLink = async (req, res) => {
     // Normalize after insertion
     await normalizeSocialLinkOrdersInternal();
 
+    clearCache(
+      "/api/social-links"
+    );
+
     // Get newly created social link
     const [rows] = await db.query(
       `
@@ -461,6 +469,10 @@ const updateSocialLink = async (req, res) => {
       ]
     );
 
+    clearCache(
+      "/api/social-links"
+    );
+
     const [rows] = await db.query(
       `
         SELECT *
@@ -541,6 +553,10 @@ const updateSocialLinksSection = async (
         section_subtitle_fr?.trim() || null,
         section_subtitle_en?.trim() || null,
       ]
+    );
+
+    clearCache(
+      "/api/social-links"
     );
 
     return sendSuccess(
@@ -744,6 +760,10 @@ const reorderSocialLink = async (
       );
     }
 
+    clearCache(
+      "/api/social-links"
+    );
+
     const [updatedRows] =
       await db.query(
         `
@@ -780,6 +800,10 @@ const normalizeSocialLinkOrders =
   async (req, res) => {
     try {
       await normalizeSocialLinkOrdersInternal();
+
+      clearCache(
+        "/api/social-links"
+      );
 
       return sendSuccess(
         res,
@@ -845,6 +869,10 @@ const deleteSocialLink = async (
 
     // Normalize remaining orders
     await normalizeSocialLinkOrdersInternal();
+
+    clearCache(
+      "/api/social-links"
+    );
 
     return sendSuccess(
       res,

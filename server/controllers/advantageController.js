@@ -5,6 +5,10 @@ const {
   sendError,
 } = require("../utils/response");
 
+const {
+  clearCache,
+} = require("../middleware/cache");
+
 // ============================================================
 // Get all active advantages
 // GET /api/advantages
@@ -319,6 +323,8 @@ const createAdvantage = async (req, res) => {
       [result.insertId]
     );
 
+    clearCache("/api/advantages");
+
     return sendSuccess(
       res,
       rows[0],
@@ -484,6 +490,8 @@ const updateAdvantage = async (req, res) => {
       ]
     );
 
+    clearCache("/api/advantages");
+
     // Get updated advantage
     const [rows] = await db.query(
       `
@@ -622,6 +630,8 @@ const reorderAdvantage = async (
         }
       }
 
+      clearCache("/api/advantages");
+
       return sendSuccess(
         res,
         null,
@@ -689,6 +699,8 @@ const reorderAdvantage = async (
       );
     }
 
+    clearCache("/api/advantages");
+
     return sendSuccess(
       res,
       null,
@@ -744,6 +756,8 @@ const normalizeAdvantageOrders =
           ]
         );
       }
+
+      clearCache("/api/advantages");
 
       return sendSuccess(
         res,
@@ -803,6 +817,8 @@ const deleteAdvantage = async (
       `,
       [id]
     );
+
+    clearCache("/api/advantages");
 
     return sendSuccess(
       res,
