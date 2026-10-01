@@ -11,6 +11,8 @@ import DataTable from "../components/DataTable";
 import FormModal from "../components/FormModal";
 import AdminPagination from "../components/AdminPagination";
 
+import Swal from "sweetalert2";
+
 const ITEMS_PER_PAGE = 10;
 
 const initialForm = {
@@ -30,53 +32,37 @@ const initialSectionForm = {
 };
 
 const Categories = () => {
-  const [categories, setCategories] =
-    useState([]);
+  const [categories, setCategories] = useState([]);
 
-  const [currentPage, setCurrentPage] =
-    useState(1);
+  const [currentPage, setCurrentPage] = useState(1);
 
-  const [totalItems, setTotalItems] =
-    useState(0);
+  const [totalItems, setTotalItems] = useState(0);
 
-  const [totalPages, setTotalPages] =
-    useState(0);
+  const [totalPages, setTotalPages] = useState(0);
 
-  const [loading, setLoading] =
-    useState(true);
+  const [loading, setLoading] = useState(true);
 
-  const [saving, setSaving] =
-    useState(false);
+  const [saving, setSaving] = useState(false);
 
-  const [sectionSaving, setSectionSaving] =
-    useState(false);
+  const [sectionSaving, setSectionSaving] = useState(false);
 
-  const [deleting, setDeleting] =
-    useState(false);
+  const [deleting, setDeleting] = useState(false);
 
-  const [error, setError] =
-    useState("");
+  const [error, setError] = useState("");
 
-  const [success, setSuccess] =
-    useState("");
+  const [success, setSuccess] = useState("");
 
-  const [sectionMessage, setSectionMessage] =
-    useState("");
+  const [sectionMessage, setSectionMessage] = useState("");
 
-  const [isModalOpen, setIsModalOpen] =
-    useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const [editingCategory, setEditingCategory] =
-    useState(null);
+  const [editingCategory, setEditingCategory] = useState(null);
 
-  const [form, setForm] =
-    useState(initialForm);
+  const [form, setForm] = useState(initialForm);
 
-  const [sectionForm, setSectionForm] =
-    useState(initialSectionForm);
+  const [sectionForm, setSectionForm] = useState(initialSectionForm);
 
-  const [formError, setFormError] =
-    useState("");
+  const [formError, setFormError] = useState("");
 
   // =========================================================
   // LOAD CATEGORIES
@@ -88,50 +74,34 @@ const Categories = () => {
         setLoading(true);
         setError("");
 
-        const response =
-          await categoriesApi.getAll({
-            page,
-            limit: ITEMS_PER_PAGE,
-          });
+        const response = await categoriesApi.getAll({
+          page,
+          limit: ITEMS_PER_PAGE,
+        });
 
         const responseData =
           response?.data ??
           response ??
           {};
 
-        const categoryData =
-          Array.isArray(
-            responseData
-          )
-            ? responseData
-            : Array.isArray(
-                responseData?.data
-              )
-            ? responseData.data
-            : [];
+        const categoryData = Array.isArray(responseData)
+          ? responseData
+          : Array.isArray(responseData?.data)
+          ? responseData.data
+          : [];
 
-        const pagination =
-          !Array.isArray(
-            responseData
-          )
-            ? responseData?.pagination ??
-              {}
-            : {};
+        const pagination = !Array.isArray(responseData)
+          ? responseData?.pagination ?? {}
+          : {};
 
-        setCategories(
-          categoryData
-        );
+        setCategories(categoryData);
 
         setTotalItems(
-          Number(
-            pagination.totalItems
-          ) || 0
+          Number(pagination.totalItems) || 0
         );
 
         setTotalPages(
-          Number(
-            pagination.totalPages
-          ) || 0
+          Number(pagination.totalPages) || 0
         );
 
         /*
@@ -142,32 +112,23 @@ const Categories = () => {
          * the current page can populate the
          * global section form.
          */
-        if (
-          categoryData.length > 0
-        ) {
-          const firstCategory =
-            categoryData[0];
+        if (categoryData.length > 0) {
+          const firstCategory = categoryData[0];
 
           setSectionForm({
             section_title_fr:
-              firstCategory.section_title_fr ??
-              "",
+              firstCategory.section_title_fr ?? "",
 
             section_title_en:
-              firstCategory.section_title_en ??
-              "",
+              firstCategory.section_title_en ?? "",
 
             section_subtitle_fr:
-              firstCategory.section_subtitle_fr ??
-              "",
+              firstCategory.section_subtitle_fr ?? "",
 
             section_subtitle_en:
-              firstCategory.section_subtitle_en ??
-              "",
+              firstCategory.section_subtitle_en ?? "",
           });
-        } else if (
-          page === 1
-        ) {
+        } else if (page === 1) {
           setSectionForm({
             ...initialSectionForm,
           });
@@ -194,22 +155,15 @@ const Categories = () => {
   // =========================================================
 
   useEffect(() => {
-    loadCategories(
-      currentPage
-    );
-  }, [
-    currentPage,
-    loadCategories,
-  ]);
+    loadCategories(currentPage);
+  }, [currentPage, loadCategories]);
 
   useEffect(() => {
     if (
       totalPages > 0 &&
       currentPage > totalPages
     ) {
-      setCurrentPage(
-        totalPages
-      );
+      setCurrentPage(totalPages);
     }
 
     if (
@@ -218,18 +172,13 @@ const Categories = () => {
     ) {
       setCurrentPage(1);
     }
-  }, [
-    currentPage,
-    totalPages,
-  ]);
+  }, [currentPage, totalPages]);
 
   // =========================================================
   // CATEGORY FORM CHANGE
   // =========================================================
 
-  const handleChange = (
-    event
-  ) => {
+  const handleChange = (event) => {
     const {
       name,
       value,
@@ -255,20 +204,16 @@ const Categories = () => {
   // SECTION FORM CHANGE
   // =========================================================
 
-  const handleSectionChange = (
-    event
-  ) => {
+  const handleSectionChange = (event) => {
     const {
       name,
       value,
     } = event.target;
 
-    setSectionForm(
-      (current) => ({
-        ...current,
-        [name]: value,
-      })
-    );
+    setSectionForm((current) => ({
+      ...current,
+      [name]: value,
+    }));
 
     setSectionMessage("");
     setError("");
@@ -283,8 +228,7 @@ const Categories = () => {
 
     setForm({
       ...initialForm,
-      display_order:
-        totalItems + 1,
+      display_order: totalItems + 1,
     });
 
     setFormError("");
@@ -298,35 +242,25 @@ const Categories = () => {
   // EDIT
   // =========================================================
 
-  const handleEdit = (
-    category
-  ) => {
-    setEditingCategory(
-      category
-    );
+  const handleEdit = (category) => {
+    setEditingCategory(category);
 
     setForm({
-      name_fr:
-        category.name_fr ?? "",
+      name_fr: category.name_fr ?? "",
 
-      name_en:
-        category.name_en ?? "",
+      name_en: category.name_en ?? "",
 
       description_fr:
-        category.description_fr ??
-        "",
+        category.description_fr ?? "",
 
       description_en:
-        category.description_en ??
-        "",
+        category.description_en ?? "",
 
       display_order:
         category.display_order ?? 0,
 
       is_active:
-        Number(
-          category.is_active
-        ),
+        Number(category.is_active),
     });
 
     setFormError("");
@@ -340,22 +274,27 @@ const Categories = () => {
   // DELETE
   // =========================================================
 
-  const handleDelete = async (
-    category
-  ) => {
+  const handleDelete = async (category) => {
     if (!category?.id) {
       return;
     }
 
-    const confirmed =
-      window.confirm(
-        `Are you sure you want to delete "${
-          category.name_en ||
-          category.name_fr
-        }"?\n\nIf this category is assigned to any products, it cannot be deleted.`
-      );
+    const result = await Swal.fire({
+      title: "Confirm Deletion",
+      text: `Are you sure you want to delete "${
+        category.name_en || category.name_fr
+      }"? If this category is assigned to any products, it cannot be deleted.`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Yes, delete it!",
+      focusCancel: true,
+      width: "400px",
+      padding: "1.25rem",
+    });
 
-    if (!confirmed) {
+    if (!result.isConfirmed) {
       return;
     }
 
@@ -364,9 +303,7 @@ const Categories = () => {
       setError("");
       setSuccess("");
 
-      await categoriesApi.remove(
-        category.id
-      );
+      await categoriesApi.remove(category.id);
 
       setSuccess(
         "Category deleted successfully."
@@ -376,13 +313,9 @@ const Categories = () => {
         categories.length === 1 &&
         currentPage > 1
       ) {
-        setCurrentPage(
-          currentPage - 1
-        );
+        setCurrentPage(currentPage - 1);
       } else {
-        await loadCategories(
-          currentPage
-        );
+        await loadCategories(currentPage);
       }
     } catch (err) {
       console.error(
@@ -417,101 +350,87 @@ const Categories = () => {
   // CATEGORY DATA
   // =========================================================
 
-  const createCategoryData =
-    () => {
-      const formData =
-        new FormData();
+  const createCategoryData = () => {
+    const formData = new FormData();
 
-      formData.append(
-        "name_fr",
-        form.name_fr.trim()
-      );
+    formData.append(
+      "name_fr",
+      form.name_fr.trim()
+    );
 
-      formData.append(
-        "name_en",
-        form.name_en.trim()
-      );
+    formData.append(
+      "name_en",
+      form.name_en.trim()
+    );
 
-      formData.append(
-        "description_fr",
-        form.description_fr.trim()
-      );
+    formData.append(
+      "description_fr",
+      form.description_fr.trim()
+    );
 
-      formData.append(
-        "description_en",
-        form.description_en.trim()
-      );
+    formData.append(
+      "description_en",
+      form.description_en.trim()
+    );
 
-      formData.append(
-        "display_order",
-        String(
-          Number(
-            form.display_order
-          ) ||
-            totalItems + 1
-        )
-      );
+    formData.append(
+      "display_order",
+      String(
+        Number(form.display_order) ||
+          totalItems + 1
+      )
+    );
 
-      formData.append(
-        "is_active",
-        String(
-          Number(
-            form.is_active
-          )
-        )
-      );
+    formData.append(
+      "is_active",
+      String(Number(form.is_active))
+    );
 
-      return formData;
-    };
+    return formData;
+  };
 
   // =========================================================
   // SECTION DATA
   // =========================================================
 
-  const createSectionData =
-    () => {
-      const formData =
-        new FormData();
+  const createSectionData = () => {
+    const formData = new FormData();
 
-      formData.append(
-        "section_title_fr",
-        sectionForm.section_title_fr.trim()
-      );
+    formData.append(
+      "section_title_fr",
+      sectionForm.section_title_fr.trim()
+    );
 
-      formData.append(
-        "section_title_en",
-        sectionForm.section_title_en.trim()
-      );
+    formData.append(
+      "section_title_en",
+      sectionForm.section_title_en.trim()
+    );
 
-      formData.append(
-        "section_subtitle_fr",
-        sectionForm.section_subtitle_fr.trim()
-      );
+    formData.append(
+      "section_subtitle_fr",
+      sectionForm.section_subtitle_fr.trim()
+    );
 
-      formData.append(
-        "section_subtitle_en",
-        sectionForm.section_subtitle_en.trim()
-      );
+    formData.append(
+      "section_subtitle_en",
+      sectionForm.section_subtitle_en.trim()
+    );
 
-      return formData;
-    };
+    return formData;
+  };
 
   // =========================================================
   // SAVE CATEGORY
   // =========================================================
 
-  const handleSubmit = async (
-    event
-  ) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
 
     setFormError("");
     setError("");
     setSuccess("");
 
-    if (
-      !form.name_fr.trim()
-    ) {
+    if (!form.name_fr.trim()) {
       setFormError(
         "French category name is required."
       );
@@ -519,9 +438,7 @@ const Categories = () => {
       return;
     }
 
-    if (
-      !form.name_en.trim()
-    ) {
+    if (!form.name_en.trim()) {
       setFormError(
         "English category name is required."
       );
@@ -539,12 +456,10 @@ const Categories = () => {
           ) || 0;
 
         const requestedOrder =
-          Number(
-            form.display_order
-          ) || oldOrder;
+          Number(form.display_order) ||
+          oldOrder;
 
-        const updateData =
-          new FormData();
+        const updateData = new FormData();
 
         updateData.append(
           "name_fr",
@@ -577,11 +492,7 @@ const Categories = () => {
 
         updateData.append(
           "is_active",
-          String(
-            Number(
-              form.is_active
-            )
-          )
+          String(Number(form.is_active))
         );
 
         await categoriesApi.update(
@@ -589,10 +500,7 @@ const Categories = () => {
           updateData
         );
 
-        if (
-          oldOrder !==
-          requestedOrder
-        ) {
+        if (oldOrder !== requestedOrder) {
           await categoriesApi.reorder(
             editingCategory.id,
             requestedOrder
@@ -619,9 +527,7 @@ const Categories = () => {
         ...initialForm,
       });
 
-      await loadCategories(
-        currentPage
-      );
+      await loadCategories(currentPage);
     } catch (err) {
       console.error(
         "Save category error:",
@@ -641,85 +547,73 @@ const Categories = () => {
   // SAVE GLOBAL SECTION
   // =========================================================
 
-  const handleSaveSection =
-    async (
-      event
-    ) => {
-      event.preventDefault();
+  const handleSaveSection = async (event) => {
+    event.preventDefault();
 
-      setError("");
-      setSuccess("");
-      setSectionMessage("");
+    setError("");
+    setSuccess("");
+    setSectionMessage("");
 
-      if (
-        totalItems === 0
-      ) {
-        setError(
-          "Add at least one category before editing the Categories section content."
-        );
+    if (totalItems === 0) {
+      setError(
+        "Add at least one category before editing the Categories section content."
+      );
 
-        return;
-      }
+      return;
+    }
 
-      try {
-        setSectionSaving(true);
+    try {
+      setSectionSaving(true);
 
-        /*
-         * IMPORTANT:
-         *
-         * This updates ALL categories through
-         * one backend query.
-         *
-         * It does NOT loop through the current
-         * pagination page.
-         */
-        await categoriesApi.updateSection(
-          createSectionData()
-        );
+      /*
+       * IMPORTANT:
+       *
+       * This updates ALL categories through
+       * one backend query.
+       *
+       * It does NOT loop through the current
+       * pagination page.
+       */
+      await categoriesApi.updateSection(
+        createSectionData()
+      );
 
-        await loadCategories(
-          currentPage
-        );
+      await loadCategories(currentPage);
 
-        setSectionMessage(
-          "Categories section content saved successfully."
-        );
-      } catch (err) {
-        console.error(
-          "Save categories section error:",
-          err
-        );
+      setSectionMessage(
+        "Categories section content saved successfully."
+      );
+    } catch (err) {
+      console.error(
+        "Save categories section error:",
+        err
+      );
 
-        setError(
-          err?.response?.data?.message ||
-            "Failed to save Categories section content."
-        );
-      } finally {
-        setSectionSaving(false);
-      }
-    };
+      setError(
+        err?.response?.data?.message ||
+          "Failed to save Categories section content."
+      );
+    } finally {
+      setSectionSaving(false);
+    }
+  };
 
   // =========================================================
   // TOGGLE STATUS
   // =========================================================
 
-  const handleToggleStatus =
-    async (
-      category
-    ) => {
+  const handleToggleStatus = useCallback(
+    async (category) => {
       try {
         setError("");
         setSuccess("");
 
-        const updateData =
-          new FormData();
+        const updateData = new FormData();
 
         updateData.append(
           "is_active",
           String(
-            Number(
-              category.is_active
-            ) === 1
+            Number(category.is_active) === 1
               ? 0
               : 1
           )
@@ -731,16 +625,12 @@ const Categories = () => {
         );
 
         setSuccess(
-          Number(
-            category.is_active
-          ) === 1
+          Number(category.is_active) === 1
             ? "Category deactivated successfully."
             : "Category activated successfully."
         );
 
-        await loadCategories(
-          currentPage
-        );
+        await loadCategories(currentPage);
       } catch (err) {
         console.error(
           "Toggle category status error:",
@@ -752,7 +642,9 @@ const Categories = () => {
             "Failed to update category status."
         );
       }
-    };
+    },
+    [currentPage, loadCategories]
+  );
 
   // =========================================================
   // TABLE COLUMNS
@@ -764,18 +656,11 @@ const Categories = () => {
         key: "name_fr",
         label: "Category",
 
-        render: (
-          value,
-          row
-        ) => (
+        render: (value, row) => (
           <div className="admin-category-name-cell">
-            <strong>
-              {value}
-            </strong>
+            <strong>{value}</strong>
 
-            <span>
-              {row.name_en}
-            </span>
+            <span>{row.name_en}</span>
           </div>
         ),
       },
@@ -784,9 +669,7 @@ const Categories = () => {
         key: "description_fr",
         label: "Description",
 
-        render: (
-          value
-        ) => (
+        render: (value) => (
           <span className="admin-table-description">
             {value || "—"}
           </span>
@@ -797,18 +680,14 @@ const Categories = () => {
         key: "display_order",
         label: "Order",
 
-        className:
-          "admin-table-order",
+        className: "admin-table-order",
       },
 
       {
         key: "is_active",
         label: "Status",
 
-        render: (
-          value,
-          row
-        ) => (
+        render: (value, row) => (
           <button
             type="button"
             className={`admin-status-button ${
@@ -817,9 +696,7 @@ const Categories = () => {
                 : "inactive"
             }`}
             onClick={() =>
-              handleToggleStatus(
-                row
-              )
+              handleToggleStatus(row)
             }
             disabled={deleting}
           >
@@ -832,7 +709,7 @@ const Categories = () => {
         ),
       },
     ],
-    [deleting]
+    [deleting, handleToggleStatus]
   );
 
   // =========================================================
@@ -849,9 +726,7 @@ const Categories = () => {
             Catalog
           </span>
 
-          <h1>
-            Categories
-          </h1>
+          <h1>Categories</h1>
 
           <p>
             Manage the product categories
@@ -866,15 +741,11 @@ const Categories = () => {
         <div className="admin-alert admin-alert-success">
           <i className="bi bi-check-circle" />
 
-          <span>
-            {success}
-          </span>
+          <span>{success}</span>
 
           <button
             type="button"
-            onClick={() =>
-              setSuccess("")
-            }
+            onClick={() => setSuccess("")}
             aria-label="Close"
           >
             ×
@@ -888,15 +759,11 @@ const Categories = () => {
         <div className="admin-alert admin-alert-error">
           <i className="bi bi-exclamation-circle" />
 
-          <span>
-            {error}
-          </span>
+          <span>{error}</span>
 
           <button
             type="button"
-            onClick={() =>
-              setError("")
-            }
+            onClick={() => setError("")}
             aria-label="Close"
           >
             ×
@@ -923,9 +790,7 @@ const Categories = () => {
           <button
             type="button"
             className="admin-primary-button"
-            onClick={
-              handleSaveSection
-            }
+            onClick={handleSaveSection}
             disabled={
               sectionSaving ||
               totalItems === 0
@@ -951,9 +816,7 @@ const Categories = () => {
           <div className="admin-inline-success">
             <i className="bi bi-check-circle" />
 
-            <span>
-              {sectionMessage}
-            </span>
+            <span>{sectionMessage}</span>
           </div>
         )}
 
@@ -970,9 +833,7 @@ const Categories = () => {
               value={
                 sectionForm.section_title_fr
               }
-              onChange={
-                handleSectionChange
-              }
+              onChange={handleSectionChange}
               placeholder="Nos catégories"
               disabled={
                 totalItems === 0 ||
@@ -993,9 +854,7 @@ const Categories = () => {
               value={
                 sectionForm.section_title_en
               }
-              onChange={
-                handleSectionChange
-              }
+              onChange={handleSectionChange}
               placeholder="Our Categories"
               disabled={
                 totalItems === 0 ||
@@ -1015,9 +874,7 @@ const Categories = () => {
               value={
                 sectionForm.section_subtitle_fr
               }
-              onChange={
-                handleSectionChange
-              }
+              onChange={handleSectionChange}
               placeholder="Sous-titre de la section"
               rows="3"
               disabled={
@@ -1038,9 +895,7 @@ const Categories = () => {
               value={
                 sectionForm.section_subtitle_en
               }
-              onChange={
-                handleSectionChange
-              }
+              onChange={handleSectionChange}
               placeholder="Section subtitle"
               rows="3"
               disabled={
@@ -1057,8 +912,7 @@ const Categories = () => {
       <div
         style={{
           display: "flex",
-          justifyContent:
-            "flex-end",
+          justifyContent: "flex-end",
           marginTop: "24px",
           marginBottom: "16px",
         }}
@@ -1093,12 +947,8 @@ const Categories = () => {
       <AdminPagination
         currentPage={currentPage}
         totalItems={totalItems}
-        itemsPerPage={
-          ITEMS_PER_PAGE
-        }
-        onPageChange={
-          setCurrentPage
-        }
+        itemsPerPage={ITEMS_PER_PAGE}
+        onPageChange={setCurrentPage}
       />
 
       {/* ADD / EDIT MODAL */}
@@ -1110,12 +960,8 @@ const Categories = () => {
             ? "Edit Category"
             : "Add Category"
         }
-        onSubmit={
-          handleSubmit
-        }
-        onClose={
-          handleCloseModal
-        }
+        onSubmit={handleSubmit}
+        onClose={handleCloseModal}
         submitText={
           editingCategory
             ? "Update Category"
@@ -1128,9 +974,7 @@ const Categories = () => {
           <div className="admin-form-error-box">
             <i className="bi bi-exclamation-circle" />
 
-            <span>
-              {formError}
-            </span>
+            <span>{formError}</span>
           </div>
         )}
 
@@ -1138,9 +982,7 @@ const Categories = () => {
 
         <div className="admin-form-section">
           <div className="admin-form-section-header">
-            <h3>
-              Category Information
-            </h3>
+            <h3>Category Information</h3>
 
             <p>
               Enter the category content
@@ -1158,12 +1000,8 @@ const Categories = () => {
                 id="name_fr"
                 name="name_fr"
                 type="text"
-                value={
-                  form.name_fr
-                }
-                onChange={
-                  handleChange
-                }
+                value={form.name_fr}
+                onChange={handleChange}
                 placeholder="Nom de la catégorie"
               />
             </div>
@@ -1177,12 +1015,8 @@ const Categories = () => {
                 id="name_en"
                 name="name_en"
                 type="text"
-                value={
-                  form.name_en
-                }
-                onChange={
-                  handleChange
-                }
+                value={form.name_en}
+                onChange={handleChange}
                 placeholder="Category name"
               />
             </div>
@@ -1195,12 +1029,8 @@ const Categories = () => {
               <textarea
                 id="description_fr"
                 name="description_fr"
-                value={
-                  form.description_fr
-                }
-                onChange={
-                  handleChange
-                }
+                value={form.description_fr}
+                onChange={handleChange}
                 placeholder="Description de la catégorie"
                 rows="4"
               />
@@ -1214,12 +1044,8 @@ const Categories = () => {
               <textarea
                 id="description_en"
                 name="description_en"
-                value={
-                  form.description_en
-                }
-                onChange={
-                  handleChange
-                }
+                value={form.description_en}
+                onChange={handleChange}
                 placeholder="Category description"
                 rows="4"
               />
@@ -1231,9 +1057,7 @@ const Categories = () => {
 
         <div className="admin-form-section">
           <div className="admin-form-section-header">
-            <h3>
-              Display Settings
-            </h3>
+            <h3>Display Settings</h3>
 
             <p>
               Set the display order and
@@ -1252,12 +1076,8 @@ const Categories = () => {
                 name="display_order"
                 type="number"
                 min="1"
-                value={
-                  form.display_order
-                }
-                onChange={
-                  handleChange
-                }
+                value={form.display_order}
+                onChange={handleChange}
               />
             </div>
 
@@ -1267,13 +1087,9 @@ const Categories = () => {
                   type="checkbox"
                   name="is_active"
                   checked={
-                    Number(
-                      form.is_active
-                    ) === 1
+                    Number(form.is_active) === 1
                   }
-                  onChange={
-                    handleChange
-                  }
+                  onChange={handleChange}
                 />
 
                 <span>
