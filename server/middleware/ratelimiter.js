@@ -8,18 +8,18 @@ const {
 // CONFIGURATION
 // ============================================================
 //
-// These values can be changed from .env.
+// These values can be changed from .env file
 //
 // The defaults are intentionally different for each layer:
 //
 // Browser:
-//   5 failed attempts / 10 minutes
+//   5 failed attempts / 10 minutes block
 //
 // IP:
-//   20 failed attempts / 10 minutes
+//   20 failed attempts / 10 minutes block
 //
 // Account:
-//   10 failed attempts / 10 minutes
+//   10 failed attempts / 10 minutes block
 //
 // General API:
 //   600 requests / 15 minutes
@@ -242,9 +242,9 @@ const browserLoginLimiter = rateLimit({
       success: false,
 
       message:
-        `Too many failed login attempts. ` +
-        `This browser is temporarily blocked ` +
-        `for ${LOGIN_BLOCK_MINUTES} minutes.`,
+        ` Too many failed login attempts. ` +
+        ` Please try again after ` +
+        ` ${LOGIN_BLOCK_MINUTES} minutes. `,
 
       loginBlocked: true,
 

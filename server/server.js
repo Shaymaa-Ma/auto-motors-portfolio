@@ -130,15 +130,8 @@ app.use(cookieParser());
 // authRoutes.js.
 // ============================================================
 
-app.use(
-  "/api",
-  burstLimiter
-);
-
-app.use(
-  "/api",
-  apiLimiter
-);
+app.use("/api", burstLimiter);
+app.use("/api", apiLimiter);
 
 
 // =========================================================
