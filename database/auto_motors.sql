@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1:3306
--- Generation Time: Sep 30, 2026 at 07:19 PM
+-- Generation Time: Oct 01, 2026 at 09:13 AM
 -- Server version: 8.4.7
 -- PHP Version: 8.3.28
 
@@ -335,27 +335,27 @@ CREATE TABLE IF NOT EXISTS `products` (
   KEY `idx_products_display_order` (`display_order`),
   KEY `idx_products_is_active` (`is_active`),
   KEY `idx_products_active_order` (`is_active`,`display_order`,`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=24 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=25 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `products`
 --
 
 INSERT INTO `products` (`id`, `category_id`, `name_fr`, `name_en`, `description_fr`, `description_en`, `price`, `image`, `image_number`, `display_order`, `is_active`, `created_at`, `updated_at`) VALUES
-(1, 1, 'Batterie automobile 12V', '12V Automotive Battery', 'Batterie destinée aux véhicules automobiles.', 'Battery designed for automotive vehicles.', '70 $', 'products/battery-001.jpg', '001', 1, 1, '2026-09-05 07:20:28', '2026-09-30 17:54:13'),
-(2, 1, 'Batterie automobile 24V', '24V Automotive Battery', 'Batterie adaptée aux véhicules professionnels et poids lourds.', 'Battery suitable for professional and heavy-duty vehicles.', '120 $', 'products/battery-002.jpg', '002', 2, 1, '2026-09-05 07:20:28', '2026-09-30 17:54:13'),
-(3, 1, 'Batterie haute performance', 'High-Performance Battery', 'Batterie fiable adaptée aux besoins des véhicules professionnels.', 'Reliable battery suitable for professional vehicle needs.', '95 $', 'products/battery-003.jpg', '003', 3, 1, '2026-09-05 07:20:28', '2026-09-30 17:54:13'),
-(4, 2, 'Pneu pour camion', 'Truck Tire', 'Pneu destiné aux véhicules et camions.', 'Tire designed for vehicles and trucks.', '150 $', 'products/tire-001.jpg', '004', 4, 1, '2026-09-05 07:20:28', '2026-09-30 17:54:13'),
-(5, 2, 'Pneu pour camionnette', 'Light Truck Tire', 'Pneu adapté aux camionnettes et véhicules utilitaires.', 'Tire suitable for light trucks and utility vehicles.', '120 $', 'products/tire-002.jpg', '005', 5, 1, '2026-09-05 07:20:28', '2026-09-30 17:54:13'),
-(6, 2, 'Pneu poids lourd', 'Heavy-Duty Truck Tire', 'Pneu adapté aux véhicules lourds et aux besoins professionnels.', 'Tire suitable for heavy-duty vehicles and professional use.', '200 $', 'products/tire-003.jpg', '006', 6, 1, '2026-09-05 07:20:28', '2026-09-30 17:54:13'),
-(7, 3, 'Huile moteur TOTAL 15W40', 'TOTAL 15W40 Engine Oil', 'Huile moteur destinée à l’entretien des véhicules.', 'Engine oil designed for vehicle maintenance.', '28 $', 'products/oil-001.jpg', '007', 7, 1, '2026-09-05 07:20:28', '2026-09-30 17:54:13'),
-(8, 3, 'Huile moteur TOTAL 20W50', 'TOTAL 20W50 Engine Oil', 'Huile moteur pour différents types de véhicules.', 'Engine oil for different types of vehicles.', '32 $', 'products/oil-002.jpg', '008', 8, 1, '2026-09-05 07:20:28', '2026-09-30 17:54:13'),
-(9, 3, 'Lubrifiant automobile TOTAL', 'TOTAL Automotive Lubricant', 'Lubrifiant destiné aux besoins d’entretien automobile.', 'Lubricant designed for automotive maintenance needs.', '36 $', 'products/oil-003.jpg', '009', 9, 1, '2026-09-05 07:20:28', '2026-09-30 17:54:13'),
-(10, 4, 'Filtre à huile', 'Oil Filter', 'Filtre destiné au système de lubrification du moteur.', 'Filter designed for the engine lubrication system.', '12 $', 'products/filter-oil-001.jpg', '010', 11, 1, '2026-09-05 07:20:28', '2026-09-30 17:54:13'),
-(11, 4, 'Filtre à air', 'Air Filter', 'Filtre destiné à la filtration de l’air du moteur.', 'Filter designed to clean the air entering the engine.', '10 $', 'products/filter-air-001.jpg', '011', 10, 1, '2026-09-05 07:20:28', '2026-09-30 17:54:13'),
-(12, 4, 'Filtre à carburant', 'Fuel Filter', 'Filtre destiné à la filtration du carburant.', 'Filter designed to clean the fuel.', '14 $', 'products/filter-fuel-001.jpg', '012', 12, 1, '2026-09-05 07:20:28', '2026-09-30 17:54:13'),
-(13, 4, 'Plaquettes de frein', 'Brake Pads', 'Pièces de freinage destinées aux véhicules automobiles.', 'Braking components designed for automotive vehicles.', '40 $', 'products/brake-pads-001.jpg', '013', 13, 1, '2026-09-05 07:20:28', '2026-09-30 17:54:13'),
-(14, 4, 'Disques de frein', 'Brake Discs', 'Composants du système de freinage automobile.', 'Components of an automotive braking system.', '55 $', 'products/brake-discs-001.jpg', '014', 14, 1, '2026-09-05 07:20:28', '2026-09-30 17:54:13');
+(1, 1, 'Batterie automobile 12V', '12V Automotive Battery', 'Batterie destinée aux véhicules automobiles.', 'Battery designed for automotive vehicles.', '70 $', 'products/battery-001.jpg', '001', 1, 1, '2026-09-05 07:20:28', '2026-10-01 08:57:38'),
+(2, 1, 'Batterie automobile 24V', '24V Automotive Battery', 'Batterie adaptée aux véhicules professionnels et poids lourds.', 'Battery suitable for professional and heavy-duty vehicles.', '120 $', 'products/battery-002.jpg', '002', 2, 1, '2026-09-05 07:20:28', '2026-10-01 08:57:38'),
+(3, 1, 'Batterie haute performance', 'High-Performance Battery', 'Batterie fiable adaptée aux besoins des véhicules professionnels.', 'Reliable battery suitable for professional vehicle needs.', '95 $', 'products/battery-003.jpg', '003', 3, 1, '2026-09-05 07:20:28', '2026-10-01 08:57:38'),
+(4, 2, 'Pneu pour camion', 'Truck Tire', 'Pneu destiné aux véhicules et camions.', 'Tire designed for vehicles and trucks.', '150 $', 'products/tire-001.jpg', '004', 4, 1, '2026-09-05 07:20:28', '2026-10-01 08:57:38'),
+(5, 2, 'Pneu pour camionnette', 'Light Truck Tire', 'Pneu adapté aux camionnettes et véhicules utilitaires.', 'Tire suitable for light trucks and utility vehicles.', '120 $', 'products/tire-002.jpg', '005', 5, 1, '2026-09-05 07:20:28', '2026-10-01 08:57:38'),
+(6, 2, 'Pneu poids lourd', 'Heavy-Duty Truck Tire', 'Pneu adapté aux véhicules lourds et aux besoins professionnels.', 'Tire suitable for heavy-duty vehicles and professional use.', '200 $', 'products/tire-003.jpg', '006', 6, 1, '2026-09-05 07:20:28', '2026-10-01 08:57:38'),
+(7, 3, 'Huile moteur TOTAL 15W40', 'TOTAL 15W40 Engine Oil', 'Huile moteur destinée à l’entretien des véhicules.', 'Engine oil designed for vehicle maintenance.', '28 $', 'products/oil-001.jpg', '007', 7, 1, '2026-09-05 07:20:28', '2026-10-01 08:57:38'),
+(8, 3, 'Huile moteur TOTAL 20W50', 'TOTAL 20W50 Engine Oil', 'Huile moteur pour différents types de véhicules.', 'Engine oil for different types of vehicles.', '32 $', 'products/oil-002.jpg', '008', 8, 1, '2026-09-05 07:20:28', '2026-10-01 08:57:38'),
+(9, 3, 'Lubrifiant automobile TOTAL', 'TOTAL Automotive Lubricant', 'Lubrifiant destiné aux besoins d’entretien automobile.', 'Lubricant designed for automotive maintenance needs.', '36 $', 'products/oil-003.jpg', '009', 9, 1, '2026-09-05 07:20:28', '2026-10-01 08:57:38'),
+(10, 4, 'Filtre à huile', 'Oil Filter', 'Filtre destiné au système de lubrification du moteur.', 'Filter designed for the engine lubrication system.', '12 $', 'products/filter-oil-001.jpg', '010', 11, 1, '2026-09-05 07:20:28', '2026-10-01 08:57:38'),
+(11, 4, 'Filtre à air', 'Air Filter', 'Filtre destiné à la filtration de l’air du moteur.', 'Filter designed to clean the air entering the engine.', '10 $', 'products/filter-air-001.jpg', '011', 10, 1, '2026-09-05 07:20:28', '2026-10-01 08:57:38'),
+(12, 4, 'Filtre à carburant', 'Fuel Filter', 'Filtre destiné à la filtration du carburant.', 'Filter designed to clean the fuel.', '14 $', 'products/filter-fuel-001.jpg', '012', 12, 1, '2026-09-05 07:20:28', '2026-10-01 08:57:38'),
+(13, 4, 'Plaquettes de frein', 'Brake Pads', 'Pièces de freinage destinées aux véhicules automobiles.', 'Braking components designed for automotive vehicles.', '40 $', 'products/brake-pads-001.jpg', '013', 13, 1, '2026-09-05 07:20:28', '2026-10-01 08:57:38'),
+(14, 4, 'Disques de frein', 'Brake Discs', 'Composants du système de freinage automobile.', 'Components of an automotive braking system.', '55 $', 'products/brake-discs-001.jpg', '014', 14, 1, '2026-09-05 07:20:28', '2026-10-01 08:57:38');
 
 -- --------------------------------------------------------
 
@@ -380,17 +380,17 @@ CREATE TABLE IF NOT EXISTS `product_categories` (
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `idx_product_categories_is_active` (`is_active`)
-) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `product_categories`
 --
 
 INSERT INTO `product_categories` (`id`, `section_title_fr`, `section_title_en`, `section_subtitle_fr`, `section_subtitle_en`, `name_fr`, `name_en`, `description_fr`, `description_en`, `display_order`, `is_active`, `created_at`, `updated_at`) VALUES
-(1, 'Des produits automobiles de qualité', 'Quality Automotive Products', 'Batteries, pneus, lubrifiants et pièces détachées', 'Batteries, tires, lubricants and spare parts', 'Batteries', 'Batteries', 'Batteries automobiles pour différents types de véhicules.', 'Automotive batteries for different types of vehicles.', 1, 1, '2026-09-05 07:20:28', '2026-09-30 17:54:19'),
-(2, 'Des produits automobiles de qualité', 'Quality Automotive Products', 'Batteries, pneus, lubrifiants et pièces détachées', 'Batteries, tires, lubricants and spare parts', 'Pneus', 'Tires', 'Pneus adaptés aux voitures, camionnettes et véhicules lourds.', 'Tires suitable for cars, light trucks and heavy-duty vehicles.', 2, 1, '2026-09-05 07:20:28', '2026-09-30 17:54:19'),
-(3, 'Des produits automobiles de qualité', 'Quality Automotive Products', 'Batteries, pneus, lubrifiants et pièces détachées', 'Batteries, tires, lubricants and spare parts', 'Lubrifiants', 'Lubricants', 'Lubrifiants et huiles moteur pour différents types de véhicules.', 'Lubricants and motor oils for different types of vehicles.', 3, 1, '2026-09-05 07:20:28', '2026-09-30 17:54:19'),
-(4, 'Des produits automobiles de qualité', 'Quality Automotive Products', 'Batteries, pneus, lubrifiants et pièces détachées', 'Batteries, tires, lubricants and spare parts', 'Pièces détachées', 'Spare Parts', 'Pièces et composants automobiles pour différents besoins.', 'Automotive parts and components for different needs.', 4, 1, '2026-09-05 07:20:28', '2026-09-30 17:54:19');
+(1, 'Des produits automobiles de qualité', 'Quality Automotive Products', 'Batteries, pneus, lubrifiants et pièces détachées', 'Batteries, tires, lubricants and spare parts', 'Batteries', 'Batteries', 'Batteries automobiles pour différents types de véhicules.', 'Automotive batteries for different types of vehicles.', 1, 1, '2026-09-05 07:20:28', '2026-10-01 08:57:52'),
+(2, 'Des produits automobiles de qualité', 'Quality Automotive Products', 'Batteries, pneus, lubrifiants et pièces détachées', 'Batteries, tires, lubricants and spare parts', 'Pneus', 'Tires', 'Pneus adaptés aux voitures, camionnettes et véhicules lourds.', 'Tires suitable for cars, light trucks and heavy-duty vehicles.', 2, 1, '2026-09-05 07:20:28', '2026-10-01 08:57:52'),
+(3, 'Des produits automobiles de qualité', 'Quality Automotive Products', 'Batteries, pneus, lubrifiants et pièces détachées', 'Batteries, tires, lubricants and spare parts', 'Lubrifiants', 'Lubricants', 'Lubrifiants et huiles moteur pour différents types de véhicules.', 'Lubricants and motor oils for different types of vehicles.', 3, 1, '2026-09-05 07:20:28', '2026-10-01 08:57:52'),
+(4, 'Des produits automobiles de qualité', 'Quality Automotive Products', 'Batteries, pneus, lubrifiants et pièces détachées', 'Batteries, tires, lubricants and spare parts', 'Pièces détachées', 'Spare Parts', 'Pièces et composants automobiles pour différents besoins.', 'Automotive parts and components for different needs.', 4, 1, '2026-09-05 07:20:28', '2026-10-01 08:57:52');
 
 -- --------------------------------------------------------
 
